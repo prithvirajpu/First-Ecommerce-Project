@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Management</title>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      min-height: 100vh;
+    }
+    .sidebar {
+      height: 100vh;
+      background-color: #343a40;
+    }
+    .sidebar a {
+      color: #adb5bd;
+      text-decoration: none;
+      display: block;
+      padding: 10px 15px;
+    }
+    .sidebar a.active,
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #fff;
+    }
+    .action-btn {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column p-3 text-white">
+      <h4 class="text-center mb-4">Admin Panel</h4>
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'user_list' %}" class="active">Users</a>
+      <a href="{% url 'category_list' %}">Categories</a>
+      <a href="{% url 'product_list' %}">Products</a>
+      <a href="#">Orders</a>
+      <a href="{% url 'admin_logout' %}">Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1 p-4">
+      <h2>User Management</h2>
+      <hr />
+
+      <!-- Search bar -->
+      <form method="GET" class="mb-3 d-flex">
+        <input type="text" name="q" class="form-control me-2" placeholder="Search by username or email" value="{{ request.GET.q }}
+">
+        <button type="submit" class="btn btn-primary me-2">Search</button>
+        <a href="{% url 'user_list' %}" class="btn btn-secondary">Clear</a>
+      </form>
+      <!-- User Table -->
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Date Joined</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.date_joined }}</td>
+              <td>
+                {% if not user.is_blocked %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-danger">Blocked</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if not user.is_blocked %}
+                  <a href="{% url 'admin_block_user' user.id %}" class="btn btn-warning btn-sm action-btn" onclick="return confirm('Are you sure you want to block this user?')">Block</a>
+                {% else %}
+                  <a href="{% url 'admin_unblock_user' user.id %}" class="btn btn-success btn-sm action-btn" onclick="return confirm('Unblock this user?')">Unblock</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">No users found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if users.has_other_pages %}
+        <nav>
+          <ul class="pagination">
+            {% if users.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Previous</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for num in users.paginator.page_range %}
+              {% if users.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if users.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Next</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
