@@ -1,3 +1,81 @@
-<h2>Welcome, {{ request.user.username }}!</h2>
-<p>This is your dashboard.</p>
-<a href="{% url 'logout' %}">Logout</a>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f4f6f8;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .dashboard-header {
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+      transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 1rem 2rem rgba(0,0,0,0.15);
+    }
+    .logout-btn {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="{% url 'logout' %}" class="btn btn-danger logout-btn">Logout</a>
+
+  <div class="container">
+    <div class="dashboard-header">
+      <h1 class="mb-3">Welcome, {{ request.user.username }}!</h1>
+      <p class="lead text-muted">Here's a quick overview of your account.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card p-4 text-center">
+          <h5 class="text-primary">Orders</h5>
+          <h2>12</h2>
+          <p class="text-muted">Total orders placed</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 text-center">
+          <h5 class="text-success">Wishlist Items</h5>
+          <h2>7</h2>
+          <p class="text-muted">Items in your wishlist</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 text-center">
+          <h5 class="text-warning">Wallet Balance</h5>
+          <h2>$150.00</h2>
+          <p class="text-muted">Available balance</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <h3>Recent Activity</h3>
+      <ul class="list-group">
+        <li class="list-group-item">Order #1024 placed on 2025-05-30</li>
+        <li class="list-group-item">Added "Sneaker Model X" to wishlist</li>
+        <li class="list-group-item">Wallet topped up by $50</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

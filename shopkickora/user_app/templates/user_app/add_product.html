@@ -55,40 +55,92 @@
         
         <div class="mb-3">
           <label for="name" class="form-label">Product Name</label>
-          <input type="text" name="name" id="name" class="form-control" required value="{{ form.name.value|default:'' }}">
+          <input type="text" name="name" id="name" class="form-control" required value="{{ form_data.name|default:'' }}">
+          {% if errors.name %}
+          <p style="color:red">{{errors.name}}</p>
+          {% endif %}
         </div>
 
         <div class="mb-3">
           <label for="description" class="form-label">Description</label>
-          <textarea name="description" id="description" class="form-control" rows="4" required>{{ form.description.value|default:'' }}</textarea>
+          <textarea name="description" id="description" class="form-control" rows="4" required>{{ form_data.description|default:'' }}</textarea>
         </div>
 
         <div class="mb-3">
           <label for="price" class="form-label">Price ($)</label>
-          <input type="number" name="price" id="price" step="0.01" class="form-control" required value="{{ form.price.value|default:'' }}">
+          <input type="number" name="price" id="price" step="0.01" class="form-control" required value="{{ form_data.price|default:'' }}">
+          {% if errors.price %}
+        <p style="color:red">{{ errors.price }}</p>
+      {% endif %}
         </div>
 
         <div class="mb-3">
-          <label for="stock" class="form-label">Stock Quantity</label>
-          <input type="number" name="stock" id="stock" class="form-control" required value="{{ form.stock.value|default:'' }}">
-        </div>
+  <label class="form-label">Stock Quantity by Size</label>
+
+  <div class="input-group mb-2" style="max-width: 200px;">
+    <span class="input-group-text">S</span>
+    <input 
+      type="number" 
+      name="stock_S" 
+      min="0" 
+      class="form-control" 
+      placeholder="Quantity for S" 
+      value="{{ form_data.stock_S|default:'' }}"
+    >
+  </div>
+
+  <div class="input-group mb-2" style="max-width: 200px;">
+    <span class="input-group-text">M</span>
+    <input 
+      type="number" 
+      name="stock_M" 
+      min="0" 
+      class="form-control" 
+      placeholder="Quantity for M" 
+      value="{{ form_data.stock_M|default:'' }}"
+    >
+  </div>
+
+  <div class="input-group mb-2" style="max-width: 200px;">
+    <span class="input-group-text">L</span>
+    <input 
+      type="number" 
+      name="stock_L" 
+      min="0" 
+      class="form-control" 
+      placeholder="Quantity for L" 
+      value="{{ form_data.stock_L|default:'' }}"
+    >
+  </div>
+
+  {% if errors.stock_sizes %}
+    <p style="color:red">{{ errors.stock_sizes }}</p>
+  {% endif %}
+</div>
+
 
         <div class="mb-3">
           <label for="category" class="form-label">Category</label>
           <select name="category" id="category" class="form-select" required>
-            <option value="">-- Select Category --</option>
-            {% for category in categories %}
-              <option value="{{ category.id }}">{{ category.name }}</option>
-            {% endfor %}
-          </select>
+  <option value="">-- Select Category --</option>
+  {% for category in categories %}
+    <option value="{{ category.id }}"
+      {% if form_data.category_id|stringformat:"s" == category.id|stringformat:"s" %} selected {% endif %}>
+      {{ category.name }}
+    </option>
+  {% endfor %}
+</select>
         </div>
 
         <div class="mb-3">
           <label for="brand" class="form-label">Brand</label>
-          <select name="brand" id="brand" required>
+          <select name="brand" id="brand" class="form-select" required>
   <option value="">Select Brand</option>
   {% for brand in brands %}
-    <option value="{{ brand.id }}">{{ brand.name }}</option>
+    <option value="{{ brand.id }}"
+      {% if form_data.brand_id|stringformat:"s" == brand.id|stringformat:"s" %} selected {% endif %}>
+      {{ brand.name }}
+    </option>
   {% empty %}
     <option disabled>No brands available</option>
   {% endfor %}

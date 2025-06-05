@@ -3,6 +3,17 @@
 {% block title %}Category Management{% endblock %}
 
 {% block content %}
+{% if messages %}
+  <div>
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>Category Management</h2>
   <a href="{% url 'add_category' %}" class="btn btn-success">+ Add Category</a>
@@ -42,11 +53,14 @@
           </td>
           <td>
             <a href="{% url 'edit_category' category.id %}" class="btn btn-warning btn-sm me-2">Edit</a>
-            {% if category.is_deleted %}
-              <a href="{% url 'toggle_category_status' category.id %}" class="btn btn-success btn-sm">Enable</a>
-            {% else %}
-              <a href="{% url 'toggle_category_status' category.id %}" class="btn btn-danger btn-sm">Disable</a>
-            {% endif %}
+
+            <!-- Disable/Enable button with modal trigger -->
+            <a href="#" 
+               class="btn btn-sm {% if category.is_deleted %}btn-success{% else %}btn-danger{% endif %} toggle-status-btn"
+               data-url="{% url 'toggle_category_status' category.id %}"
+               data-action="{% if category.is_deleted %}enable{% else %}disable{% endif %}">
+              {% if category.is_deleted %}Enable{% else %}Disable{% endif %}
+            </a>
           </td>
         </tr>
       {% empty %}
@@ -90,4 +104,64 @@
     </ul>
   </nav>
 {% endif %}
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to <span id="actionText"></span> this category?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="#" id="confirmBtn" class="btn btn-primary">Yes, proceed</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to logout?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="{% url 'admin_logout' %}" class="btn btn-danger">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    var actionTextSpan = document.getElementById('actionText');
+    var confirmBtn = document.getElementById('confirmBtn');
+
+    document.querySelectorAll('.toggle-status-btn').forEach(function(button) {
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        var url = this.getAttribute('data-url');
+        var action = this.getAttribute('data-action');
+
+        actionTextSpan.textContent = action;
+        confirmBtn.setAttribute('href', url);
+
+        confirmModal.show();
+      });
+    });
+  });
+</script>
 {% endblock %}

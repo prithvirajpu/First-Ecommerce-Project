@@ -6,10 +6,14 @@
   <!-- Success/Error Messages -->
   {% if messages %}
     {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
+      {% if 'brand' in message.extra_tags %}
+        {% with tags=message.extra_tags|cut:"brand"|cut:" " %}
+          <div class="alert alert-{{ tags|default:"info" }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endwith %}
+      {% endif %}
     {% endfor %}
   {% endif %}
 
@@ -46,8 +50,10 @@
           <td>{{ brand.status }}</td>
           <td>
             <a href="{% url 'edit_brand' brand.id %}" class="btn btn-warning btn-sm">Edit</a>
-            <a href="{% url 'toggle_brand_status' brand.id %}"
-               class="btn btn-sm {% if brand.status == 'active' %}btn-danger{% else %}btn-success{% endif %}">
+            <a href="#" 
+               class="btn btn-sm {% if brand.status == 'active' %}btn-danger{% else %}btn-success{% endif %} toggle-status-btn" 
+               data-url="{% url 'toggle_brand_status' brand.id %}" 
+               data-action="{% if brand.status == 'active' %}disable{% else %}enable{% endif %}">
               {% if brand.status == 'active' %}Disable{% else %}Enable{% endif %}
             </a>
           </td>
@@ -59,4 +65,66 @@
       {% endfor %}
     </tbody>
   </table>
+  
+  <!-- Confirmation Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to <span id="actionText"></span> this brand?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <a href="#" id="confirmBtn" class="btn btn-primary">Yes, proceed</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to logout?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="{% url 'admin_logout' %}" class="btn btn-danger">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    var actionTextSpan = document.getElementById('actionText');
+    var confirmBtn = document.getElementById('confirmBtn');
+
+    document.querySelectorAll('.toggle-status-btn').forEach(function(button) {
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        var url = this.getAttribute('data-url');
+        var action = this.getAttribute('data-action');
+
+        actionTextSpan.textContent = action;
+        confirmBtn.setAttribute('href', url);
+
+        confirmModal.show();
+      });
+    });
+  });
+</script>
 {% endblock %}

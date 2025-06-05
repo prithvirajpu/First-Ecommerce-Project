@@ -46,5 +46,22 @@ class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')
     image=models.ImageField(upload_to='product_images/')
 
+    
     def __str__(self):
         return f"Image for {self.product.name}"
+
+
+
+class ProductSizeStock(models.Model):
+    SIZE_CHOICES = [
+        ('S', 'Small'),
+        ('M', 'Medium'),
+        ('L', 'Large'),
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='size_stocks')
+    size = models.CharField(max_length=1, choices=SIZE_CHOICES)
+    quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.get_size_display()} ({self.quantity})"
