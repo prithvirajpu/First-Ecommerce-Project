@@ -15,7 +15,7 @@
       min-height: 100vh;
     }
     .sidebar {
-      height: 100vh;
+      min-height: 100vh;
       background-color: #343a40;
     }
     .sidebar a {
@@ -39,14 +39,14 @@
       <a href="{% url 'admin_dashboard' %}" class="active">Dashboard</a>
       <a href="{% url 'user_list' %}">Users</a>
       <a href="{% url 'category_list' %}">Categories</a>
+      <a href="{% url 'brand_list' %}" class="">Brands</a>
       <a href="{% url 'product_list' %}">Products</a>
-      <a href="#">Orders</a>
       <a href="{% url 'admin_logout' %}">Logout</a>
     </div>
 
     <!-- Main content -->
     <div class="flex-grow-1 p-4">
-      <h2>Welcome to Admin Dashboard 👋</h2>
+      <h2>Welcome to {{request.user}} ..</h2>
       <hr />
 
       <div class="row g-4 mt-4">

@@ -1,0 +1,55 @@
+<!-- templates/user_app/edit_brand.html -->
+{% extends "user_app/base_admin.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Edit Brand</h3>
+  <hr />
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+  <div>
+    {% for message in messages %}
+      <div 
+        class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" 
+        role="alert"
+      >
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Brand Name</label>
+      <input type="text" class="form-control" name="name" value="{{ brand.name }}" required />
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea class="form-control" name="description" rows="3">{{ brand.description }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label for="logo" class="form-label">Change Logo</label>
+      <input type="file" class="form-control" name="logo" accept="image/*" />
+      {% if brand.logo %}
+        <img src="{{ brand.logo.url }}" alt="Current Logo" style="width: 80px; height: auto;" class="mt-2" />
+      {% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">Update Brand</button>
+    <a href="{% url 'brand_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+      // Auto dismiss alert messages after 5 seconds
+      setTimeout(function () {
+        const alerts = document.querySelectorAll(".alert");
+        alerts.forEach((alert) => {
+          // Bootstrap 5 uses fade & show classes for dismissible alerts
+          alert.classList.remove("show");
+          alert.classList.add("fade");
+          setTimeout(() => alert.remove(), 500); // Give time for fade-out transition
+        });
+      }, 5000);
+    </script>
+{% endblock %}

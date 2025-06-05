@@ -1,0 +1,5238 @@
+{
+	"info": {
+		"_postman_id": "aa846962-d7e7-496b-b293-7b0b83e1f395",
+		"name": "Shop_kickora",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45320300",
+		"_collection_link": "https://prithviraj-3719018.postman.co/workspace/Prithviraj's-Workspace~7d62d6b5-a8b4-49af-8ae6-4c3ba543b863/collection/45320300-aa846962-d7e7-496b-b293-7b0b83e1f395?action=share&source=collection_link&creator=45320300"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Signup",
+					"item": [
+						{
+							"name": "signup",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/signup",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"signup"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "signup",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "https://27ee80cf-1ceb-415b-871b-6dcea686959a.mock.pstmn.io/user/signup",
+											"protocol": "https",
+											"host": [
+												"27ee80cf-1ceb-415b-871b-6dcea686959a",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"signup"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "html",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/html",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "signup page"
+								}
+							]
+						},
+						{
+							"name": "signup",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{   \r\n    \"name\":\"prithviraj\",\r\n    \"email\" : \"prithviraj@gmail.com\",\r\n    \"phone\": \"9072513338\",\r\n    \"password\" : \"pri123\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/signup",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"signup"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "signup-success",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{   \r\n    \"name\":\"prithviraj\",\r\n    \"email\" : \"prithviraj@gmail.com\",\r\n    \"phone\": \"9072513338\",\r\n    \"password\" : \"pri123\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/signup",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"signup"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\" : \"successfully signed in\"\r\n}"
+								},
+								{
+									"name": "signup-error 400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{   \r\n    \"name\":\"\",\r\n    \"email\" : \"prithviraj@gmail.com\",\r\n    \"phone\": \"8734559922\",\r\n    \"password\" : \"pri123\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/signup",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"signup"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "{\r\n    \"message\": \"Validation error\",\r\n    \"errors\": {\r\n        \"email\": \"Invalid email format\",\r\n        \"first_name\": \"First name is required\",\r\n        \"password\": \"Password must be at least 8 characters\"\r\n    }\r\n}\r\n"
+								}
+							]
+						}
+					],
+					"description": "The Signup API allows new users to create an account in the Uniformis Shoppe e-commerce application. This endpoint collects essential user information such as name, email, phone number, and password. Upon successful registration, the user is added to the database, and a unique user_id is assigned."
+				},
+				{
+					"name": "login",
+					"item": [
+						{
+							"name": "login",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/login",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"login"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "loginpage",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/login",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "login page"
+								}
+							]
+						},
+						{
+							"name": "login",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\" : \"*\",\r\n    \"password\" : \"*\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/login",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"login"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "success",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\" : \"ebi@gmail.com\",\r\n    \"password\" : \"ebi123\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/login",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"successfully user signed in\"\n}"
+								},
+								{
+									"name": "error -400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\" : \"*\",\r\n    \"password\" : \"*\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/login",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"login"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\" : \"sign in failed\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "The Sign-in page of the Uniformis e-commerce application allows registered users to access their accounts by entering their credentials."
+				},
+				{
+					"name": "Forgot_password",
+					"item": [
+						{
+							"name": "forgot_password",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/forgot-password",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"forgot-password"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "success",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/forgot-password",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"forgot-password"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "html",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/html",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "forgot password page"
+								}
+							]
+						},
+						{
+							"name": "forgot_password",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\" :\"\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/forgot-password",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"forgot-password"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "success -200",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\" :\"ebi@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/forgot-password",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"forgot-password"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\" : \"OTP sent to your email\"\r\n}"
+								},
+								{
+									"name": "error -400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\" :\"\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/forgot-password",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"forgot-password"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"The 'user_id' or 'email' field is required.\"\n}"
+								}
+							]
+						},
+						{
+							"name": "reset_password",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/reset-password",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"reset-password"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "reset_password",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/reset-password",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"reset-password"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "html",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/html",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "reset password page"
+								}
+							]
+						},
+						{
+							"name": "reset_password",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"new_password\" : \"654654\",\r\n    \"conform_password\" : \"654645\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/reset-password",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"reset-password"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "success 200",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"new_password\" : \"654654\",\r\n    \"conform_password\" : \"654645\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://52d08108-3292-4979-a52c-e2488f015e22.mock.pstmn.io/user/reset-password",
+											"protocol": "https",
+											"host": [
+												"52d08108-3292-4979-a52c-e2488f015e22",
+												"mock",
+												"pstmn",
+												"io"
+											],
+											"path": [
+												"user",
+												"reset-password"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\" : \"password reset successfully\"\r\n}"
+								},
+								{
+									"name": "error 400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"new_password\" : \"654654\",\r\n    \"conform_password\" : \"654645\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/reset-password",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"reset-password"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\": \"Invalid or expired OTP. Please request a new one.\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "The Forgot Password feature allows users who have forgotten their password to request an OTP (One-Time Password) sent to their registered email. This OTP can be used to reset their password."
+				},
+				{
+					"name": "Home_page",
+					"item": [
+						{
+							"name": "Home",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/home",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"home"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Home",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/home",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"home"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"banner\": {\r\n        \"image_url\": \"url_to_banner_image\",\r\n        \"alt_text\": \"Banner Image Description\"\r\n    },\r\n    \"categories\": [\r\n        {\r\n            \"id\": 1,\r\n            \"name\": \"NIke shoes\",\r\n            \"products\": [\r\n                {\r\n                    \"product_id\": 101,\r\n                    \"name\": \"Puma\",\r\n                    \"rating\": 4.5,\r\n                    \"price\": 15.99,\r\n                    \"image_url\": \"url_to_product_image\"\r\n                },\r\n                // Other products\r\n            ]\r\n        },\r\n        {\r\n            \"id\": 2,\r\n            \"name\": \"Adidas\",\r\n            \"products\": [\r\n                {\r\n                    \"product_id\": 201,\r\n                    \"name\": \"Puma\",\r\n                    \"rating\": 4.2,\r\n                    \"price\": 20.99,\r\n                    \"image_url\": \"url_to_product_image\"\r\n                },\r\n                // Other products\r\n            ]\r\n        },\r\n        // Additional categories\r\n    ],\r\n    \"footer\": {\r\n        \"about_us\": \"Brief description about the company\",\r\n        \"contact_info\": {\r\n            \"email\": \"contact@shopkickora.com\",\r\n            \"phone\": \"123-456-7890\"\r\n        },\r\n        \"social_media\": [\r\n            {\r\n                \"platform\": \"Facebook\",\r\n                \"link\": \"url_to_facebook\"\r\n            },\r\n            {\r\n                \"platform\": \"Twitter\",\r\n                \"link\": \"url_to_twitter\"\r\n            }\r\n            // Additional social media links\r\n        ]\r\n    }\r\n}\r\n"
+								},
+								{
+									"name": "Home -error 404",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{url}}/user/home1",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"home1"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\": \"Failed to fetch homepage data.\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "Home Page which displays items based on catefory."
+				},
+				{
+					"name": "Product_details",
+					"item": [
+						{
+							"name": "product-details",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/product/1",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"product",
+										"1"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "product-page-success 200",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/product/1",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"product",
+												"1"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"product\": {\n    \"product_id\": 1,\n    \"name\": \"Product Name\",\n    \"price\": 499.99,\n    \"description\": \"This is a detailed product description.\",\n    \"category\": {\n      \"category_id\": 1,\n      \"name\": \"Category Name\"\n    },\n    \"product_img\": [\n      \"image1.jpg\",\n      \"image2.jpg\"\n    ],\n    \"variants\": [\n      {\n        \"variant_id\": 1,\n        \"size\": \"M\",\n        \"price\": 99.99,\n        \"stock_quantity\": 50\n      },\n      {\n        \"variant_id\": 2,\n        \"size\": \"L\",\n        \"price\": 109.99,\n        \"stock_quantity\": 30\n      }\n    ],\n    \"is_active\": true\n  },\n  \"reviews\": {\n    \"total_reviews\": 10,\n    \"reviews\": [\n      {\n        \"review_id\": 1,\n        \"user_name\": \"John Doe\",\n        \"rating\": 5,\n        \"review\": \"Great product!\",\n        \"created_at\": \"2024-01-05T10:00:00Z\"\n      },\n      {\n        \"review_id\": 2,\n        \"user_name\": \"Jane Smith\",\n        \"rating\": 4,\n        \"review\": \"Very good, but could be better in terms of quality.\",\n        \"created_at\": \"2024-01-06T12:00:00Z\"\n      }\n    ],\n    \"show_more_reviews\": true\n  },\n  \"similar_products\": [\n    {\n      \"product_id\": 2,\n      \"name\": \"Similar Product 1\",\n      \"price\": 579.99,\n      \"rating\": 4.5,\n      \"image\": \"similar_product1.jpg\"\n    },\n    {\n      \"product_id\": 3,\n      \"name\": \"Similar Product 2\",\n      \"price\": 589.99,\n      \"rating\": 4.8,\n      \"image\": \"similar_product2.jpg\"\n    }\n  ],\n  \"footer_links\": {\n    \"contact_us\": \"/contact-us/\",\n    \"social_media\": {\n      \"facebook\": \"https://facebook.com/yourpage\",\n      \"twitter\": \"https://twitter.com/yourpage\",\n      \"instagram\": \"https://instagram.com/yourpage\"\n    }\n  }\n}\n"
+								},
+								{
+									"name": "product-page-error 404",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/product/2",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"product",
+												"2"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"error\": \"Product not found.\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "This page return the product details, customer reviews, and similar products (for recommendations)."
+				},
+				{
+					"name": "Cart",
+					"item": [
+						{
+							"name": "cart",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/cart",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"cart"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "cart",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/cart",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "html",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/html",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "cart page"
+								}
+							]
+						},
+						{
+							"name": "cart",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "",
+										"value": "",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"product_id\": 123,\r\n  \"quantity\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/cart/add",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"cart",
+										"add"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "cart-success-200",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"userId\": \"user123\",\r\n  \"productId\": \"12345\",\r\n  \"quantity\": 1\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/cart",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "\r\n{\r\n  \"message\": \"Product added to cart successfully.\",\r\n  \"cart_item\": {\r\n    \"cart_item_id\": 456,\r\n    \"cart_id\": 123,\r\n    \"product_id\": 123,\r\n    \"quantity\": 1,\r\n    \"created_at\": \"2025-01-07T10:30:00Z\",\r\n    \"updated_at\": \"2025-01-07T10:30:00Z\"\r\n  }\r\n}"
+								},
+								{
+									"name": "cart-error-400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "",
+												"value": "",
+												"type": "text",
+												"disabled": true
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"product_id\": 123,\r\n  \"quantity\": 2\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/cart/add",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart",
+												"add"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"error\": \"Invalid product ID or quantity.\"\r\n}"
+								}
+							]
+						},
+						{
+							"name": "cart",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/cart/update/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"cart",
+										"update",
+										""
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "cart-success-200",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"cartItemId\": \"67890\",\r\n  \"quantity\": 3\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/cart:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart:id"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Cart item updated successfully.\",\n  \"cart_item\": {\n    \"cart_item_id\": 456,\n    \"quantity\": 3,\n    \"total_price\": 577.97\n  }\n}"
+								},
+								{
+									"name": "cart-error-400",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/cart/update/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart",
+												"update",
+												""
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"error\": \"Invalid cart item ID or quantity.\"\r\n}"
+								}
+							]
+						},
+						{
+							"name": "cart",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "Bearer <JWT>",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "",
+										"type": "text"
+									},
+									{
+										"key": "acc",
+										"value": "",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"cart_item_id\": 456\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/cart/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"cart",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "cart-success-200",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"cart_item_id\": \"12345\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/cart/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": ""
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Cart item removed successfully.\"\r\n}"
+								},
+								{
+									"name": "cart-error-404",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"cart_item_id\": 456\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/cart/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"cart",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": ""
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"No Cart Item found.\"\n}  "
+								}
+							]
+						}
+					],
+					"description": "This allows the users to add items to their cart."
+				},
+				{
+					"name": "Wishlist",
+					"item": [
+						{
+							"name": "wishlist",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/wishlist/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wishlist",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "wishlist",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/wishlist/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wishlist",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "135132"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"Wishlist retrieved successfully\",\n    \"wishlist\": {\n        \"id\": \"w123\",\n        \"user_id\": \"user123\",\n        \"product_ids\": [\n            {\n                \"product_id\": \"p456\",\n                \"title\": \"Product Name 1\",\n                \"price\": 450,\n                \"available_quantity\": 10,\n                \"product_imgs\": [\n                    \"image1.jpg\",\n                    \"image2.jpg\"\n                ]\n            },\n            {\n                \"product_id\": \"p789\",\n                \"title\": \"Product Name 2\",\n                \"price\": 250,\n                \"available_quantity\": 5,\n                \"product_imgs\": [\n                    \"image3.jpg\"\n                ]\n            }\n        ],\n        \"created_at\": \"2024-12-18T10:00:00Z\",\n        \"updated_at\": \"2024-12-19T12:00:00Z\"\n    }\n}"
+								}
+							]
+						},
+						{
+							"name": "wishlist",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"user_id\": 456,\r\n  \"product_id\": 1011\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/wishlist",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wishlist"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "wishlist",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"user_id\": \"user123\",\r\n  \"product_id\": \"p456\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/wishlist/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wishlist",
+												""
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Product added to wishlist successfully\",\r\n  \"wishlist\": {\r\n    \"id\": 123,\r\n    \"user_id\": 456,\r\n    \"wishlist_products\": [\r\n      {\r\n        \"id\": 789,\r\n        \"product_id\": 1011,\r\n        \"created_at\": \"2024-12-18T10:00:00Z\"\r\n      },\r\n      {\r\n        \"id\": 790,\r\n        \"product_id\": 1012,\r\n        \"created_at\": \"2024-12-18T10:00:00Z\"\r\n      }\r\n    ]\r\n  }\r\n}\r\n"
+								},
+								{
+									"name": "wishlist error 400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/wishlist",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wishlist"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"error\": \"Wishlist not found for user\"\r\n}"
+								}
+							]
+						},
+						{
+							"name": "wishlist",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/wishlist/product/{product_id}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wishlist",
+										"product",
+										"{product_id}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "wishlist",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"whishlist_item_id\" : \"p3513\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/wishlist/product/{product_id}",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wishlist",
+												"product",
+												"{product_id}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Product removed from wishlist successfully\"\r\n}"
+								},
+								{
+									"name": "wishlist-error",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/wishlist/product/{product_id}",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wishlist",
+												"product",
+												"{product_id}"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"error\": \"Product not found in wishlist\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "This sections allows the items to be added to wishlist for later reference"
+				},
+				{
+					"name": "orders",
+					"item": [
+						{
+							"name": "order",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/order/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"order",
+										""
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "order",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{url}}/user/order/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"order",
+												""
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Orders fetched successfully\",\n  \"orders\": [\n    {\n      \"order_id\": 123,\n      \"user_id\": 1,\n      \"address_id\": 1,\n      \"payment_id\": 1,\n      \"payment_method\": \"credit_card\",\n      \"order_date\": \"2025-01-07T10:30:00Z\",\n      \"status\": \"pending\",\n      \"shipping_charge\": 5.00,\n      \"discount\": 0.00,\n      \"total_amount\": 100.50,\n      \"updated_at\": \"2025-01-07T10:30:00Z\",\n      \"order_items\": [\n        {\n          \"product_id\": 1,\n          \"product_name\": \"Product A\",\n          \"quantity\": 2,\n          \"unit_price\": 25.25,\n          \"product_img\": [\"url1\", \"url2\"]\n        },\n        {\n          \"product_id\": 2,\n          \"product_name\": \"Product B\",\n          \"quantity\": 1,\n          \"unit_price\": 50.00,\n          \"product_img\": [\"url3\"]\n        }\n      ]\n    }\n  ]\n}\n"
+								}
+							]
+						},
+						{
+							"name": "order_cancellation",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"address_id\": 1,\r\n  \"payment_id\": 1,\r\n  \"payment_method\": \"credit_card\",\r\n  \"total_amount\": 100.50,\r\n  \"order_items\": [\r\n    {\r\n      \"product_id\": 1,\r\n      \"quantity\": 2,\r\n      \"unit_price\": 25.25\r\n    },\r\n    {\r\n      \"product_id\": 2,\r\n      \"quantity\": 1,\r\n      \"unit_price\": 50.00\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/orders/{order_id}/cancel",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"orders",
+										"{order_id}",
+										"cancel"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "order_success",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"user_id\": 1,\r\n  \"payment_id\": 456,\r\n  \"address_id\": 789,\r\n  \"order_date\": \"2024-12-15\",\r\n  \"delivery_date\": \"2024-12-20\",\r\n  \"status\": \"delivered\",\r\n  \"shipping_chrg\": 50,\r\n  \"total\": 500,\r\n  \"net_amount\": 470,\r\n  \"discount\": 30,\r\n  \"created_at\": \"2024-12-15T10:00:00Z\",\r\n  \"updated_at\": \"2024-12-20T15:00:00Z\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/order/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"order",
+												""
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Order canceled successfully.\",\n  \"order\": {\n    \"order_id\": 123,\n    \"status\": \"canceled\"\n  }\n}"
+								},
+								{
+									"name": "order_error",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"address_id\": 1,\r\n  \"payment_id\": 1,\r\n  \"payment_method\": \"credit_card\",\r\n  \"total_amount\": 100.50,\r\n  \"order_items\": [\r\n    {\r\n      \"product_id\": 1,\r\n      \"quantity\": 2,\r\n      \"unit_price\": 25.25\r\n    },\r\n    {\r\n      \"product_id\": 2,\r\n      \"quantity\": 1,\r\n      \"unit_price\": 50.00\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/orders/{order_id}/cancel",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"orders",
+												"{order_id}",
+												"cancel"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Order cannot be canceled. It may have already been processed.\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "This request will be used to retrieve all orders placed by a specific user, including order details and their items"
+				},
+				{
+					"name": "user_detail_page",
+					"item": [
+						{
+							"name": "user",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/user-detail/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"user-detail",
+										""
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "user",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/user-detail/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"user-detail",
+												""
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"id\": \"u123\",\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Doe\",\r\n  \"date_of_birth\": \"1990-01-01\",\r\n  \"phone_no\": \"1234567890\",\r\n  \"email\": \"johndoe@example.com\",\r\n  \"is_admin\": false,\r\n  \"created_at\": \"2024-12-01T10:00:00Z\",\r\n  \"updated_at\": \"2024-12-10T15:00:00Z\"\r\n}\r\n"
+								}
+							]
+						},
+						{
+							"name": "user_put",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"response": [
+								{
+									"name": "user_put",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Doe\",\r\n  \"date_of_birth\": \"1990-01-01\",\r\n  \"mobile_number\": \"1234567890\",\r\n  \"email\": \"johndoe@example.com\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/user-detail/u123",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"user-detail",
+												"u123"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"success\": true,\r\n  \"message\": \"user updated successfully\"\r\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "address",
+					"item": [
+						{
+							"name": "address",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/address",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"address"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "address",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"user_id\": \"u456\",\r\n  \"name\": \"Niketh\",\r\n  \"city\": \"Kannur\",\r\n  \"state\": \"Kerala\",\r\n  \"pin_code\": \"670592\",\r\n  \"address_type\": \"home\",\r\n  \"land_mark\": \"RKUP School\",\r\n  \"mobile_number\": \"9876773210\",\r\n  \"alternate_number\": \"9127856789\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/address",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"address"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"success\": true,\r\n  \"message\": \"address successfully added\"\r\n}"
+								}
+							]
+						},
+						{
+							"name": "address",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/address/a125",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"address",
+										"a125"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "address",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"city\": \"Kannur\",\r\n  \"state\": \"Kerala\",\r\n  \"pin_code\": \"670001\",\r\n  \"address_type\": \"work\",\r\n  \"land_mark\": \"Railway Station\",\r\n  \"mobile_number\": \"7894562224\",\r\n  \"alternate_number\": \"9123456788\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/address/a125",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"address",
+												"a125"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"success\": true,\r\n  \"message\": \"address updated successfully.\"\r\n}\r\n"
+								}
+							]
+						},
+						{
+							"name": "address",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/address/a125",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"address",
+										"a125"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/address/a125",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"address",
+												"a125"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"success\": true,\r\n  \"message\": \"address deleted successfully\"\r\n}\r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "checkout",
+					"item": [
+						{
+							"name": "Payment",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"userId\": \"60d5f485f0e9c3a5b5d1f5e7\",\r\n  \"addressId\": \"60d6c47f0e9c3a5b5d1f5e9a\",\r\n  \"couponIds\": [\"60d6c56f0e9c3a5b5d1f5e5b\"],\r\n  \"paymentMethod\": \"credit_card\",\r\n  \"status\": \"pending\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/checkout",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"checkout"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Payment",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"userId\": \"60d5f485f0e9c3a5b5d1f5e7\",\r\n  \"addressId\": \"60d6c47f0e9c3a5b5d1f5e9a\",\r\n  \"couponIds\": [\"60d6c56f0e9c3a5b5d1f5e5b\"],\r\n  \"paymentMethod\": \"credit_card\",\r\n  \"status\": \"pending\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/checkout",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"checkout"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"success\": true,\r\n  \"message\": \"order placed successfully\"\r\n}\r\n"
+								}
+							]
+						},
+						{
+							"name": "Payment_status",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"status\": \"paid\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/checkout/payment-id=5665432",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"checkout",
+										"payment-id=5665432"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Payment_status",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"status\": \"paid\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/checkout/payment-id=5665432",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"checkout",
+												"payment-id=5665432"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Payment status updated\"\n}\n"
+								}
+							]
+						},
+						{
+							"name": "Transaction",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"user_id\": \"64afc2e5463b6b00123abcd1\",\r\n  \"status\": \"success\",\r\n  \"amount\": 450,\r\n  \"date\": \"2024-12-19T15:00:00.000Z\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/checkout/transactions",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"checkout",
+										"transactions"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Transaction",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"user_id\": \"64afc2e5463b6b00123abcd1\",\r\n  \"status\": \"success\",\r\n  \"amount\": 450,\r\n  \"date\": \"2024-12-19T15:00:00.000Z\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/checkout/transactions",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"checkout",
+												"transactions"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Transaction logged successfully\"\r\n}\r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Review",
+					"item": [
+						{
+							"name": "Review",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"product_id\": \"64ab12cd34ef56gh78ij9012\",\r\n  \"user_id\": \"63bc45de67fg89hi01jk2345\",\r\n  \"comment\": \"This is an excellent product! It exceeded my expectations.\",\r\n  \"rating\": 5\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/review",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"review"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Review-201 Success",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"product_id\": \"64ab12cd34ef56gh78ij9012\",\r\n  \"user_id\": \"63bc45de67fg89hi01jk2345\",\r\n  \"description\": \"This is an excellent product! It exceeded my expectations.\",\r\n  \"rating\": 5\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/review",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"review"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\",\n    \"message\": \"Review added successfully.\"\n}"
+								},
+								{
+									"name": "error",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"product_id\": \"\",\r\n  \"description\": \"\",\r\n  \"invalid\": \"\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/review",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"review"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "{\r\n    \"status\": \"failed\",\r\n    \"message\": \"Review cannot be added.\"\r\n}"
+								}
+							]
+						},
+						{
+							"name": "Review",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/review?product_id=64ab12cd34ef56gh78ij9012",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"review"
+									],
+									"query": [
+										{
+											"key": "product_id",
+											"value": "64ab12cd34ef56gh78ij9012"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/review?product_id=64ab12cd34ef56gh78ij9012",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"review"
+											],
+											"query": [
+												{
+													"key": "product_id",
+													"value": "64ab12cd34ef56gh78ij9012"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"id\": \"65cd78ef90gh12ij34kl5678\",\n            \"product_id\": \"64ab12cd34ef56gh78ij9012\",\n            \"user_id\": \"63bc45de67fg89hi01jk2345\",\n            \"description\": \"This is an excellent product! It exceeded my expectations.\",\n            \"rating\": 5,\n            \"created_at\": \"2024-12-19T12:34:56.789Z\",\n            \"updated_at\": \"2024-12-19T12:34:56.789Z\"\n        },\n        {\n            \"id\": \"66de89fg01hi23jk45lm6789\",\n            \"product_id\": \"64ab12cd34ef56gh78ij9012\",\n            \"user_id\": \"64de34fg56hi78jk90lm1234\",\n            \"description\": \"Good product but slightly overpriced.\",\n            \"rating\": 4,\n            \"created_at\": \"2024-12-18T15:20:45.678Z\",\n            \"updated_at\": \"2024-12-18T15:20:45.678Z\"\n        }\n    ]\n}"
+								}
+							]
+						}
+					],
+					"description": "User would be allowed to add review to a prduct form this section"
+				},
+				{
+					"name": "Offer_page",
+					"item": [
+						{
+							"name": "offerpage",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/offers",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"offers"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "offerpage",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/offers",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"offers"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"Offers with product details retrieved successfully\",\n    \"data\": [\n        {\n            \"offer_id\": \"64afc2e5463b6b00123abcd2\",\n            \"discount_percentage\": 15,\n            \"products\": [\n                {\n                    \"id\": \"64afc2e5463b6b00123abcd1\",\n                    \"title\": \"Product 1\",\n                    \"price\": 500,\n                    \"available_quantity\": 20,\n                    \"description\": \"Description of Product 1\",\n                    \"category_id\": \"64afc2e5463b6b00123abcd5\"\n                },\n                {\n                    \"id\": \"64afc2e5463b6b00123abcd3\",\n                    \"title\": \"Product 2\",\n                    \"price\": 1000,\n                    \"available_quantity\": 10,\n                    \"description\": \"Description of Product 2\",\n                    \"category_id\": \"64afc2e5463b6b00123abcd6\"\n                }\n            ]\n        }\n    ]\n}"
+								}
+							]
+						}
+					],
+					"description": "This page will showcase the offers that are available"
+				},
+				{
+					"name": "Wallet",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/wallet",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wallet"
+									],
+									"query": [
+										{
+											"key": "user_id",
+											"value": "54523",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/wallet?user_id=54523",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wallet"
+											],
+											"query": [
+												{
+													"key": "user_id",
+													"value": "54523"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"wallet\": {\n        \"wallet_id\": \"64bdf5c2c7bff6001f5bfb2a\",\n        \"user_id\": \"54523\",\n        \"balance\": 1800,\n        \"last_updated\": \"2024-12-19T10:15:00Z\"\n    }\n}"
+								}
+							]
+						},
+						{
+							"name": "Add_money",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"payment_method\": \"Debit/Credit\",  \r\n  \"amount\": 100.00\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/wallet/credit",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wallet",
+										"credit"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Add_money",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"wallet_id\": \"64bdf5c2c7bff6001f5bfb2b\",\r\n  \"amount\": 500\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/wallet/credit",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wallet",
+												"credit"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Money added to wallet successfully.\",\r\n  \"wallet\": {\r\n    \"wallet_id\": 123,\r\n    \"user_id\": 1,\r\n    \"balance\": 100.00,\r\n    \"last_updated\": \"2025-01-07T10:30:00Z\"\r\n  }\r\n}"
+								},
+								{
+									"name": "Add_money-error",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"payment_method\": \"Debit/Credit\",  \r\n  \"amount\": 100.00\r\n\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/wallet/credit",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wallet",
+												"credit"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Failed to add money. Please try again later.\"\r\n}"
+								}
+							]
+						},
+						{
+							"name": "Debit_money",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"wallet_id\": \"64bdf5c2c7bff6001f5bfb2b\",\r\n  \"amount\": 200,\r\n  \"order_id\": \"64bdf5c2c7bff6001f5bfb2d\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/wallet/debit",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wallet",
+										"debit"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Debit_money",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"wallet_id\": \"64bdf5c2c7bff6001f5bfb2b\",\r\n  \"amount\": 200,\r\n  \"order_id\": \"64bdf5c2c7bff6001f5bfb2d\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/wallet/debit",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wallet",
+												"debit"
+											]
+										}
+									},
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": ""
+								}
+							]
+						}
+					],
+					"description": "This endpoint will allow users to add money to their wallet using different payment methods."
+				},
+				{
+					"name": "Wallet history",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/wallet/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"wallet",
+										"history"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "wallet history success",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/wallet/history",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"wallet",
+												"history"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Wallet history fetched successfully.\",\r\n  \"history\": [\r\n    {\r\n      \"history_id\": 1,\r\n      \"wallet_id\": 123,\r\n      \"amount\": 100.00,\r\n      \"transaction_type\": \"credit\",\r\n      \"transaction_date\": \"2025-01-07T10:30:00Z\",\r\n     \r\n    },\r\n    {\r\n      \"history_id\": 2,\r\n      \"wallet_id\": 123,\r\n      \"amount\": 50.00,\r\n      \"transaction_type\": \"credit\",\r\n      \"transaction_date\": \"2025-01-08T11:00:00Z\",\r\n \r\n    }\r\n  ]\r\n}\r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "About Us",
+					"item": [
+						{
+							"name": "About_us",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/user/about_us",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"about_us"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "About_us",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/about_us",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"about_us"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "About us page"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "contact_us",
+					"item": [
+						{
+							"name": "contact",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/contact",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"contact"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "contact",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/user/contact",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"contact"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "html",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/html",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "contact page"
+								}
+							]
+						},
+						{
+							"name": "contact_submit",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"John Doe\",\r\n  \"email\": \"johndoe@example.com\",\r\n  \"subject\": \"Issue with my order\",\r\n  \"message\": \"I have not received my order placed last week. Please assist.\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/contact",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"contact"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "contact_submit",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"John Doe\",\r\n  \"email\": \"johndoe@example.com\",\r\n  \"subject\": \"Issue with my order\",\r\n  \"message\": \"I have not received my order placed last week. Please assist.\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/contact",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"contact"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Contact form submitted successfully.\",\r\n  \"contact_id\": 123\r\n}\r\n"
+								},
+								{
+									"name": "contact_error 400",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"John Luther\",\r\n  \"email\": \"john.luther@example.com\",\r\n  \"subject\": \"Inquiry about shoes\",\r\n  \"description\": \"I would like more information about your corporate uniforms.\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/contact",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"contact"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"error\": \"Invalid input. Please ensure all fields are filled correctly.\"\r\n}"
+								}
+							]
+						}
+					],
+					"description": "This API endpoint allows users to submit a contact form. The form includes details such as name, email, subject, and a message description."
+				}
+			],
+			"description": "This part includes the documentation of the user side api"
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "signin",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/signin",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"signin"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{url}}/admin/signin",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"signin"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "html",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "text/html",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "admin signin page"
+								}
+							]
+						},
+						{
+							"name": "New Request",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\" : \"*\",\r\n    \"password\" : \"*\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/signin",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"signin"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\" : \"admin@gmail.com\",\r\n    \"password\" : \"admin123\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/signin",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"signin"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\" : \"successfully loged in\"\r\n}"
+								},
+								{
+									"name": "error",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\" : \"*\",\r\n    \"password\" : \"*\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/signin",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"signin"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"invalid\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Dashboard",
+					"item": [
+						{
+							"name": "Dashboard",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/dashboard",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"dashboard"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Dashboard",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/dashboard",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"dashboard"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\",\n    \"data\": {\n        \"total_users\": 150,\n        \"total_orders\": 420,\n        \"total_sales\": 98760.5,\n        \"recent_sales\": [\n            {\n                \"order_id\": \"6489304a6e2451e001bdda5d\",\n                \"first_name\": \"John Doe\",\n                \"total_amount\": 560,\n                \"order_date\": \"2024-12-28\",\n                \"status\": \"completed\"\n            },\n            {\n                \"order_id\": \"6489304a6e2451e001bdda6f\",\n                \"first_name\": \"Jane Smith\",\n                \"total_amount\": 320,\n                \"order_date\": \"2024-12-17\",\n                \"status\": \"pending\"\n            }\n        ]\n    }\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Products",
+					"item": [
+						{
+							"name": "Get_products",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/products",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"products"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Get_products",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{url}}/admin/products",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"products"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "[\r\n    {\r\n        \"title\": \"Manchester United Away 2021\",\r\n        \"stock_unit\": 348920,\r\n        \"price\": 50,\r\n        \"stock\": true,\r\n        \"category\": \"652d2e2b4f3a3b5b4d0a9c3f\"\r\n    },\r\n    {\r\n        \"title\": \"Liverpool Third Kit 2022\",\r\n        \"stock_unit\": 289150,\r\n        \"price\": 55,\r\n        \"stock\": false,\r\n        \"category\": \"652d2e2b4f3a3b5b4d0a9c40\"\r\n    }\r\n]\r\n"
+								}
+							]
+						},
+						{
+							"name": "Add_products",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"Nike killshot 2\",\r\n  \"category_id\": \"6489304a6e2451e001bdda5d\",\r\n  \"price\": 45.99,\r\n  \"available_quantity\": 150,\r\n  \"description\": \"This is a good shoe\",\r\n  \"Brand\": \"NIke\",\r\n  \"color\":\"black\",\r\n  \"size\":\"L\",\r\n  \"Type\":\"L\",\r\n  \"product_imgs\": [\r\n    \"https://example.com/images/product1.jpg\",\r\n    \"https://example.com/images/product2.jpg\",\r\n    \"https://example.com/images/product3.jpg\"\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/add_products",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"add_products"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Add_products",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"title\": \"Nike killshot 2\",\r\n  \"category_id\": \"6489304a6e2451e001bdda5d\",\r\n  \"price\": 45.99,\r\n  \"available_quantity\": 150,\r\n  \"description\": \"This is a good shoe\",\r\n  \"Brand\": \"NIke\",\r\n  \"color\":\"black\",\r\n  \"size\":\"L\",\r\n  \"Type\":\"L\",\r\n  \"product_imgs\": [\r\n    \"https://example.com/images/product1.jpg\",\r\n    \"https://example.com/images/product2.jpg\",\r\n    \"https://example.com/images/product3.jpg\"\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/add_products",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"add_products"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Product added successfully\"\r\n}\r\n"
+								}
+							]
+						},
+						{
+							"name": "Delete_products",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/delete_product/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"delete_product",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Delete_products",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/delete_products/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"delete_products",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Product deleted successfully\"\r\n}\r\n"
+								}
+							]
+						},
+						{
+							"name": "Update_products",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"price\": 50.99,\r\n  \"available_quantity\": 120,\r\n  \"description\": \"Updated description for Clean Code.\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/update_product/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"update_product",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Update_product",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{url}}/admin/update_products/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"update_products",
+												""
+											]
+										}
+									},
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "{\r\n  \"message\": \"Product updated successfully\",\r\n}\r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Order",
+					"item": [
+						{
+							"name": "Get_orders",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/orders",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"orders"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Get_orders",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{url}}/admin/orders?",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"orders"
+											],
+											"query": [
+												{
+													"key": "",
+													"value": null
+												}
+											]
+										}
+									},
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "Getting all orders"
+								}
+							]
+						},
+						{
+							"name": "Status_change",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"Nike killshot 2\",\r\n  \"category_id\": \"6489304a6e2451e001bdda5d\",\r\n  \"price\": 45.99,\r\n  \"available_quantity\": 150,\r\n  \"description\": \"This is a good shoe\",\r\n  \"brand\": \"Nike\",\r\n  \"color\":\"Light Blue\",\r\n  \"size\":\"L\",\r\n  \"product_imgs\": [\r\n    \"https://example.com/images/product1.jpg\",\r\n    \"https://example.com/images/product2.jpg\",\r\n    \"https://example.com/images/product3.jpg\"\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/change-status/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"change-status",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6489304a6e2451e001bdda5d"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Status_change",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"title\": \"Clean Code\",\r\n  \"category_id\": \"6489304a6e2451e001bdda5d\",\r\n  \"author_name\": \"Robert C. Martin\",\r\n  \"price\": 45.99,\r\n  \"available_quantity\": 150,\r\n  \"description\": \"A Handbook of Agile Software Craftsmanship\",\r\n  \"publishing_date\": \"2008-08-01\",\r\n  \"publisher\": \"Prentice Hall\",\r\n  \"page\": 464,\r\n  \"language\": \"English\",\r\n  \"product_imgs\": [\r\n    \"https://example.com/images/product1.jpg\",\r\n    \"https://example.com/images/product2.jpg\",\r\n    \"https://example.com/images/product3.jpg\"\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/change-status/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"change-status",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6489304a6e2451e001bdda5d"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"order delivered\"\n}"
+								}
+							]
+						},
+						{
+							"name": "delete_order",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/orders/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"orders",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "123123"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "delete_order",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/orders/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"orders",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "123123"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Order deleted successfully\"\r\n}\r\n"
+								}
+							]
+						},
+						{
+							"name": "update_status",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/orders/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"orders",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6489304a6e2451e001bdda5d"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "update_status",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/orders/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"orders",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6489304a6e2451e001bdda5d"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Order status updated successfully\"\r\n} "
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "customers",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/customers",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"customers"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/customers",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"customers"
+											]
+										}
+									},
+									"_postman_previewlanguage": "Text",
+									"header": [],
+									"cookie": [],
+									"body": "Getting all customers"
+								}
+							]
+						},
+						{
+							"name": "Update_user",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Smith\",\r\n  \"phone_no\": 9876543211,\r\n  \"is_admin\": true\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/update_books/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"update_books",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6489304a6e2451e001bdda5d"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Update_user",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"first_name\": \"John\",\r\n  \"last_name\": \"Smith\",\r\n  \"phone_no\": 9876543211,\r\n  \"is_admin\": true\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/update_books/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"update_books",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6489304a6e2451e001bdda5d"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"User updated successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete_user",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/delete_books/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"delete_books",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Delete_user",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/delete-books/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"delete-books",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "sales report",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/sales-report",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"sales-report"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/sales-report",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"sales-report"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"first_name\": \"George\",\n            \"name\": \"Manchester Home\",\n            \"quantity\": 1,\n            \"price\": 499,\n            \"category\": \"Football\",\n            \"total_amount\": 499\n        },\n        {\n            \"first_name\": \"John\",\n            \"name\": \"Arsenal Home\",\n            \"quantity\": 1,\n            \"price\": 450,\n            \"category\": \"Cricket\",\n            \"total_amount\": 450\n        }\n    ]\n}"
+								}
+							]
+						},
+						{
+							"name": "download",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"product_ids\": [\"64893a1f6e2451e001bdda5e\", \"64893a1f6e2451e001bdda5f\"],\r\n  \"discount_percentage\": 15\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/offers",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"offers"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "download",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"filter\": {\r\n    \"category\": \"Romance\",\r\n    \"product_name\": \"Die for you\"\r\n  },\r\n  \"sort\": {\r\n    \"by\": \"price\",\r\n    \"order\": \"asc\"\r\n  }\r\n}\r\n\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/offers",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"offers"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"PDF exported successfully\"\r\n}  "
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Coupon",
+					"item": [
+						{
+							"name": "Add_coupon",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"is_active\": \"active\",\r\n  \"code\": \"NEW50\",\r\n  \"coupon_amount\": 50,\r\n  \"min_amount\":1000,\r\n  \"description\": \"Flat $50 OFF Above 500\",\r\n   \"valid_from\": \"2024-03-01\",\r\n   \"expire_date\": \"2024-03-01\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/coupons",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"coupons"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Add_coupon",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"is_active\": \"active\",\r\n  \"code\": \"NEW50\",\r\n  \"coupon_amount\": 50,\r\n  \"min_amount\":1000,\r\n  \"description\": \"Flat $50 OFF Above 500\",\r\n   \"valid_from\": \"2024-03-01\",\r\n   \"expire_date\": \"2024-03-01\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/coupons",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"coupons"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Coupon created successfully\"\r\n}  "
+								}
+							]
+						},
+						{
+							"name": "Delete_coupon",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/coupons/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"coupons",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Delete_coupon",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/coupons/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"coupons",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"status\": \"success\",\n  \"message\": \"Coupon deleted successfully\"\n}\n"
+								}
+							]
+						},
+						{
+							"name": "Update_coupon",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"is_active\": \"inactive\",\r\n  \"code\": \"NEW50\",\r\n  \"coupon_amount\": 50,\r\n  \"min_amount\":1000,\r\n  \"description\": \"Flat $50 OFF Above 500\",\r\n   \"valid_from\": \"2024-03-01\",\r\n   \"expire_date\": \"2024-03-01\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/coupons/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"coupons",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Update_coupon",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"is_active\": \"inactive\",\r\n  \"code\": \"NEW50\",\r\n  \"coupon_amount\": 50,\r\n  \"min_amount\":1000,\r\n  \"description\": \"Flat $50 OFF Above 500\",\r\n   \"valid_from\": \"2024-03-01\",\r\n   \"expire_date\": \"2024-03-01\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/coupons/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"coupons",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Coupon updated successfully\"\r\n}  \r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Category",
+					"item": [
+						{
+							"name": "Add_category",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Nike\",\r\n  \"description\": \"This is a description\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/categories",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"categories"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Add_category",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"Nike\",\r\n  \"description\": \"This is a description\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/categories",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"categories"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\",\n    \"message\": \"Category added successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete_category",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/categories/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"categories",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Delete_category",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/categories/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"categories",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"status\": \"success\",\n  \"message\": \"Category deleted successfully\"\n}\n"
+								}
+							]
+						},
+						{
+							"name": "Update_category",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Badminton\",\r\n  \"description\": \"This is a description\",\r\n  \"active\":false\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/categories/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"categories",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Update_category",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"Badminton\",\r\n  \"description\": \"This is a description\",\r\n  \"active\":false\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/categories/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"categories",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Category updated successfully\"\r\n}  \r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Banner",
+					"item": [
+						{
+							"name": "Add_banner",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"World Cup Festive\",\r\n  \"banner_img\": \"http://example.com/worldCup.jpg\",\r\n  \"start_date\": \"2024-04-01\",\r\n  \"end_date\": \"2024-04-30\",\r\n  \"description\": \"This is a description\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/banners",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"banners"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Add_banner",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"World Cup Festive\",\r\n  \"banner_img\": \"http://example.com/worldCup.jpg\",\r\n  \"start_date\": \"2024-04-01\",\r\n  \"end_date\": \"2024-04-30\",\r\n  \"description\": \"This is a description\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/banners",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"banners"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"success\",\n    \"message\": \"Banner added successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete_banner",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/banners/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"banners",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Delete_banner",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/banners/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"banners",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"status\": \"success\",\n  \"message\": \"Banner deleted successfully\"\n}\n"
+								}
+							]
+						},
+						{
+							"name": "Update_banner",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Updated Spring Collection\",\r\n  \"banner_img\": \"http://example.com/updated_spring_collection.jpg\",\r\n  \"start_date\": \"2024-04-01\",\r\n  \"end_date\": \"2024-04-30\",\r\n  \"status\": \"inactive\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/banners/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"banners",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Update_banner",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"World Cup Festive\",\r\n  \"banner_img\": \"http://example.com/worldCup.jpg\",\r\n  \"start_date\": \"2024-04-01\",\r\n  \"end_date\": \"2024-04-30\",\r\n  \"description\": \"This is a description Updated\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/banners/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"banners",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Banner updated successfully\"\r\n}  \r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Offer",
+					"item": [
+						{
+							"name": "Add_offer",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"productId\":2647467,\r\n    \"categoryId\":75984759,\r\n    \"discount_value\":20,\r\n    \"start_date\":\"12/3/4\",\r\n    \"end_date\":\"12/3/4\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/offers",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"offers"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Add_offer",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"productId\":2647467,\r\n    \"categoryId\":75984759,\r\n    \"discount_value\":20,\r\n    \"start_date\":\"12/3/4\",\r\n    \"end_date\":\"12/3/4\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/offers",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"offers"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Offer created successfully\"\r\n}  "
+								}
+							]
+						},
+						{
+							"name": "Delete_offer",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/admin/offers/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"offers",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Delete_offer",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/admin/offers/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"offers",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"status\": \"success\",\n  \"message\": \"Offer deleted successfully\"\n}\n"
+								}
+							]
+						},
+						{
+							"name": "Update_offer",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"discount_percentage\": 25\r\n}\r\n\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/admin/offers/:id",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"admin",
+										"offers",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "649a6b1f5b3e556002d9ab12"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Update_offer",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"discount_percentage\": 25\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/admin/offers/:id",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"admin",
+												"offers",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "649a6b1f5b3e556002d9ab12"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n  \"status\": \"success\",\r\n  \"message\": \"Offer updated successfully\"\r\n}  \r\n"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "settings",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\":\"*\",\r\n    \"Mobile\":9072513338,\r\n    \"email\":\"prithviraj@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/user/settings",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"user",
+										"settings"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"name\":\"prithviraj\",\r\n    \"Mobile\":9072513338,\r\n    \"email\":\"prithviraj@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/settings",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"settings"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [],
+									"body": "{\r\n    \"message\" : \"Settings Updated\"\r\n}"
+								},
+								{
+									"name": "New Request",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"name\":\"*\",\r\n    \"Mobile\":9072513338,\r\n    \"email\":\"prithviraj@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/user/settings",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"user",
+												"settings"
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json",
+											"description": "",
+											"type": "text"
+										}
+									],
+									"cookie": [
+										{
+											"expires": "Invalid Date"
+										}
+									],
+									"body": "{\"message\":\"something is wrong\"}"
+								}
+							]
+						}
+					]
+				}
+			],
+			"description": "This part includes the api of the admin"
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "https://9ad777be-979c-4218-9425-f9232f8b0df6.mock.pstmn.io"
+		}
+	]
+}

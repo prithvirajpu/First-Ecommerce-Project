@@ -1,0 +1,24 @@
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="text" name="name" value="{{ product.name }}" required>
+    <textarea name="description">{{ product.description }}</textarea>
+    <input type="number" name="price" value="{{ product.price }}" required>
+    <input type="number" name="stock" value="{{ product.stock }}" required>
+
+    <select name="category">
+        {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if cat.id == product.category.id %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="brand">
+        {% for b in brands %}
+            <option value="{{ b.id }}" {% if b.id == product.brand.id %}selected{% endif %}>{{ b.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Add More Images (optional)</label>
+    <input type="file" name="images" multiple>
+
+    <button type="submit">Update Product</button>
+</form>

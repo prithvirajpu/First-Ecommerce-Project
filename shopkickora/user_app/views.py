@@ -5,8 +5,9 @@ from user_app.forms import UserSignupForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 
-
+@never_cache
 def signup_view(request):
     if request.method=='POST':
         form=UserSignupForm(request.POST)
@@ -19,6 +20,7 @@ def signup_view(request):
         form=UserSignupForm()
     return render(request,'user_app/signup.html',{'form':form})
 
+@never_cache
 def login_view(request):
     if request.user.is_authenticated and request.user.is_superuser :
         return redirect('admin_dashboard')
@@ -39,6 +41,7 @@ def logout_view(request):
     request.session.flush()
     return redirect('login')
 
+@never_cache
 @login_required(login_url='login')
 def user_dashboard(request):
     return render(request,'user_app/dashboard.html')

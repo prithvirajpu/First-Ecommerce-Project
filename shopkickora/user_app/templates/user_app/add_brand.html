@@ -1,0 +1,38 @@
+{% extends "user_app/base_admin.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <h3>Add Brand</h3>
+  <hr />
+  <form id="brandForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Brand Name</label>
+      <input type="text" class="form-control" name="name" value="{{ form_data.name|default_if_none:'' }}" required />
+      {% if errors.name %}
+        <p style="color:red">{{ errors.name }}</p>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea class="form-control" name="description" rows="3">{{ form_data.description|default_if_none:'' }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="logo" class="form-label">Logo</label>
+      <input type="file" class="form-control" name="logo" id="logo" accept="image/*" />
+      {% if errors.logo %}
+        <p style="color:red">{{ errors.logo }}</p>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Brand</button>
+    <a href="{% url 'brand_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
+</div>
+
+
+
+{% endblock %}
