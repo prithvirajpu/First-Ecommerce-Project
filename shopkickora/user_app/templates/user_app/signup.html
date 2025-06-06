@@ -1,155 +1,259 @@
+{% load socialaccount %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign Up</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      background-color: #f8f9fa;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .signup-container {
-      background: #fff;
-      padding: 3rem 4rem;
-      border-radius: 0.75rem;
-      box-shadow: 0 0.75rem 1.5rem rgb(0 0 0 / 0.15);
-      width: 100%;
-      max-width: 480px;
-    }
-    h2 {
-      margin-bottom: 2rem;
-      text-align: center;
-      font-weight: 600;
-      color: #343a40;
-    }
-    button {
-      width: 100%;
-    }
-    .login-link {
-      display: block;
-      margin-top: 1.25rem;
-      text-align: center;
-      color: #6c757d;
-      text-decoration: none;
-    }
-    .login-link:hover {
-      text-decoration: underline;
-      color: #0d6efd;
-    }
-    .error-text {
-      color: #dc3545;
-      font-size: 0.875em;
-      margin-top: 0.25rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Your Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'soft': '0 4px 20px rgba(0, 0, 0, 0.08)',
+                    },
+                    transitionDuration: {
+                        '400': '400ms',
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-
-  <div class="signup-container">
-    <h2>Create Account</h2>
-
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<body class="bg-gray-50 font-sans min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-500">
+                    <a href="#" class="hover:text-primary-600 transition-colors duration-300">Home</a>
+                    <span class="mx-2">/</span>
+                    <span class="text-gray-900 font-medium">Sign Up</span>
+                </div>
+            </div>
         </div>
-      {% endfor %}
-    {% endif %}
+    </header>
 
-    <form method="POST" novalidate>
-      {% csrf_token %}
-      
-      <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input 
-          type="text" 
-          class="form-control {% if errors.username %}is-invalid{% endif %}" 
-          id="username" 
-          name="username" 
-          value="{{ username|default:'' }}"
-          required
-        />
-        {% if errors.username %}
-          <div class="error-text">{{ errors.username }}</div>
-        {% endif %}
-      </div>
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-soft transform transition-all duration-400 hover:scale-[1.02]">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Create Your Account</h1>
 
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input 
-          type="email" 
-          class="form-control {% if errors.email %}is-invalid{% endif %}" 
-          id="email" 
-          name="email" 
-          value="{{ email|default:'' }}"
-          required
-        />
-        {% if errors.email %}
-          <div class="error-text">{{ errors.email }}</div>
-        {% endif %}
-      </div>
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md relative" role="alert">
+                            {{ message }}
+                            <button type="button" class="absolute top-0 right-0 p-3 text-red-500 hover:text-red-700" onclick="this.parentElement.remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
 
-      <div class="mb-3">
-        <label for="password1" class="form-label">Password</label>
-        <input 
-          type="password" 
-          class="form-control {% if errors.password1 %}is-invalid{% endif %}" 
-          id="password1" 
-          name="password1"
-          required
-        />
-        {% if errors.password1 %}
-          <div class="error-text">{{ errors.password1 }}</div>
-        {% endif %}
-      </div>
+                <!-- Sign Up Form -->
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    <!-- Username Field -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            placeholder="e.g. johndoe" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-300"
+                            value="{{ request.POST.username }}"
+                            required
+                        >
+                        {% if errors.username %}
+                            <small class="text-red-600 text-sm mt-1">{{ errors.username }}</small>
+                        {% endif %}
+                    </div>
 
-      <div class="mb-3">
-        <label for="password2" class="form-label">Confirm Password</label>
-        <input 
-          type="password" 
-          class="form-control {% if errors.password2 %}is-invalid{% endif %}" 
-          id="password2" 
-          name="password2"
-          required
-        />
-        {% if errors.password2 %}
-          <div class="error-text">{{ errors.password2 }}</div>
-        {% endif %}
-      </div>
+                    <!-- Email Field -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="e.g. you@gmail.com" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-300"
+                            value="{{ request.POST.email }}"
+                            required
+                        >
+                        {% if errors.email %}
+                            <small class="text-red-600 text-sm mt-1">{{ errors.email }}</small>
+                        {% endif %}
+                    </div>
 
-      <button type="submit" class="btn btn-primary">Sign Up</button>
-    </form>
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password1" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input 
+                            type="password" 
+                            id="password1" 
+                            name="password1" 
+                            placeholder="Enter password" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-300"
+                            required
+                        >
+                        {% if errors.password1 %}
+                            <small class="text-red-600 text-sm mt-1">{{ errors.password1 }}</small>
+                        {% endif %}
+                    </div>
 
-    <a href="{% url 'login' %}" class="login-link">Already have an account? Log in</a>
-  </div>
+                    <!-- Confirm Password Field -->
+                    <div>
+                        <label for="password2" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="password2" 
+                            name="password2" 
+                            placeholder="Re-enter password" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-300"
+                            required
+                        >
+                        {% if errors.password2 %}
+                            <small class="text-red-600 text-sm mt-1">{{ errors.password2 }}</small>
+                        {% endif %}
+                    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  // Select all inputs in the form
-  const inputs = document.querySelectorAll('input');
+                    <!-- Sign Up Button -->
+                    <button 
+                        type="submit" 
+                        class="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-300"
+                    >
+                        Sign Up
+                    </button>
+                </form>
 
-  inputs.forEach(input => {
-    input.addEventListener('input', () => {
-      // Find the error message div next to the input and hide it
-      const errorDiv = input.nextElementSibling;
-      if (errorDiv && errorDiv.classList.contains('error-text')) {
-        errorDiv.style.display = 'none';
-      }
+                <!-- Google Sign In -->
+                <div class="mt-4">
+                    <a 
+                        href="{% provider_login_url 'google' process='login' %}?next=/user_dashboard/" 
+                        class="w-full flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-300"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+                            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15(DocumentFragment),18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.792,44,33.735,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                        </svg>
+                        Sign in with Google
+                    </a>
+                </div>
 
-      // Also remove the red border (Bootstrap's is-invalid class)
-      input.classList.remove('is-invalid');
-    });
-  });
-</script>
+                <!-- Login Link -->
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account? 
+                        <a href="{% url 'login' %}" class="text-primary-600 hover:text-primary-700 font-medium transition-colors duration-300">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
 
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-8">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Brand -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">YourBrand</h3>
+                    <p class="text-sm text-gray-600 mb-4">Premium products crafted for style, comfort, and performance.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-gray-500 transition-colors duration-300">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gray-500 transition-colors duration-300">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gray-500 transition-colors duration-300">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                    </div>
+                </div>
 
+                <!-- Support -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Support</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">FAQ</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">Terms of Use</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">Privacy Policy</a></li>
+                    </ul>
+                </div>
+
+                <!-- Company -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Company</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">About Us</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">Contact</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">Careers</a></li>
+                    </ul>
+                </div>
+
+                <!-- Shop -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Shop</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">My Account</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">Checkout</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-600 transition-colors duration-300">Cart</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">© 2023 shopKickora. All rights reserved.</p>
+                    <div class="flex space-x-4">
+                        <img src="/placeholder.svg?height=30&width=40" alt="Mastercard" class="h-8">
+                        <img src="/placeholder.svg?height=30&width=40" alt="Visa" class="h-8">
+                        <img src="/placeholder.svg?height=30&width=40" alt="American Express" class="h-8">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function () {
+            const alerts = document.querySelectorAll("[role='alert']");
+            alerts.forEach((alert) => {
+                alert.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    </script>
 </body>
 </html>

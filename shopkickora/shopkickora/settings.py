@@ -41,17 +41,24 @@ INSTALLED_APPS = [
     'admin_app',
     'user_app',
     'widget_tweaks',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'admin_app.middleware.DisableCacheMiddleware',           
+    'admin_app.middleware.DisableCacheMiddleware',  
+         
 ]
 
 ROOT_URLCONF = 'shopkickora.urls'
@@ -125,6 +132,49 @@ AUTH_USER_MODEL = 'user_app.CustomUser'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'ADAPTER': 'user_app.adapters.CustomGoogleOAuth2Adapter',
+    }
+}
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'ADAPTER': 'user_app.adapters.CustomGoogleOAuth2Adapter',
+    }
+}
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'pythondevelopment10@gmail.com'
+EMAIL_HOST_PASSWORD = 'hzdqbohnbwoopoos'  # App password, looks correct
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SITE_ID = 4
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_EMAIL_VERIFICATION = "none"  # you already have this, so good
+SOCIALACCOUNT_LOGIN_ON_GET = True   # <---- ADD THIS LINE
+ # or "none" if you want to skip email confirmation
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+LOGIN_REDIRECT_URL = 'user_dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Optional - simplify signup/login flow
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+
+
 
 STATIC_URL = 'static/'
 MEDIA_URL = '/media/'

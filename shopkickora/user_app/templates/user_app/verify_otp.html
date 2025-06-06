@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Verify OTP - ShopKickora</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f3f4f6;
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+      }
+      .otp-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1d4ed8;
+      }
+      .resend {
+        margin-top: 1rem;
+        font-size: 0.95rem;
+        color: #555;
+      }
+      .resend a {
+        text-decoration: none;
+        font-weight: bold;
+        color: #2563eb;
+        pointer-events: none;
+        opacity: 0.6;
+      }
+      .resend a.enabled {
+        pointer-events: auto;
+        opacity: 1;
+      }
+      .message {
+        color: red;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="otp-box">
+      <h2>Verify OTP</h2>
+
+      {% if messages %} {% for message in messages %}
+      <div class="message">{{ message }}</div>
+      {% endfor %} {% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <input
+          type="text"
+          name="otp"
+          placeholder="Enter 6-digit OTP"
+          maxlength="6"
+          required
+        />
+        <button type="submit">Verify</button>
+      </form>
+
+      <div class="resend">
+        <span id="timer">Resend OTP in 30s</span><br />
+        <form method="POST" action="{% url 'resend_otp' %}">
+          {% csrf_token %}
+          <button id="resendButton" type="submit" disabled>Resend OTP</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+  let timerDisplay = document.getElementById("timer");
+  let resendButton = document.getElementById("resendButton");
+
+  let countdown = 60;  // changed from 30 to 60
+  resendButton.disabled = true;
+
+  const interval = setInterval(() => {
+    countdown--;
+    timerDisplay.innerText = `Resend OTP in ${countdown}s`;
+
+    if (countdown <= 0) {
+      clearInterval(interval);
+      timerDisplay.innerText = "";
+      resendButton.disabled = false;
+    }
+  }, 1000);
+
+
+    </script>
+  </body>
+</html>

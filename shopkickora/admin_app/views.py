@@ -16,7 +16,8 @@ import re
 def admin_login(request):
     if request.user.is_authenticated and request.user.is_superuser:
         return redirect('admin_dashboard')
-
+    if request.user.is_authenticated:
+        return redirect('user_dashboard')
 
     if request.method == 'POST':
         form = AdminLoginForm(request.POST)
@@ -268,10 +269,10 @@ def add_product(request):
             s = int(stock_s)
             m = int(stock_m)
             l = int(stock_l)
-            if s < 0 or m < 0 or l < 0:
-                errors['stock_sizes'] = "Stock values cannot be negative."
+            if s <= 0 or m <= 0 or l <= 0:
+                errors['stock_sizes'] = "Stock values must be positive numbers."
         except:
-            errors['stock_sizes'] = "Stock values must be integers."
+            errors['stock_sizes'] = "Must enter the stock."
 
         # ✅ Validate category and brand
         try:
@@ -325,6 +326,7 @@ def add_product(request):
         'errors': {},
         'form_data': {}
     })
+
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def edit_product(request, product_id):
@@ -341,6 +343,15 @@ def edit_product(request, product_id):
         category_id = request.POST.get('category')
         brand_id = request.POST.get('brand')
         new_images = request.FILES.getlist('images')
+
+        # Handle image deletions
+        delete_image_ids = request.POST.getlist('delete_images')
+        if delete_image_ids:
+            images_to_delete = ProductImage.objects.filter(product=product, id__in=delete_image_ids)
+            for img in images_to_delete:
+                if img.image:
+                    img.image.delete(save=False)  # Delete file from storage
+                img.delete()  # Delete DB record
 
         # Size-based stock inputs
         stock_s = request.POST.get('stock_S')
@@ -367,8 +378,6 @@ def edit_product(request, product_id):
                 "Please enter a product name with at least one letter. "
                 "Only letters, numbers, spaces, hyphens, and underscores are allowed."
             )
-        elif Product.objects.filter(name__iexact=name).exclude(id=product.id).exists():
-            errors['name'] = "The product name already exists"
 
         # Validate price
         try:
@@ -378,22 +387,23 @@ def edit_product(request, product_id):
         except (ValueError, TypeError):
             errors['price'] = "Enter a valid number for price."
 
-        # Validate images
+        # Refresh existing_images after deletion
+        existing_images = ProductImage.objects.filter(product=product)
+
+        # Validate images count and formats
         MAX_IMAGES = 3
         if new_images:
-            total_images = existing_images.count() + len(new_images)
-            if total_images > MAX_IMAGES:
-                errors['format'] = f"Total images cannot exceed {MAX_IMAGES}."
+            if len(new_images) != 3:
+                errors['format'] = "You must upload exactly 3 images to replace the existing ones."
             else:
                 for image in new_images:
                     ext = image.name.split('.')[-1].lower()
                     if ext not in allowed_extensions:
-                        errors['format'] = "Invalid image file format"
+                        errors['format'] = "Invalid image file format. Allowed: jpg, jpeg, png, webp."
                         break
         else:
-            # If no new images uploaded, but existing images less than MAX_IMAGES, error
-            if existing_images.count() < MAX_IMAGES:
-                errors['format'] = f"At least {MAX_IMAGES} images are required."
+            if existing_images.count() != 3:
+                errors['format'] = "Exactly 3 images are required. Please upload 3 images."
 
         # Validate category and brand
         try:
@@ -415,11 +425,12 @@ def edit_product(request, product_id):
                 s = int(stock_s)
                 m = int(stock_m)
                 l = int(stock_l)
-                if s < 0 or m < 0 or l < 0:
-                    errors['stock_sizes'] = "Stock values cannot be negative."
+                if s <= 0 or m <= 0 or l <= 0:
+                    errors['stock_sizes'] = "Stock values must be positive."
             except ValueError:
-                errors['stock_sizes'] = "Stock values must be integers."
+                errors['stock_sizes'] = "Stock values must be positive integers."
 
+        # If errors exist, render form again
         if errors:
             return render(request, 'user_app/edit_product.html', {
                 'product': product,
@@ -430,19 +441,25 @@ def edit_product(request, product_id):
                 'images': existing_images,
             })
 
-        # Save product and images
+        # Save updated product details
         product.name = name
         product.description = description
         product.price = price_val
         product.category = category
         product.brand = brand
-        product.stock = s + m + l  # Total stock = sum of sizes
+        product.stock = s + m + l
         product.save()
 
-        for image in new_images:
-            ProductImage.objects.create(product=product, image=image)
+        # Save new images (after deleting old ones)
+        if new_images and len(new_images) == 3:
+            for img in existing_images:
+                if img.image:
+                    img.image.delete(save=False)
+                img.delete()
+            for image in new_images:
+                ProductImage.objects.create(product=product, image=image)
 
-        # Update or create ProductSizeStock entries
+        # Update or create stock for sizes
         for size, quantity in [('S', s), ('M', m), ('L', l)]:
             ProductSizeStock.objects.update_or_create(
                 product=product,
@@ -453,7 +470,7 @@ def edit_product(request, product_id):
         messages.success(request, "Product updated successfully.")
         return redirect('product_list')
 
-    # GET request - prefill form with existing data
+    # GET method - prefill form
     size_stock = {'S': 0, 'M': 0, 'L': 0}
     for stock in ProductSizeStock.objects.filter(product=product):
         size_stock[stock.size] = stock.quantity
@@ -469,6 +486,8 @@ def edit_product(request, product_id):
         'brand_id': product.brand.id if product.brand else None,
     }
 
+    existing_images = ProductImage.objects.filter(product=product)
+
     return render(request, 'user_app/edit_product.html', {
         'product': product,
         'categories': categories,
@@ -477,6 +496,7 @@ def edit_product(request, product_id):
         'form_data': form_data,
         'images': existing_images,
     })
+
 
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
@@ -545,6 +565,7 @@ def add_brand(request):
         return redirect('brand_list')
 
     return render(request, 'user_app/add_brand.html', {'errors': {}, 'form_data': {}})
+
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def edit_brand(request, brand_id):
@@ -563,7 +584,12 @@ def edit_brand(request, brand_id):
         }
 
         # Check for name duplication (only if changed)
-        if name.lower() != brand.name.lower():
+        # Validate brand name pattern
+        if not re.match(r'^[A-Za-z]+(?: [A-Za-z]+)*$', name):
+            errors['name'] = "Brand name should only contain letters and spaces, without leading/trailing spaces or underscores."
+
+        # Check for name duplication (only if changed and pattern is valid)
+        elif name.lower() != brand.name.lower():
             if Brand.objects.filter(name__iexact=name).exclude(id=brand.id).exists():
                 errors['name'] = "This brand name already exists."
 
