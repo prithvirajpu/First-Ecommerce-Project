@@ -1,0 +1,25 @@
+# Ignore Python bytecode and cache
+__pycache__/
+*.py[cod]
+
+# Ignore environment and secrets
+.env
+*.env
+
+# Ignore local database (if using SQLite)
+db.sqlite3
+
+# Ignore static/media files (if generated locally)
+staticfiles/
+media/
+
+# Ignore virtual environments
+venv/
+env/
+
+# Ignore VSCode settings
+.vscode/
+
+# Ignore migrations' bytecode
+**/migrations/__pycache__/
+**/migrations/*.pyc
