@@ -2,95 +2,315 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      background-color: #f4f6f8;
-      min-height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .dashboard-header {
-      margin: 2rem 0;
-      text-align: center;
-    }
-    .card {
-      border-radius: 1rem;
-      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
-      transition: transform 0.2s ease-in-out;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 1rem 2rem rgba(0,0,0,0.15);
-    }
-    .logout-btn {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shopKickora - Premium Footwear Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 16px rgba(0,0,0,0.05)',
+                        'soft': '0 8px 24px rgba(0,0,0,0.1)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .hero-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
+                </div>
 
-  <a href="{% url 'logout' %}" class="btn btn-danger logout-btn">Logout</a>
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium">Home</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Men</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Women</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Kids</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Sale</a>
+                    <a href="#" class="text-gray-700 hover:text-purple-600 font-medium">Contact</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium">Dashboard</a>
+                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-purple-600 font-medium">Logout</a>
+                    {% else %}
+                        <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Login</a>
+                        <a href=" " class="text-gray-700 hover:text-purple-600 font-medium">Sign Up</a>
+                    {% endif %}
+                </nav>
 
-  <div class="container">
-    <div class="dashboard-header">
-      <h1 class="mb-3">Welcome, {{ request.user.username }}!</h1>
-      <p class="lead text-muted">Here's a quick overview of your account.</p>
-    </div>
+                <!-- Cart and Mobile Menu -->
+                <div class="flex items-center space-x-4">
+                    <button class="relative">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+                        <span class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+                    <button class="md:hidden" id="mobile-menu-btn">
+                        <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
+                    </button>
+                </div>
+            </div>
 
-    <div class="row g-4">
-      <div class="col-md-4">
-        <div class="card p-4 text-center">
-          <h5 class="text-primary">Orders</h5>
-          <h2>12</h2>
-          <p class="text-muted">Total orders placed</p>
+            <!-- Mobile Navigation -->
+            <nav class="md:hidden hidden pb-4" id="mobile-menu">
+                <div class="flex flex-col space-y-2">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Home</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Men</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Women</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Women</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Women</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Kids</a>
+                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Sale</a>
+                    <a href="#" class="text-gray-700 hover:text-purple-600 font-medium py-2">Contact</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Dashboard</a>
+                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Login</a>
+                        <a href="{% url 'signup' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Sign Up</a>
+                    {% endif %}
+                </div>
+            </nav>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-4 text-center">
-          <h5 class="text-success">Wishlist Items</h5>
-          <h2>7</h2>
-          <p class="text-muted">Items in your wishlist</p>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-bg text-white py-20">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col lg:flex-row items-center">
+                <div class="lg:w-1/2 mb-10 lg:mb-0">
+                    <h1 class="text-4xl lg:text-6xl font-bold mb-6 animate-fade-in">Step Into Style</h1>
+                    <p class="text-xl mb-8 opacity-90">Discover our premium collection of footwear designed for comfort, style, and performance.</p>
+                    <a href="" class="inline-block py-3 px-8 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+                        Shop Now
+                    </a>
+                </div>
+                <div class="lg:w-1/2">
+                    <img src="{% static 'images/hero-shoes.jpg' %}" alt="Premium Shoes" class="w-full max-w-md mx-auto">
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-4 text-center">
-          <h5 class="text-warning">Wallet Balance</h5>
-          <h2>$150.00</h2>
-          <p class="text-muted">Available balance</p>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center animate-fade-in">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="truck" class="w-8 h-8 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Free Shipping</h3>
+                    <p class="text-gray-600">Free shipping on orders over $50. Fast and reliable delivery to your doorstep.</p>
+                </div>
+                <div class="text-center animate-fade-in">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Quality Guarantee</h3>
+                    <p class="text-gray-600">30-day return policy. We stand behind the quality of our products.</p>
+                </div>
+                <div class="text-center animate-fade-in">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="lock" class="w-8 h-8 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Secure Payment</h3>
+                    <p class="text-gray-600">Your payment information is encrypted and secure with us.</p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
+    </section>
 
-    <div class="mt-5">
-      <h3>Recent Activity</h3>
-      <ul class="list-group">
-        <li class="list-group-item">Order #1024 placed on 2025-05-30</li>
-        <li class="list-group-item">Added "Sneaker Model X" to wishlist</li>
-        <li class="list-group-item">Wallet topped up by $50</li>
-      </ul>
-    </div>
-  </div>
-<script>
-  if (window.history.replaceState) {
-    window.history.replaceState(null, null, window.location.href);
-  }
-</script>
-<!-- your dashboard HTML content -->
+    <!-- Best Sellers Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Best Sellers</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for product in featured_products %}
+                    <div class="bg-white rounded-lg shadow-card overflow-hidden hover:shadow-soft transition-all duration-300 animate-fade-in">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="font-semibold mb-2">{{ product.name }}</h3>
+                            <p class="text-gray-600 text-sm mb-2">{{ product.description|truncatewords:10 }}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl font-bold text-purple-600">${{ product.price }}</span>
+                                <a href="" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-600 text-center col-span-4">No products available at the moment.</p>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-8">
+                <a href="" class="inline-block py-3 px-6 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-300">
+                    View All Products
+                </a>
+            </div>
+        </div>
+    </section>
 
-<script>
-  if (window.history.replaceState) {
-    window.history.replaceState(null, null, window.location.href);
-  }
-</script>
-</body>
-</html>
+    <!-- Promotional Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col lg:flex-row items-center bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 lg:p-12 text-white">
+                <div class="lg:w-1/2 mb-8 lg:mb-0">
+                    <h2 class="text-3xl lg:text-4xl font-bold mb-4 animate-fade-in">Limited Time Offer</h2>
+                    <p class="text-xl mb-6 opacity-90">Get up to 50% off on selected items. Don't miss out on these amazing deals!</p>
+                    <a href="" class="inline-block py-3 px-8 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+                        Shop Sale
+                    </a>
+                </div>
+                <div class="lg:w-1/2">
+                    <img src="{% static 'images/sale-banner.jpg' %}" alt="Sale Items" class="w-full max-w-sm mx-auto">
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <!-- Newsletter Section -->
+    <section class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-4 animate-fade-in">Stay Updated</h2>
+            <p class="text-gray-600 mb-8 max-w-2xl mx-auto">Subscribe to our newsletter and be the first to know about new arrivals, exclusive deals, and special offers.</p>
+            <form method="POST" class="max-w-md mx-auto flex">
+                {% csrf_token %}
+                <input type="email" name="email" placeholder="Enter your email" class="flex-1 px-4 py-3 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-600">
+                <button type="submit" class="bg-purple-600 text-white px-6 py-3 rounded-r-lg hover:bg-purple-700 transition duration-300">
+                    Subscribe
+                </button>
+            </form>
+        </div>
+    </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold">shopKickora</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">Your trusted partner for premium footwear. Quality, comfort, and style in every step.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Size Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Shipping Info</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+                    <ul class="space-y-2">
+                        <li><a href="" class="text-gray-400 hover:text-white">Men's Shoes</a></li>
+                        <li><a href="" class="text-gray-400 hover:text-white">Women's Shoes</a></li>
+                        <li><a href="" class="text-gray-400 hover:text-white">Kids' Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Accessories</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+                    <div class="space-y-2 text-gray-400">
+                        <p class="flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                            123 Fashion Street, NY 10001
+                        </p>
+                        <p class="flex items-center">
+                            <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                            (555) 123-4567
+                        </p>
+                        <p class="flex items-center">
+                            <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                            info@shopkickora.com
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2025 shopKickora. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Newsletter subscription
+        document.querySelector('button[type="submit"]').addEventListener('click', (e) => {
+            const email = document.querySelector('input[type="email"]').value;
+            if (!email) {
+                e.preventDefault();
+                alert('Please enter a valid email address.');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -22,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!+3j!#x_2zfo4&&43@*9$d%dr#+37#mx!jht8*pd(df6*xr^t3'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -121,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -136,11 +136,13 @@ AUTH_USER_MODEL = 'user_app.CustomUser'
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'ADAPTER': 'user_app.adapters.CustomGoogleOAuth2Adapter',
-    }
-}
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'ADAPTER': 'user_app.adapters.CustomGoogleOAuth2Adapter',
+        'APP': {
+            'client_id': config('GOOGLE_CLIENT_ID'),
+            'secret': config('GOOGLE_CLIENT_SECRET'),
+            'key': '',
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
     }
 }
 
@@ -153,11 +155,9 @@ EMAIL_PORT = config('EMAIL_PORT', cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
- # App password, looks correct
-
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-SITE_ID = 4
+SITE_ID = 1
 SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_EMAIL_VERIFICATION = "none"  # you already have this, so good
 SOCIALACCOUNT_LOGIN_ON_GET = True   # <---- ADD THIS LINE

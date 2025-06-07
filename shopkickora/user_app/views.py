@@ -218,6 +218,7 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('user_dashboard')
 
+
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -250,4 +251,5 @@ def user_dashboard(request):
 def logout_view(request):
     logout(request)
     request.session.flush()
+    list(messages.get_messages(request))
     return redirect('login')
