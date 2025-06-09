@@ -144,43 +144,52 @@
         <div class="flex flex-col lg:flex-row gap-8">
             <div class="lg:w-1/4">
                 <div class="filter-section p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="category" value="all" checked class="mr-2 text-blue-600">
-                            <span class="text-gray-700">All</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="category" value="men" class="mr-2 text-blue-600">
-                            <span class="text-gray-700">Men</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="category" value="women" class="mr-2 text-blue-600">
-                            <span class="text-gray-700">Women</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="category" value="kids" class="mr-2 text-blue-600">
-                            <span class="text-gray-700">Kids</span>
-                        </label>
-                    </div>
-                </div>
+    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+    <form method="get" id="category-form" class="space-y-2">
+
+        <!-- All option -->
+        <label class="flex items-center">
+            <input type="radio" name="category" value="all" class="mr-2 text-blue-600"
+                {% if category == 'all' %}checked{% endif %} onchange="this.form.submit()">
+            <span class="text-gray-700">All</span>
+        </label>
+
+        <!-- Dynamic category options -->
+        {% for cat in categories %}
+            <label class="flex items-center">
+                <input type="radio" name="category" value="{{ cat.id }}" class="mr-2 text-blue-600"
+                    {% if category|add:'' == cat.id|stringformat:"s" %}checked{% endif %} onchange="this.form.submit()">
+                <span class="text-gray-700">{{ cat.name }}</span>
+            </label>
+        {% endfor %}
+
+        <!-- Preserve search and sort -->
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+    </form>
+</div>
+
                 <div class="filter-section p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Select Brand</h3>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="checkbox" class="mr-2 text-blue-600">
-                            <span class="text-gray-700">Adidas</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" class="mr-2 text-blue-600">
-                            <span class="text-gray-700">Nike</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" class="mr-2 text-blue-600">
-                            <span class="text-gray-700">Puma</span>
-                        </label>
-                    </div>
-                </div>
+    <h3 class="text-lg font-semibold mb-4">Brands</h3>
+    <form method="get" id="brand-form">
+        {% comment %} Preserve other filters in hidden inputs {% endcomment %}
+        <input type="hidden" name="category" value="{{ category }}">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+
+        <div class="space-y-2">
+            {% for b in brands %}
+            <label class="flex items-center">
+                <input type="checkbox" name="brand" value="{{ b.id }}"
+                    class="mr-2 text-blue-600 brand-checkbox"
+                    {% if b.id|stringformat:"s" in selected_brands %}checked{% endif %}>
+                <span class="text-gray-700">{{ b.name }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </form>
+</div>
+
                 <div class="filter-section p-6 mb-6">
                     <h3 class="text-lg font-semibold mb-4">Size</h3>
                     <div class="grid grid-cols-3 gap-2">
@@ -406,4 +415,10 @@
                 chip.remove();
             });
         });
+    document.querySelectorAll('.brand-checkbox').forEach(function(checkbox) {
+      checkbox.addEventListener('change', function() {
+          document.getElementById('brand-form').submit();
+      });
+  });
     </script>
+    

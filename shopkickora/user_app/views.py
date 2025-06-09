@@ -3,7 +3,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import CustomUser, Product
+from .models import Brand, Category, CustomUser, Product
 from user_app.forms import LoginForm
 import random
 import time
@@ -272,43 +272,65 @@ def user_dashboard(request):
     }
     return render(request, 'user_app/dashboard.html', context)
 
-
 @never_cache
 @login_required(login_url='login')
 def user_product_list(request):
-    # Get search query and sort option
     query = request.GET.get('q', '').strip()
-    sort = request.GET.get('sort', 'newest')  # Default to 'newest'
+    category = request.GET.get('category', 'all')
+    sort = request.GET.get('sort', 'newest')
+    categories = Category.objects.filter(is_active=True, is_deleted=False)
+
+    # For brands, get list of IDs from GET param (e.g. ?brand=1&brand=3)
+    brand_ids = request.GET.getlist('brand')  # returns a list of brand ids as strings
 
     # Base queryset
-    products = Product.objects.filter(is_deleted=False)
+    products = Product.objects.filter(
+        is_deleted=False,
+        category__is_deleted=False,
+        category__is_active=True,
+        brand__is_active=True
+    )
 
-    # Apply search filter if query exists
+    # Filter by category
+    if category != 'all':
+        products = products.filter(category__id=category)
+
+    # Filter by brands if any selected
+    if brand_ids:
+        products = products.filter(brand__id__in=brand_ids)
+
+    # Apply search filter
     if query:
         products = products.filter(
             Q(name__icontains=query) |
             Q(description__icontains=query)
         )
 
-    # Apply sorting
+    # Sorting
     if sort == 'price_low':
         products = products.order_by('price')
     elif sort == 'price_high':
         products = products.order_by('-price')
-    else:  # Default: newest
+    else:
         products = products.order_by('-created_at')
 
+    brands = Brand.objects.filter(is_active=True)
+
     # Pagination
-    paginator = Paginator(products, 4)  # 4 products per page
+    paginator = Paginator(products, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Pass context to template
     context = {
         'page_obj': page_obj,
         'query': query,
+        'category': category,
         'sort': sort,
         'product_count': products.count(),
+        'sizes_list': ['S', 'M', 'L'],
+        'categories': categories,
+        'brands': brands,
+        'selected_brands': brand_ids,  # Pass selected brand ids to template
     }
 
     return render(request, 'user_app/user_product_list.html', context)

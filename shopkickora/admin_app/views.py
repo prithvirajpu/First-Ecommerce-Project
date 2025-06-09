@@ -635,6 +635,6 @@ def edit_brand(request, brand_id):
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def toggle_brand_status(request, brand_id):
     brand = get_object_or_404(Brand, id=brand_id)
-    brand.status = 'inactive' if brand.status == 'active' else 'active'
+    brand.is_active =  not brand.is_active
     brand.save()
     return redirect('brand_list')

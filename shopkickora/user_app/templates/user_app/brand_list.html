@@ -51,11 +51,12 @@
           <td>
             <a href="{% url 'edit_brand' brand.id %}" class="btn btn-warning btn-sm">Edit</a>
             <a href="#" 
-               class="btn btn-sm {% if brand.status == 'active' %}btn-danger{% else %}btn-success{% endif %} toggle-status-btn" 
-               data-url="{% url 'toggle_brand_status' brand.id %}" 
-               data-action="{% if brand.status == 'active' %}disable{% else %}enable{% endif %}">
-              {% if brand.status == 'active' %}Disable{% else %}Enable{% endif %}
-            </a>
+   class="btn btn-sm {% if brand.is_active %}btn-danger{% else %}btn-success{% endif %} toggle-status-btn" 
+   data-url="{% url 'toggle_brand_status' brand.id %}" 
+   data-action="{% if brand.is_active %}disable{% else %}enable{% endif %}">
+  {% if brand.is_active %}Disable{% else %}Enable{% endif %}
+</a>
+
           </td>
         </tr>
       {% empty %}
