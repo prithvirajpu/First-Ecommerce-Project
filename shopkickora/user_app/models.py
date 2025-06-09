@@ -28,19 +28,28 @@ class Brand(models.Model):
     def __str__(self):
         return self.name
     
+    
 class Product(models.Model):
-    name=models.CharField(max_length=200)
-    description=models.TextField(blank=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
-    price=models.DecimalField(max_digits=10,decimal_places=2)
-    stock=models.IntegerField()
-    category=models.ForeignKey(Category,on_delete=models.SET_NULL,null=True)
-    brand=models.ForeignKey(Brand,on_delete=models.CASCADE,null=True,blank=True)
-    is_deleted=models.BooleanField(default=False)
-    created_at=models.DateTimeField(default=timezone.now)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.IntegerField()
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
+
+    @property
+    def image_url(self):
+        try:
+            return self.image.url if self.image else None
+        except ValueError:
+            return None
     
 class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')

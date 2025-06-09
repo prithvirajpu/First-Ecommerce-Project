@@ -1,0 +1,409 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shopKickora - Product Listing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .price-range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            outline: none;
+        }
+        .price-range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .price-range-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
+                    <a href="#" class="text-blue-600 font-medium">Categories</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Contact</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
+                        <input type="text" name="q" value="{{ query }}" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
+                        {% if query %}
+                            <a href="{% url 'user_product_list' %}?sort={{ sort }}" class="ml-2 text-gray-500 hover:text-gray-700">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </a>
+                        {% else %}
+                            <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </button>
+                        {% endif %}
+                        <input type="hidden" name="sort" value="{{ sort }}">
+                    </form>
+                    <button class="relative">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+                    <button class="md:hidden" id="mobile-menu-btn">
+                        <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
+                    </button>
+                </div>
+            </div>
+            <nav class="md:hidden hidden pb-4" id="mobile-menu">
+                <div class="flex flex-col space-y-2">
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
+                    <a href="#" class="text-blue-600 font-medium py-2">Categories</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contact</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="bg-blue-50 py-3">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex items-center space-x-2 text-sm">
+                <a href="#" class="text-blue-600 hover:text-blue-800">Home</a>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                <span class="text-gray-600">Search</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-1/4">
+                <div class="filter-section p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="category" value="all" checked class="mr-2 text-blue-600">
+                            <span class="text-gray-700">All</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="category" value="men" class="mr-2 text-blue-600">
+                            <span class="text-gray-700">Men</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="category" value="women" class="mr-2 text-blue-600">
+                            <span class="text-gray-700">Women</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="category" value="kids" class="mr-2 text-blue-600">
+                            <span class="text-gray-700">Kids</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-section p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Select Brand</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2 text-blue-600">
+                            <span class="text-gray-700">Adidas</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2 text-blue-600">
+                            <span class="text-gray-700">Nike</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2 text-blue-600">
+                            <span class="text-gray-700">Puma</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-section p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Size</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">S</button>
+                        <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">M</button>
+                        <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">L</button>
+                    </div>
+                </div>
+                <div class="filter-section p-6">
+                    <h3 class="text-lg font-semibold mb-4">Price</h3>
+                    <div class="space-y-4">
+                        <input type="range" min="0" max="10000" value="0" class="price-range-slider w-full" id="price-range">
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>$0</span>
+                            <span>$10000</span>
+                        </div>
+                        <div class="text-center text-sm font-medium">
+                            $<span id="price-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:w-3/4">
+                <div class="mb-6">
+                    {% if query %}
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            Search Results for "{{ query }}" ({{ product_count }} found)
+                        </h2>
+                    {% else %}
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            All Products ({{ product_count }})
+                        </h2>
+                    {% endif %}
+                </div>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-600">Applied Filters:</span>
+                        {% if query %}
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center filter-chip">
+                                Search: {{ query }}
+                                <a href="{% url 'user_product_list' %}?sort={{ sort }}" class="ml-2 text-blue-600 hover:text-blue-800">
+                                    <i data-lucide="x" class="w-3 h-3"></i>
+                                </a>
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-600 text-sm">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ product_count }} results</span>
+                        <form action="{% url 'user_product_list' %}" method="GET" class="inline-block">
+                            <select name="sort" class="border border-gray-300 rounded px-3 py-2 text-sm" onchange="this.form.submit()">
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            </select>
+                            {% if query %}
+                                <input type="hidden" name="q" value="{{ query }}">
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
+                    {% for product in page_obj %}
+                        <div class="product-card p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <div class="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
+                                {% if product.images.all %}
+                                    <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                {% elif product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <img src="{% static 'user_app/default-shoe.jpg' %}" alt="Default shoe image" class="w-full h-full object-cover">
+                                {% endif %}
+                            </div>
+                            <h3 class="font-semibold text-gray-800 mb-1">{{ product.name }}</h3>
+                            <div class="flex items-center mb-2">
+                                <div class="flex text-yellow-400 text-sm">
+                                    {% for i in "12345" %}
+                                        <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= 4 %}fill-current{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="text-gray-500 text-sm ml-1">(4.0)</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-lg font-bold text-gray-800">₹{{ product.price }}</span>
+                                    {% if product.old_price %}
+                                        <span class="text-sm text-gray-500 line-through ml-2">₹{{ product.old_price }}</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-green-600 text-sm font-medium">
+                                    {% if product.stock > 0 %}In Stock{% else %}Out of Stock{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-gray-600 col-span-3 text-center">No products found.</p>
+                    {% endfor %}
+                </div>
+                <div class="flex justify-center items-center space-x-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </a>
+                    {% else %}
+                        <button class="px-3 py-2 border border-gray-300 rounded opacity-50 cursor-not-allowed">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 bg-blue-600 text-white rounded">{{ num }}</a>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">{{ num }}</a>
+                        {% elif num == page_obj.paginator.num_pages or num == 1 %}
+                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">{{ num }}</a>
+                        {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                            <span class="px-3 py-2 text-gray-500">...</span>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </a>
+                    {% else %}
+                        <button class="px-3 py-2 border border-gray-300 rounded opacity-50 cursor-not-allowed">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold">shopKickora</span>
+                    </div>
+                    <p class="text-gray-400 mb-4 text-sm sm:text-base">Your trusted partner for premium footwear. Quality, comfort, and style in every step.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Size Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Shipping Info</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Men's Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Women's Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Kids' Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Accessories</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+                    <div class="space-y-2 text-gray-400 text-sm sm:text-base">
+                        <p class="flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                            123 Fashion Street, NY 10001
+                        </p>
+                        <p class="flex items-center">
+                            <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                            (555) 123-4567
+                        </p>
+                        <p class="flex items-center">
+                            <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                            info@shopkickora.com
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
+                <p>© 2025 shopKickora. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        const priceSlider = document.getElementById('price-range');
+        const priceValue = document.getElementById('price-value');
+        priceSlider.addEventListener('input', (e) => {
+            priceValue.textContent = e.target.value;
+        });
+
+        const sizeButtons = document.querySelectorAll('.size-button');
+        sizeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                sizeButtons.forEach(b => {
+                    b.classList.remove('border-blue-500', 'text-blue-600', 'bg-blue-50');
+                    b.classList.add('border-gray-300');
+                });
+                button.classList.remove('border-gray-300');
+                button.classList.add('border-blue-500', 'text-blue-600', 'bg-blue-50');
+            });
+        });
+
+        const filterRemoveButtons = document.querySelectorAll('.filter-chip button');
+        filterRemoveButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const chip = e.target.closest('.filter-chip');
+                chip.remove();
+            });
+        });
+    </script>

@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.2']
 
 
 # Application definition
@@ -50,16 +50,14 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'admin_app.middleware.DisableCacheMiddleware',  
-         
+    'admin_app.middleware.DisableCacheMiddleware', 
 ]
 
 ROOT_URLCONF = 'shopkickora.urls'
@@ -159,7 +157,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SITE_ID = 1
 SOCIALACCOUNT_AUTO_SIGNUP = True
-ACCOUNT_EMAIL_VERIFICATION = "none"  # you already have this, so good
 SOCIALACCOUNT_LOGIN_ON_GET = True   # <---- ADD THIS LINE
  # or "none" if you want to skip email confirmation
 
@@ -170,11 +167,15 @@ AUTHENTICATION_BACKENDS = [
 ]
 LOGIN_REDIRECT_URL = 'user_dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = 'login'
+
 
 # Optional - simplify signup/login flow
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_ADAPTER = 'user_app.adapter.CustomAccountAdapter'
+
 
 
 
@@ -185,6 +186,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STATICFILES_DIRS = [
     BASE_DIR / "admin_app" / "static",
 ]
+STATICFILES_DIRS = [
+    BASE_DIR / "user_app" / "static",
+]
+
 
 
 

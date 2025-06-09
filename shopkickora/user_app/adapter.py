@@ -1,4 +1,6 @@
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.account.adapter import DefaultAccountAdapter
+
 
 class CustomGoogleOAuth2Adapter(GoogleOAuth2Adapter):
     def get_auth_params(self, request, action):
@@ -7,3 +9,8 @@ class CustomGoogleOAuth2Adapter(GoogleOAuth2Adapter):
             params['prompt'] = 'select_account'
             request.session['google_login_attempted'] = True
         return params
+
+class CustomAccountAdapter(DefaultAccountAdapter):
+    def populate_username(self, request, user):
+        # Make username equal to email
+        user.username = user.email

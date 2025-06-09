@@ -3,10 +3,12 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import CustomUser
+from .models import CustomUser, Product
 from user_app.forms import LoginForm
 import random
 import time
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.conf import settings
 from django.core.mail import send_mail
 from django.urls import reverse
@@ -159,6 +161,7 @@ def forgot_password_view(request):
             reset_url = request.build_absolute_uri(
                 reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
             )
+            print("Password reset URL:", reset_url)
 
             # Send password reset email
             send_mail(
@@ -188,8 +191,8 @@ def reset_password_view(request, uidb64, token):
     token_generator = PasswordResetTokenGenerator()
     if user is not None and token_generator.check_token(user, token):
         if request.method == "POST":
-            password1 = request.POST.get('password1', '')
-            password2 = request.POST.get('password2', '')
+            password1 = request.POST.get('password1', '').strip()
+            password2 = request.POST.get('password2', '').strip()
 
             errors = {}
             if not password1:
@@ -230,6 +233,7 @@ def login_view(request):
                     messages.error(request, "Your account is currently suspended.")
                 else:
                     login(request, user)
+                    print(f"Logged in user: {request.user}") 
                     return redirect('user_dashboard')
             else:
                 form.add_error(None, "Invalid username or password.")
@@ -237,14 +241,77 @@ def login_view(request):
         form = LoginForm()
 
     return render(request, 'user_app/login.html', {'form': form})
-
-
 @never_cache
 @login_required(login_url='login')
 def user_dashboard(request):
     if request.user.is_superuser:
         return redirect('admin_dashboard')
-    return render(request, 'user_app/dashboard.html')
+    
+    # Get all non-deleted products
+    all_products = Product.objects.filter(is_deleted=False)
+    
+    # For "Best Selling" section: Select 4 random products
+    best_selling_products = random.sample(list(all_products), min(4, len(all_products))) if all_products else []
+    
+    # For "Featured" section: Select another 4 random products
+    remaining_products = [p for p in all_products if p not in best_selling_products]
+    featured_products = random.sample(list(remaining_products), min(4, len(remaining_products))) if remaining_products else []
+    
+    # Debugging: Print product details
+    print("Best Selling Products:")
+    for product in best_selling_products:
+        print(f"Product: {product.name}, Image: {product.image}, Image URL: {product.image_url}")
+    
+    print("Featured Products:")
+    for product in featured_products:
+        print(f"Product: {product.name}, Image: {product.image}, Image URL: {product.image_url}")
+    
+    context = {
+        'best_selling_products': best_selling_products,
+        'featured_products': featured_products,
+    }
+    return render(request, 'user_app/dashboard.html', context)
+
+
+@never_cache
+@login_required(login_url='login')
+def user_product_list(request):
+    # Get search query and sort option
+    query = request.GET.get('q', '').strip()
+    sort = request.GET.get('sort', 'newest')  # Default to 'newest'
+
+    # Base queryset
+    products = Product.objects.filter(is_deleted=False)
+
+    # Apply search filter if query exists
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    # Apply sorting
+    if sort == 'price_low':
+        products = products.order_by('price')
+    elif sort == 'price_high':
+        products = products.order_by('-price')
+    else:  # Default: newest
+        products = products.order_by('-created_at')
+
+    # Pagination
+    paginator = Paginator(products, 4)  # 4 products per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Pass context to template
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+        'sort': sort,
+        'product_count': products.count(),
+    }
+
+    return render(request, 'user_app/user_product_list.html', context)
 
 
 @never_cache
@@ -253,3 +320,4 @@ def logout_view(request):
     request.session.flush()
     list(messages.get_messages(request))
     return redirect('login')
+

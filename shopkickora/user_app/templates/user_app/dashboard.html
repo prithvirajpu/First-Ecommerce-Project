@@ -25,8 +25,8 @@
                             900: '#0c4a6e',
                         },
                         accent: {
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
+                            500: '#ff4d4f',
+                            600: '#f5222d',
                         },
                     },
                     fontFamily: {
@@ -44,45 +44,75 @@
                             '0%': { opacity: '0', transform: 'translateY(10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         },
-                    }
+                    },
+                    aspectRatio: {
+                        '4/3': '4 / 3',
+                    },
                 }
             }
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .hero-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        body {
+            background-color: #E6F0FA;
+        }
+        .product-image-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3; /* Ensures consistent image aspect ratio */
+            overflow: hidden;
+        }
+        .product-image {
+            background-color: #e5e7eb; /* Gray background as a fallback */
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures image covers the container without distortion */
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.05); /* Subtle zoom effect on hover */
+        }
+        .btn-primary {
+            background-color: #0ea5e9; /* primary-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0284c7; /* primary-600 */
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
     <!-- Header -->
     <header class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto px-4">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between py-4">
                 <!-- Logo -->
                 <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                         <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                     </div>
                     <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
                 </div>
 
                 <!-- Desktop Navigation -->
-                <nav class="hidden md:flex space-x-8">
-                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium">Home</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Men</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Women</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Kids</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Sale</a>
-                    <a href="#" class="text-gray-700 hover:text-purple-600 font-medium">Contact</a>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Men</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Women</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Kids</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Sale</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Contact</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium">Dashboard</a>
-                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-purple-600 font-medium">Logout</a>
+                        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Dashboard</a>
+                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Logout</a>
                     {% else %}
-                        <a href="" class="text-gray-700 hover:text-purple-600 font-medium">Login</a>
-                        <a href=" " class="text-gray-700 hover:text-purple-600 font-medium">Sign Up</a>
+                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Login</a>
+                        <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Sign Up</a>
                     {% endif %}
                 </nav>
 
@@ -90,7 +120,7 @@
                 <div class="flex items-center space-x-4">
                     <button class="relative">
                         <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
-                        <span class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
                     </button>
                     <button class="md:hidden" id="mobile-menu-btn">
                         <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
@@ -101,20 +131,18 @@
             <!-- Mobile Navigation -->
             <nav class="md:hidden hidden pb-4" id="mobile-menu">
                 <div class="flex flex-col space-y-2">
-                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Home</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Men</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Women</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Women</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Women</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Kids</a>
-                    <a href="" class="text-gray-700 hover:text-purple-600 font-medium py-2">Sale</a>
-                    <a href="#" class="text-gray-700 hover:text-purple-600 font-medium py-2">Contact</a>
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium py-2">Men</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium py-2">Women</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium py-2">Kids</a>
+                    <a href="" class="text-gray-700 hover:text-blue-600 font-medium py-2">Sale</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contact</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Dashboard</a>
-                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Logout</a>
+                        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Dashboard</a>
+                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Logout</a>
                     {% else %}
-                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Login</a>
-                        <a href="{% url 'signup' %}" class="text-gray-700 hover:text-purple-600 font-medium py-2">Sign Up</a>
+                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Login</a>
+                        <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Sign Up</a>
                     {% endif %}
                 </div>
             </nav>
@@ -122,155 +150,164 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="hero-bg text-white py-20">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col lg:flex-row items-center">
-                <div class="lg:w-1/2 mb-10 lg:mb-0">
-                    <h1 class="text-4xl lg:text-6xl font-bold mb-6 animate-fade-in">Step Into Style</h1>
-                    <p class="text-xl mb-8 opacity-90">Discover our premium collection of footwear designed for comfort, style, and performance.</p>
-                    <a href="" class="inline-block py-3 px-8 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
-                        Shop Now
+    <section class="text-black py-12 sm:py-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-8">
+                <div class="lg:w-1/2 mb-8 lg:mb-0">
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 animate-fade-in leading-tight">Fresh Arrivals Online</h1>
+                    <p class="text-base sm:text-lg text-gray-600 mb-6">Discover our newest collection today</p>
+                    <a href="{% url 'user_product_list' %}" class="inline-block btn-primary">
+                        View Collection
                     </a>
                 </div>
                 <div class="lg:w-1/2">
-                    <img src="{% static 'images/hero-shoes.jpg' %}" alt="Premium Shoes" class="w-full max-w-md mx-auto">
+                    <img src="{% static 'user_app/Home_pic.png' %}" alt="Person with Shoes" class="w-full max-w-md mx-auto">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="text-center animate-fade-in">
-                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="truck" class="w-8 h-8 text-purple-600"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Free Shipping</h3>
-                    <p class="text-gray-600">Free shipping on orders over $50. Fast and reliable delivery to your doorstep.</p>
-                </div>
-                <div class="text-center animate-fade-in">
-                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="shield-check" class="w-8 h-8 text-purple-600"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Quality Guarantee</h3>
-                    <p class="text-gray-600">30-day return policy. We stand behind the quality of our products.</p>
-                </div>
-                <div class="text-center animate-fade-in">
-                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="lock" class="w-8 h-8 text-purple-600"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Secure Payment</h3>
-                    <p class="text-gray-600">Your payment information is encrypted and secure with us.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Best Sellers Section -->
-    <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12">Best Sellers</h2>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {% for product in featured_products %}
-                    <div class="bg-white rounded-lg shadow-card overflow-hidden hover:shadow-soft transition-all duration-300 animate-fade-in">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
-                        <div class="p-4">
-                            <h3 class="font-semibold mb-2">{{ product.name }}</h3>
-                            <p class="text-gray-600 text-sm mb-2">{{ product.description|truncatewords:10 }}</p>
+    <!-- Best Selling Section -->
+    <section class="py-12 sm:py-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10 sm:mb-12">Best Selling</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for product in best_selling_products %}
+                    <div class="bg-white rounded-lg shadow-card overflow-hidden transition-all duration-300 animate-fade-in product-card">
+                        <div class="product-image-container">
+                            <!-- Debug: Product {{ product.name }} has image_url: {{ product.image_url }} -->
+                            {% if product.image_url %}
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                <!-- Try to get the first image from ProductImage -->
+                                {% with first_image=product.images.first %}
+                                    {% if first_image %}
+                                        <!-- Debug: Product {{ product.name }} has ProductImage: {{ first_image.image.url }} -->
+                                        <img src="{{ first_image.image.url }}" alt="{{ product.name }}" class="product-image">
+                                    {% else %}
+                                        <!-- Debug: Product {{ product.name }} has no image -->
+                                        <img src="{% static 'user_app/default-shoe.jpg' %}" alt="{{ product.name }}" class="product-image">
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </div>
+                        <div class="p-4 sm:p-5">
+                            <h3 class="text-lg font-semibold mb-2 text-gray-800">{{ product.name }}</h3>
+                            <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ product.description|truncatewords:10 }}</p>
                             <div class="flex items-center justify-between">
-                                <span class="text-xl font-bold text-purple-600">${{ product.price }}</span>
-                                <a href="" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300">
-                                    View Details
+                                <span class="text-lg sm:text-xl font-bold text-blue-600">${{ product.price }}</span>
+                                <a href="" class="text-sm btn-primary py-2 px-3">
+                                    Add to Cart
                                 </a>
                             </div>
                         </div>
                     </div>
                 {% empty %}
-                    <p class="text-gray-600 text-center col-span-4">No products available at the moment.</p>
+                    <p class="text-gray-600 text-center col-span-full">No products available at the moment.</p>
                 {% endfor %}
-            </div>
-            <div class="text-center mt-8">
-                <a href="" class="inline-block py-3 px-6 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-300">
-                    View All Products
-                </a>
             </div>
         </div>
     </section>
 
     <!-- Promotional Section -->
-    <section class="py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col lg:flex-row items-center bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 lg:p-12 text-white">
-                <div class="lg:w-1/2 mb-8 lg:mb-0">
-                    <h2 class="text-3xl lg:text-4xl font-bold mb-4 animate-fade-in">Limited Time Offer</h2>
-                    <p class="text-xl mb-6 opacity-90">Get up to 50% off on selected items. Don't miss out on these amazing deals!</p>
-                    <a href="" class="inline-block py-3 px-8 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
-                        Shop Sale
+    <section class="py-12 sm:py-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center bg-white rounded-2xl p-6 sm:p-8 lg:p-12 gap-8">
+                <div class="lg:w-1/2 mb-6 lg:mb-0">
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 animate-fade-in leading-tight">Game Day Ready - Shop Your Favorite Shoes!</h2>
+                    <a href="" class="inline-block btn-primary">
+                        Shop Now
                     </a>
                 </div>
                 <div class="lg:w-1/2">
-                    <img src="{% static 'images/sale-banner.jpg' %}" alt="Sale Items" class="w-full max-w-sm mx-auto">
+                    <img src="{% static 'user_app/group.png' %}" alt="Group with Shoes" class="w-full max-w-md mx-auto">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Newsletter Section -->
-    <section class="py-16 bg-gray-100">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl font-bold mb-4 animate-fade-in">Stay Updated</h2>
-            <p class="text-gray-600 mb-8 max-w-2xl mx-auto">Subscribe to our newsletter and be the first to know about new arrivals, exclusive deals, and special offers.</p>
-            <form method="POST" class="max-w-md mx-auto flex">
-                {% csrf_token %}
-                <input type="email" name="email" placeholder="Enter your email" class="flex-1 px-4 py-3 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-600">
-                <button type="submit" class="bg-purple-600 text-white px-6 py-3 rounded-r-lg hover:bg-purple-700 transition duration-300">
-                    Subscribe
-                </button>
-            </form>
+    <!-- Featured Section -->
+    <!-- <section class="py-12 sm:py-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10 sm:mb-12">House Line Favorites</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for product in featured_products %}
+                    <div class="bg-white rounded-lg shadow-card overflow-hidden transition-all duration-300 animate-fade-in product-card">
+                        <div class="product-image-container">
+                            {% if product.image_url %}
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                {% with first_image=product.images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ product.name }}" class="product-image">
+                                    {% else %}
+                                        <img src="{% static 'user_app/default-shoe.jpg' %}" alt="{{ product.name }}" class="product-image">
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </div>
+                        <div class="p-4 sm:p-5">
+                            <h3 class="text-lg font-semibold mb-2 text-gray-800">{{ product.name }}</h3>
+                            <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ product.description|truncatewords:10 }}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg sm:text-xl font-bold text-blue-600">${{ product.price }}</span>
+                                <a href="" class="text-sm btn-primary py-2 px-3">
+                                    Add to Cart
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-600 text-center col-span-full">No products available at the moment.</p>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-8">
+                <a href="" class="inline-block btn-primary">
+                    Shop More
+                </a>
+            </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12">
-        <div class="container mx-auto px-4">
-            <div class="grid md:grid-cols-4 gap-8">
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                             <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                         </div>
                         <span class="text-xl font-bold">shopKickora</span>
                     </div>
-                    <p class="text-gray-400 mb-4">Your trusted partner for premium footwear. Quality, comfort, and style in every step.</p>
+                    <p class="text-gray-400 mb-4 text-sm sm:text-base">Your trusted partner for premium footwear. Quality, comfort, and style in every step.</p>
                     <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="facebook" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
                     </div>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Size Guide</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Shipping Info</a></li>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Size Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Shipping Info</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Categories</h3>
-                    <ul class="space-y-2">
-                        <li><a href="" class="text-gray-400 hover:text-white">Men's Shoes</a></li>
-                        <li><a href="" class="text-gray-400 hover:text-white">Women's Shoes</a></li>
-                        <li><a href="" class="text-gray-400 hover:text-white">Kids' Shoes</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Accessories</a></li>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="" class="text-gray-400 hover:text-white transition-colors">Men's Shoes</a></li>
+                        <li><a href="" class="text-gray-400 hover:text-white transition-colors">Women's Shoes</a></li>
+                        <li><a href="" class="text-gray-400 hover:text-white transition-colors">Kids' Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Accessories</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
-                    <div class="space-y-2 text-gray-400">
+                    <div class="space-y-2 text-gray-400 text-sm sm:text-base">
                         <p class="flex items-center">
                             <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
                             123 Fashion Street, NY 10001
@@ -286,7 +323,7 @@
                     </div>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
                 <p>© 2025 shopKickora. All rights reserved.</p>
             </div>
         </div>
@@ -301,15 +338,6 @@
         const mobileMenu = document.getElementById('mobile-menu');
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
-        });
-
-        // Newsletter subscription
-        document.querySelector('button[type="submit"]').addEventListener('click', (e) => {
-            const email = document.querySelector('input[type="email"]').value;
-            if (!email) {
-                e.preventDefault();
-                alert('Please enter a valid email address.');
-            }
         });
     </script>
 </body>
