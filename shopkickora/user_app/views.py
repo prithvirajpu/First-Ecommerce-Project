@@ -1,9 +1,10 @@
-from django.shortcuts import render, redirect
+import re
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import Brand, Category, CustomUser, Product
+from .models import Brand, Category, CustomUser, Product, ProductSizeStock
 from user_app.forms import LoginForm
 import random
 import time
@@ -34,6 +35,9 @@ def signup_view(request):
 
         if not username:
             errors['username'] = "Username is required."
+        elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', username):
+            errors['username'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
+        
         elif CustomUser.objects.filter(username=username).exists():
             errors['username'] = "Username already taken."
 
@@ -241,6 +245,7 @@ def login_view(request):
         form = LoginForm()
 
     return render(request, 'user_app/login.html', {'form': form})
+
 @never_cache
 @login_required(login_url='login')
 def user_dashboard(request):
@@ -335,6 +340,27 @@ def user_product_list(request):
 
     return render(request, 'user_app/user_product_list.html', context)
 
+@never_cache
+@login_required(login_url='login')
+def product_detail(request, slug):
+    product = get_object_or_404(Product, slug=slug)
+
+    # Fetch related products
+    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+
+    # Fetch available sizes from ProductSizeStock where quantity > 0
+    sizes = ProductSizeStock.objects.filter(product=product, quantity__gt=0).values_list('size', flat=True)
+
+    # Optional: Get full size display names (e.g., "Small" instead of "S")
+    size_choices = dict(ProductSizeStock.SIZE_CHOICES)  # {'S': 'Small', 'M': 'Medium', 'L': 'Large'}
+    sizes = [size for size in sizes]  # Ensure sizes is a list
+
+    return render(request, 'user_app/product_detail.html', {
+        'product': product,
+        'related_products': related_products,
+        'sizes': sizes,
+        'size_choices': size_choices,  # Optional: If you want to display full size names
+    })
 
 @never_cache
 def logout_view(request):

@@ -168,46 +168,48 @@
     </section>
 
     <!-- Best Selling Section -->
-    <section class="py-12 sm:py-16">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10 sm:mb-12">Best Selling</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {% for product in best_selling_products %}
-                    <div class="bg-white rounded-lg shadow-card overflow-hidden transition-all duration-300 animate-fade-in product-card">
+   <section class="py-12 sm:py-16">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-10 sm:mb-12">Best Selling</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in best_selling_products %}
+                <div class="bg-white rounded-lg shadow-card overflow-hidden transition-all duration-300 animate-fade-in product-card">
+                    <!-- Link the entire image container to the product detail page -->
+                    <a href="{% url 'product_detail' slug=product.slug %}"> {# CHANGED: Pass slug=product.slug #}
                         <div class="product-image-container">
-                            <!-- Debug: Product {{ product.name }} has image_url: {{ product.image_url }} -->
                             {% if product.image_url %}
                                 <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
                             {% else %}
-                                <!-- Try to get the first image from ProductImage -->
                                 {% with first_image=product.images.first %}
                                     {% if first_image %}
-                                        <!-- Debug: Product {{ product.name }} has ProductImage: {{ first_image.image.url }} -->
                                         <img src="{{ first_image.image.url }}" alt="{{ product.name }}" class="product-image">
                                     {% else %}
-                                        <!-- Debug: Product {{ product.name }} has no image -->
                                         <img src="{% static 'user_app/default-shoe.jpg' %}" alt="{{ product.name }}" class="product-image">
                                     {% endif %}
                                 {% endwith %}
                             {% endif %}
                         </div>
-                        <div class="p-4 sm:p-5">
-                            <h3 class="text-lg font-semibold mb-2 text-gray-800">{{ product.name }}</h3>
-                            <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ product.description|truncatewords:10 }}</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-lg sm:text-xl font-bold text-blue-600">${{ product.price }}</span>
-                                <a href="" class="text-sm btn-primary py-2 px-3">
-                                    Add to Cart
-                                </a>
-                            </div>
+                    </a>
+                    <div class="p-4 sm:p-5">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800">
+                            <!-- Also link the product name -->
+                            <a href="{% url 'product_detail' slug=product.slug %}" class="hover:text-blue-600">{{ product.name }}</a> {# CHANGED: Pass slug=product.slug #}
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ product.description|truncatewords:10 }}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-lg sm:text-xl font-bold text-blue-600">${{ product.price }}</span>
+                            <a href="{% url 'product_detail' slug=product.slug %}" class="text-sm btn-primary py-2 px-3"> {# CHANGED: Pass slug=product.slug #}
+                                View Details
+                            </a>
                         </div>
                     </div>
-                {% empty %}
-                    <p class="text-gray-600 text-center col-span-full">No products available at the moment.</p>
-                {% endfor %}
-            </div>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No products available at the moment.</p>
+            {% endfor %}
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- Promotional Section -->
     <section class="py-12 sm:py-16">

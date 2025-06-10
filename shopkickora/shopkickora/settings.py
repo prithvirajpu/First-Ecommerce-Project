@@ -40,13 +40,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'admin_app',
-    'user_app',
     'widget_tweaks',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'user_app.apps.UserappConfig',
 ]
 
 MIDDLEWARE = [
