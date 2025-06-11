@@ -92,8 +92,7 @@
                     <a href="#" class="text-blue-600 font-medium">Categories</a>
                     <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
                     <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
-                <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Logout
-                </button>
+                    <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Logout</button>
                 </nav>
                 <div class="flex items-center space-x-4">
                     <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
@@ -114,7 +113,7 @@
                         <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
                         <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
                     </button>
-                    <button class="md:hidden" id="mobile-menu-btn">
+                    <button class="md:hidden" id="mobileMenuBtn">
                         <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
                     </button>
                 </div>
@@ -145,51 +144,58 @@
         <div class="flex flex-col lg:flex-row gap-8">
             <div class="lg:w-1/4">
                 <div class="filter-section p-6 mb-6">
-    <h3 class="text-lg font-semibold mb-4">Categories</h3>
-    <form method="get" id="category-form" class="space-y-2">
-
-        <!-- All option -->
-        <label class="flex items-center">
-            <input type="radio" name="category" value="all" class="mr-2 text-blue-600"
-                {% if category == 'all' %}checked{% endif %} onchange="this.form.submit()">
-            <span class="text-gray-700">All</span>
-        </label>
-
-        <!-- Dynamic category options -->
-        {% for cat in categories %}
-            <label class="flex items-center">
-                <input type="radio" name="category" value="{{ cat.id }}" class="mr-2 text-blue-600"
-                    {% if category|add:'' == cat.id|stringformat:"s" %}checked{% endif %} onchange="this.form.submit()">
-                <span class="text-gray-700">{{ cat.name }}</span>
-            </label>
-        {% endfor %}
-
-        <!-- Preserve search and sort -->
-        <input type="hidden" name="q" value="{{ query }}">
-        <input type="hidden" name="sort" value="{{ sort }}">
-    </form>
-</div>
+                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+                    <form method="get" id="category-form" class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="category" value="all" class="mr-2 text-blue-600"
+                                {% if category == 'all' %}checked{% endif %} onchange="this.form.submit()">
+                            <span class="text-gray-700">All</span>
+                        </label>
+                        {% for cat in categories %}
+                            <label class="flex items-center">
+                                <input type="radio" name="category" value="{{ cat.id }}" class="mr-2 text-blue-600"
+                                    {% if category|add:'' == cat.id|stringformat:"s" %}checked{% endif %} onchange="this.form.submit()">
+                                <span class="text-gray-700">{{ cat.name }}</span>
+                            </label>
+                        {% endfor %}
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <input type="hidden" name="sort" value="{{ sort }}">
+                        {% if min_price %}
+                            <input type="hidden" name="min_price" value="{{ min_price }}">
+                        {% endif %}
+                        {% if max_price %}
+                            <input type="hidden" name="max_price" value="{{ max_price }}">
+                        {% endif %}
+                        {% for brand_id in selected_brands %}
+                            <input type="hidden" name="brand" value="{{ brand_id }}">
+                        {% endfor %}
+                    </form>
+                </div>
 
                 <div class="filter-section p-6 mb-6">
-    <h3 class="text-lg font-semibold mb-4">Brands</h3>
-    <form method="get" id="brand-form">
-        {% comment %} Preserve other filters in hidden inputs {% endcomment %}
-        <input type="hidden" name="category" value="{{ category }}">
-        <input type="hidden" name="q" value="{{ query }}">
-        <input type="hidden" name="sort" value="{{ sort }}">
-
-        <div class="space-y-2">
-            {% for b in brands %}
-            <label class="flex items-center">
-                <input type="checkbox" name="brand" value="{{ b.id }}"
-                    class="mr-2 text-blue-600 brand-checkbox"
-                    {% if b.id|stringformat:"s" in selected_brands %}checked{% endif %}>
-                <span class="text-gray-700">{{ b.name }}</span>
-            </label>
-            {% endfor %}
-        </div>
-    </form>
-</div>
+                    <h3 class="text-lg font-semibold mb-4">Brands</h3>
+                    <form method="get" id="brand-form">
+                        <input type="hidden" name="category" value="{{ category }}">
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <input type="hidden" name="sort" value="{{ sort }}">
+                        {% if min_price %}
+                            <input type="hidden" name="min_price" value="{{ min_price }}">
+                        {% endif %}
+                        {% if max_price %}
+                            <input type="hidden" name="max_price" value="{{ max_price }}">
+                        {% endif %}
+                        <div class="space-y-2">
+                            {% for b in brands %}
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="brand" value="{{ b.id }}"
+                                        class="mr-2 text-blue-600 brand-checkbox"
+                                        {% if b.id|stringformat:"s" in selected_brands %}checked{% endif %}>
+                                    <span class="text-gray-700">{{ b.name }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </form>
+                </div>
 
                 <div class="filter-section p-6 mb-6">
                     <h3 class="text-lg font-semibold mb-4">Size</h3>
@@ -199,23 +205,37 @@
                         <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">L</button>
                     </div>
                 </div>
+
                 <div class="filter-section p-6">
                     <h3 class="text-lg font-semibold mb-4">Price</h3>
-                    <div class="space-y-4">
-                        <input type="range" min="0" max="10000" value="0" class="price-range-slider w-full" id="price-range">
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>$0</span>
-                            <span>$10000</span>
+                    <form method="get" class="mb-6">
+                        <div class="w-full">
+                            <label for="minPrice" class="block text-sm font-medium text-gray-700 mb-2">Filter by Price</label>
+                            <div class="flex items-center space-x-4">
+                                <span>$<span id="minPriceLabel">0</span></span>
+                                <input type="range" id="minPrice" name="min_price" min="0" max="5000" value="{{ min_price|default:0 }}"
+                                        class="w-full price-range-slider" oninput="updateRangeLabels()">
+                                <input type="range" id="maxPrice" name="max_price" min="0" max="5000" value="{{ max_price|default:5000 }}"
+                                        class="w-full price-range-slider" oninput="updateRangeLabels()">
+                                <span>$<span id="maxPriceLabel">5000</span></span>
+                            </div>
+                            <input type="hidden" name="q" value="{{ query }}">
+                            <input type="hidden" name="category" value="{{ category }}">
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                            {% for brand_id in selected_brands %}
+                                <input type="hidden" name="brand" value="{{ brand_id }}">
+                            {% endfor %}
+                            <div class="mt-4">
+                                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                                    Apply Price
+                                </button>
+                            </div>
                         </div>
-                        <div class="text-center text-sm font-medium">
-                            $<span id="price-value">0</span>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
-            
-            <div class="lg:w-3/4">
 
+            <div class="lg:w-3/4">
                 <div class="mb-6">
                     {% if query %}
                         <h2 class="text-xl font-semibold text-gray-800">
@@ -228,12 +248,44 @@
                     {% endif %}
                 </div>
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-4 flex-wrap">
                         <span class="text-gray-600">Applied Filters:</span>
                         {% if query %}
                             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center filter-chip">
                                 Search: {{ query }}
                                 <a href="{% url 'user_product_list' %}?sort={{ sort }}" class="ml-2 text-blue-600 hover:text-blue-800">
+                                    <i data-lucide="x" class="w-3 h-3"></i>
+                                </a>
+                            </span>
+                        {% endif %}
+                        {% if category and category != 'all' %}
+                            {% for cat in categories %}
+                                {% if category|add:'' == cat.id|stringformat:"s" %}
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center filter-chip">
+                                        Category: {{ cat.name }}
+                                        <a href="{% url 'user_product_list' %}?q={{ query|urlencode }}&sort={{ sort }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% for bid in selected_brands %}&brand={{ bid }}{% endfor %}" class="ml-2 text-blue-600 hover:text-blue-800">
+                                            <i data-lucide="x" class="w-3 h-3"></i>
+                                        </a>
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if selected_brands %}
+                            {% for b in brands %}
+                                {% if b.id|stringformat:"s" in selected_brands %}
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center filter-chip">
+                                        Brand: {{ b.name }}
+                                        <a href="{% url 'user_product_list' %}?q={{ query|urlencode }}&sort={{ sort }}&category={{ category }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% for bid in selected_brands %}{% if bid != b.id|stringformat:'s' %}&brand={{ bid }}{% endif %}{% endfor %}" class="ml-2 text-blue-600 hover:text-blue-800">
+                                            <i data-lucide="x" class="w-3 h-3"></i>
+                                        </a>
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if min_price or max_price %}
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center filter-chip">
+                                Price: ₹{{ min_price|default:0 }} - ₹{{ max_price|default:5000 }}
+                                <a href="{% url 'user_product_list' %}?q={{ query|urlencode }}&sort={{ sort }}&category={{ category }}{% for bid in selected_brands %}&brand={{ bid }}{% endfor %}" class="ml-2 text-blue-600 hover:text-blue-800">
                                     <i data-lucide="x" class="w-3 h-3"></i>
                                 </a>
                             </span>
@@ -250,52 +302,63 @@
                             {% if query %}
                                 <input type="hidden" name="q" value="{{ query }}">
                             {% endif %}
+                            {% if category %}
+                                <input type="hidden" name="category" value="{{ category }}">
+                            {% endif %}
+                            {% for brand_id in selected_brands %}
+                                <input type="hidden" name="brand" value="{{ brand_id }}">
+                            {% endfor %}
+                            {% if min_price %}
+                                <input type="hidden" name="min_price" value="{{ min_price }}">
+                            {% endif %}
+                            {% if max_price %}
+                                <input type="hidden" name="max_price" value="{{ max_price }}">
+                            {% endif %}
                         </form>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
                     {% for product in page_obj %}
                         <div class="product-card p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
-    <a href="{% url 'product_detail' product.slug %}" class="block">
-        <div class="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
-            {% if product.images.all %}
-                <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-            {% elif product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-            {% else %}
-                <img src="{% static 'user_app/default-shoe.jpg' %}" alt="Default shoe image" class="w-full h-full object-cover">
-            {% endif %}
-        </div>
-        <h3 class="font-semibold text-gray-800 mb-1">{{ product.name }}</h3>
-    </a>
-    <div class="flex items-center mb-2">
-        <div class="flex text-yellow-400 text-sm">
-            {% for i in "12345" %}
-                <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= 4 %}fill-current{% endif %}"></i>
-            {% endfor %}
-        </div>
-        <span class="text-gray-500 text-sm ml-1">(4.0)</span>
-    </div>
-    <div class="flex items-center justify-between">
-        <div>
-            <span class="text-lg font-bold text-gray-800">₹{{ product.price }}</span>
-            {% if product.old_price %}
-                <span class="text-sm text-gray-500 line-through ml-2">₹{{ product.old_price }}</span>
-            {% endif %}
-        </div>
-        <span class="text-green-600 text-sm font-medium">
-            {% if product.stock > 0 %}In Stock{% else %}Out of Stock{% endif %}
-        </span>
-    </div>
-</div>
-
+                            <a href="{% url 'product_detail' product.slug %}" class="block">
+                                <div class="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
+                                    {% if product.images.all %}
+                                        <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                    {% elif product.image %}
+                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <img src="{% static 'user_app/default-shoe.jpg' %}" alt="Default shoe image" class="w-full h-full object-cover">
+                                    {% endif %}
+                                </div>
+                                <h3 class="font-semibold text-gray-800 mb-1">{{ product.name }}</h3>
+                            </a>
+                            <div class="flex items-center mb-2">
+                                <div class="flex text-yellow-400 text-sm">
+                                    {% for i in "12345" %}
+                                        <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= 4 %}fill-current{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="text-gray-500 text-sm ml-1">(4.0)</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-lg font-bold text-gray-800">₹{{ product.price }}</span>
+                                    {% if product.old_price %}
+                                        <span class="text-sm text-gray-500 line-through ml-2">₹{{ product.old_price }}</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-green-600 text-sm font-medium">
+                                    {% if product.stock > 0 %}In Stock{% else %}Out of Stock{% endif %}
+                                </span>
+                            </div>
+                        </div>
                     {% empty %}
                         <p class="text-gray-600 col-span-3 text-center">No products found.</p>
                     {% endfor %}
                 </div>
                 <div class="flex justify-center items-center space-x-2">
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% for brand_id in selected_brands %}&brand={{ brand_id }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
                             <i data-lucide="chevron-left" class="w-4 h-4"></i>
                         </a>
                     {% else %}
@@ -305,17 +368,17 @@
                     {% endif %}
                     {% for num in page_obj.paginator.page_range %}
                         {% if page_obj.number == num %}
-                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 bg-blue-600 text-white rounded">{{ num }}</a>
+                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% for brand_id in selected_brands %}&brand={{ brand_id }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="px-3 py-2 bg-blue-600 text-white rounded">{{ num }}</a>
                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">{{ num }}</a>
+                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% for brand_id in selected_brands %}&brand={{ brand_id }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">{{ num }}</a>
                         {% elif num == page_obj.paginator.num_pages or num == 1 %}
-                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">{{ num }}</a>
+                            <a href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% for brand_id in selected_brands %}&brand={{ brand_id }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">{{ num }}</a>
                         {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
                             <span class="px-3 py-2 text-gray-500">...</span>
                         {% endif %}
                     {% endfor %}
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% for brand_id in selected_brands %}&brand={{ brand_id }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </a>
                     {% else %}
@@ -387,51 +450,73 @@
         </div>
     </footer>
 
-     <!-- Logout Confirmation Modal -->
-<div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-  <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
-    <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
-    <p class="mb-6 text-gray-600">Are you sure you want to log out?</p>
-    <div class="flex justify-end space-x-4">
-      <button id="cancelLogout" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-      <a href="{% url 'logout' %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Logout</a>
+    <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
+            <p class="mb-6 text-gray-600">Are you sure you want to log out?</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancelLogout" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                <a href="{% url 'logout' %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Logout</a>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-<script>
-  const logoutBtn = document.getElementById('logoutBtn');
-  const logoutModal = document.getElementById('logoutModal');
-  const cancelLogout = document.getElementById('cancelLogout');
 
-  logoutBtn.addEventListener('click', () => {
-    logoutModal.classList.remove('hidden');
-  });
-
-  cancelLogout.addEventListener('click', () => {
-    logoutModal.classList.add('hidden');
-  });
-
-  // Optional: close modal on ESC key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      logoutModal.classList.add('hidden');
-    }
-  });
-</script>
     <script>
         lucide.createIcons();
 
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const cancelLogout = document.getElementById('cancelLogout');
+
+        logoutBtn.addEventListener('click', () => {
+            logoutModal.classList.remove('hidden');
+        });
+
+        cancelLogout.addEventListener('click', () => {
+            logoutModal.classList.add('hidden');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                logoutModal.classList.add('hidden');
+            }
+        });
+
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mobileMenu = document.getElementById('mobile-menu');
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
         });
 
-        const priceSlider = document.getElementById('price-range');
-        const priceValue = document.getElementById('price-value');
-        priceSlider.addEventListener('input', (e) => {
-            priceValue.textContent = e.target.value;
-        });
+        function updateRangeLabels() {
+            const minInput = document.getElementById('minPrice');
+            const maxInput = document.getElementById('maxPrice');
+            const minLabel = document.getElementById('minPriceLabel');
+            const maxLabel = document.getElementById('maxPriceLabel');
+
+            let min = parseInt(minInput.value);
+            let max = parseInt(maxInput.value);
+
+            // Corrected logic:
+            // Ensure min slider does not go above max slider
+            if (min > max) {
+                minInput.value = max;
+                min = max;
+            }
+            // Ensure max slider does not go below min slider
+            if (max < min) {
+                maxInput.value = min;
+                max = min;
+            }
+
+            minLabel.innerText = min;
+            maxLabel.innerText = max;
+        }
+
+
+        // Initialize labels on page load
+        document.addEventListener('DOMContentLoaded', updateRangeLabels);
+
 
         const sizeButtons = document.querySelectorAll('.size-button');
         sizeButtons.forEach(button => {
@@ -445,17 +530,13 @@
             });
         });
 
-        const filterRemoveButtons = document.querySelectorAll('.filter-chip button');
-        filterRemoveButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const chip = e.target.closest('.filter-chip');
-                chip.remove();
+        // Add event listener for brand checkboxes
+        document.querySelectorAll('.brand-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.form.submit();
             });
         });
-    document.querySelectorAll('.brand-checkbox').forEach(function(checkbox) {
-      checkbox.addEventListener('change', function() {
-          document.getElementById('brand-form').submit();
-      });
-  });
+
     </script>
-    
+</body>
+</html>

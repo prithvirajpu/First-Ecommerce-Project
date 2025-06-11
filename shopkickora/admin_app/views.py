@@ -124,6 +124,7 @@ def add_category(request):
                 errors['name'] = f'Category "{name}" already exists.'
 
     return render(request, 'admin_app/add_category.html', {'errors': errors})
+
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def edit_category(request, category_id):
@@ -173,7 +174,7 @@ def edit_category(request, category_id):
 @user_passes_test(lambda x:x.is_superuser,login_url='admin_login')
 def toggle_category_status(request,category_id):
     category=get_object_or_404(Category,id=category_id)
-    category.is_deleted=not category.is_deleted
+    category.is_deleted=not category.is_deleted 
     category.save()
     status= "enabled" if category.is_deleted else "disabled"
     messages.success(request,f"Category {status} successfully")

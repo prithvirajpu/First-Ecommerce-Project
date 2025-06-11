@@ -286,10 +286,7 @@ def user_product_list(request):
 
     # Apply search filter
     if query:
-        products = products.filter(
-            Q(name__icontains=query) |
-            Q(description__icontains=query)
-        )
+        products = products.filter(name__istartswith=query)
 
     # Sorting
     if sort == 'price_low':
