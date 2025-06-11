@@ -1,35 +1,42 @@
-{% extends "user_app/base_admin.html" %}
-{% block content %}
+{% extends "user_app/base_admin.html" %} {% block content %}
 <div class="container mt-4">
   <h3>Edit Brand</h3>
   <hr />
   <form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-
-    {% if messages %}
-      <div>
-        {% for message in messages %}
-          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
-            {{ message }}
-          </div>
-        {% endfor %}
+    {% csrf_token %} {% if messages %}
+    <div>
+      {% for message in messages %}
+      <div
+        class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
+        role="alert"
+      >
+        {{ message }}
       </div>
+      {% endfor %}
+    </div>
     {% endif %}
 
     <!-- Brand Name -->
     <div class="mb-3">
       <label for="name" class="form-label">Brand Name</label>
-      <input type="text" class="form-control" name="name"
-             value="{{ form_data.name|default:brand.name }}" required />
+      <input
+        type="text"
+        class="form-control"
+        name="name"
+        value="{{ form_data.name|default:brand.name }}"
+        required
+      />
       {% if errors.name %}
-        <p style="color:red">{{ errors.name }}</p>
+      <p style="color: red">{{ errors.name }}</p>
       {% endif %}
     </div>
 
     <!-- Description -->
     <div class="mb-3">
       <label for="description" class="form-label">Description</label>
-      <textarea class="form-control" name="description" rows="3">{{ form_data.description|default:brand.description }}</textarea>
+      <textarea class="form-control" name="description" rows="3">
+{{ form_data.description|default:brand.description }}</textarea
+      >
     </div>
 
     <!-- Logo -->
@@ -37,10 +44,14 @@
       <label for="logo" class="form-label">Change Logo</label>
       <input type="file" class="form-control" name="logo" accept="image/*" />
       {% if errors.logo %}
-        <p style="color:red">{{ errors.logo }}</p>
-      {% endif %}
-      {% if brand.logo %}
-        <img src="{{ brand.logo.url }}" alt="Current Logo" style="width: 80px; height: auto;" class="mt-2" />
+      <p style="color: red">{{ errors.logo }}</p>
+      {% endif %} {% if brand.logo %}
+      <img
+        src="{{ brand.logo.url }}"
+        alt="Current Logo"
+        style="width: 80px; height: auto"
+        class="mt-2"
+      />
       {% endif %}
     </div>
 
@@ -49,9 +60,7 @@
     <a href="{% url 'brand_list' %}" class="btn btn-secondary ms-2">Cancel</a>
   </form>
 </div>
-{% endblock %}
-
-{% block script %}
+{% endblock %} {% block script %}
 <script>
   // Auto dismiss alert messages after 5 seconds
   setTimeout(function () {

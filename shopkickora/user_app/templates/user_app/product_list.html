@@ -1,17 +1,21 @@
-{% extends "user_app/base_admin.html" %}
-
-{% block title %}Product Management{% endblock %}
-
-{% block content %}
-{% if messages %}
-  <div>
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endfor %}
+{% extends "user_app/base_admin.html" %} {% block title %}Product Management{%
+endblock %} {% block content %} {% if messages %}
+<div>
+  {% for message in messages %}
+  <div
+    class="alert alert-{{ message.tags }} alert-dismissible fade show"
+    role="alert"
+  >
+    {{ message }}
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
   </div>
+  {% endfor %}
+</div>
 {% endif %}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -21,7 +25,13 @@
 
 <!-- Search -->
 <form method="GET" class="mb-3 d-flex">
-  <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search products..." class="form-control me-2" />
+  <input
+    type="text"
+    name="q"
+    value="{{ request.GET.q }}"
+    placeholder="Search products..."
+    class="form-control me-2"
+  />
   <button type="submit" class="btn btn-primary me-2">Search</button>
   <a href="{% url 'product_list' %}" class="btn btn-secondary">Clear</a>
 </form>
@@ -44,53 +54,65 @@
     </thead>
     <tbody>
       {% for product in products %}
-        <tr>
-          <td>{{ forloop.counter }}</td>
-          <td>
-            {% if product.images.all %}
-              <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}" style="width: 60px; height: auto; object-fit: contain;" />
-            {% else %}
-              <span>No Image</span>
-            {% endif %}
-          </td>
-          <td>{{ product.name }}</td>
-          <td>{{ product.category.name|default:"-" }}</td>
-          <td>{{ product.brand.name|default:"-" }}</td>
-          <td>${{ product.price|floatformat:2 }}</td>
-<td>
-  {% if product.size_stocks.all %}
-    <ul class="list-unstyled mb-0">
-      {% for stock in product.size_stocks.all %}
-        <li><strong>{{ stock.get_size_display }}:</strong> {{ stock.quantity }}</li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <span>No size info</span>
-  {% endif %}
-</td>
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>
+          {% if product.images.all %}
+          <img
+            src="{{ product.images.all.0.image.url }}"
+            alt="{{ product.name }}"
+            style="width: 60px; height: auto; object-fit: contain"
+          />
+          {% else %}
+          <span>No Image</span>
+          {% endif %}
+        </td>
+        <td>{{ product.name }}</td>
+        <td>{{ product.category.name|default:"-" }}</td>
+        <td>{{ product.brand.name|default:"-" }}</td>
+        <td>${{ product.price|floatformat:2 }}</td>
+        <td>
+          {% if product.size_stocks.all %}
+          <ul class="list-unstyled mb-0">
+            {% for stock in product.size_stocks.all %}
+            <li>
+              <strong>{{ stock.get_size_display }}:</strong> {{ stock.quantity
+              }}
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <span>No size info</span>
+          {% endif %}
+        </td>
 
-
-          <td>
-            {% if not product.is_deleted %}
-              <span class="badge bg-success">Active</span>
-            {% else %}
-              <span class="badge bg-secondary">Disabled</span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{% url 'edit_product' product.id %}" class="btn btn-warning btn-sm me-2">Edit</a>
-            <a href="#" 
-               class="btn btn-sm {% if product.is_deleted %}btn-success{% else %}btn-danger{% endif %} toggle-status-btn"
-               data-url="{% url 'toggle_product_status' product.id %}"
-               data-action="{% if product.is_deleted %}enable{% else %}disable{% endif %}">
-              {% if product.is_deleted %}Enable{% else %}Disable{% endif %}
-            </a>
-          </td>
-        </tr>
+        <td>
+          {% if not product.is_deleted %}
+          <span class="badge bg-success">Active</span>
+          {% else %}
+          <span class="badge bg-secondary">Disabled</span>
+          {% endif %}
+        </td>
+        <td>
+          <a
+            href="{% url 'edit_product' product.id %}"
+            class="btn btn-warning btn-sm me-2"
+            >Edit</a
+          >
+          <a
+            href="#"
+            class="btn btn-sm {% if product.is_deleted %}btn-success{% else %}btn-danger{% endif %} toggle-status-btn"
+            data-url="{% url 'toggle_product_status' product.id %}"
+            data-action="{% if product.is_deleted %}enable{% else %}disable{% endif %}"
+          >
+            {% if product.is_deleted %}Enable{% else %}Disable{% endif %}
+          </a>
+        </td>
+      </tr>
       {% empty %}
-        <tr>
-          <td colspan="9" class="text-center">No products found.</td>
-        </tr>
+      <tr>
+        <td colspan="9" class="text-center">No products found.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -98,98 +120,127 @@
 
 <!-- Pagination -->
 {% if products.has_other_pages %}
-  <nav>
-    <ul class="pagination">
-      {% if products.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Previous</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
-      {% endif %}
-
-      {% for num in products.paginator.page_range %}
-        {% if products.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-        {% else %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
-          </li>
-        {% endif %}
-      {% endfor %}
-
-      {% if products.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Next</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
-      {% endif %}
-    </ul>
-  </nav>
+<nav>
+  <ul class="pagination">
+    {% if products.has_previous %}
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+        >Previous</a
+      >
+    </li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+    {% endif %} {% for num in products.paginator.page_range %} {% if
+    products.number == num %}
+    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+    {% else %}
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+        >{{ num }}</a
+      >
+    </li>
+    {% endif %} {% endfor %} {% if products.has_next %}
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+        >Next</a
+      >
+    </li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link">Next</span></li>
+    {% endif %}
+  </ul>
+</nav>
 {% endif %}
 
 <!-- Confirmation Modal -->
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="confirmModal"
+  tabindex="-1"
+  aria-labelledby="confirmModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="modal-body">
         Are you sure you want to <span id="actionText"></span> this product?
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
         <a href="#" id="confirmBtn" class="btn btn-primary">Yes, proceed</a>
       </div>
     </div>
   </div>
 </div>
 <!-- Logout Confirmation Modal -->
-<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="logoutModal"
+  tabindex="-1"
+  aria-labelledby="logoutModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
-      <div class="modal-body">
-        Are you sure you want to logout?
-      </div>
+      <div class="modal-body">Are you sure you want to logout?</div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
         <a href="{% url 'admin_logout' %}" class="btn btn-danger">Logout</a>
       </div>
     </div>
   </div>
 </div>
-{% endblock %}
-
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-    var actionTextSpan = document.getElementById('actionText');
-    var confirmBtn = document.getElementById('confirmBtn');
+  document.addEventListener("DOMContentLoaded", function () {
+    var confirmModal = new bootstrap.Modal(
+      document.getElementById("confirmModal")
+    );
+    var actionTextSpan = document.getElementById("actionText");
+    var confirmBtn = document.getElementById("confirmBtn");
 
-    document.querySelectorAll('.toggle-status-btn').forEach(function(button) {
-      button.addEventListener('click', function(event) {
+    document.querySelectorAll(".toggle-status-btn").forEach(function (button) {
+      button.addEventListener("click", function (event) {
         event.preventDefault();
 
-        var url = this.getAttribute('data-url');
-        var action = this.getAttribute('data-action');
+        var url = this.getAttribute("data-url");
+        var action = this.getAttribute("data-action");
 
         actionTextSpan.textContent = action;
-        confirmBtn.setAttribute('href', url);
+        confirmBtn.setAttribute("href", url);
 
         confirmModal.show();
       });
     });
   });
 </script>
-
 
 {% endblock %}

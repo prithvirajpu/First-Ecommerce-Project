@@ -110,7 +110,8 @@
                         Explore All <i class="fas fa-chevron-down ml-1 text-xs"></i>
                     </a>
                     <a href="#" class="text-sm hover:text-gray-500">About</a>
-                    <a href="#" class="text-sm hover:text-gray-500">Contact</a>
+                         <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Logout
+                </button>
                 </nav>
             </div>
             <div class="flex items-center space-x-4">
@@ -136,8 +137,7 @@
                 <a href="{% url 'user_product_list' %}" class="text-sm hover:text-gray-500 py-2">Categories</a>
                 <a href="{% url 'user_product_list' %}" class="text-sm hover:text-gray-500 py-2">Explore All</a>
                 <a href="#" class="text-sm hover:text-gray-500 py-2">About</a>
-                <a href="#" class="text-sm hover:text-gray-500 py-2">Contact</a>
-            </div>
+           
         </nav>
     </header>
 
@@ -284,7 +284,37 @@
             </div>
         </div>
     </footer>
+       <!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+  <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+    <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
+    <p class="mb-6 text-gray-600">Are you sure you want to log out?</p>
+    <div class="flex justify-end space-x-4">
+      <button id="cancelLogout" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+      <a href="{% url 'logout' %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Logout</a>
+    </div>
+  </div>
+</div>
+<script>
+  const logoutBtn = document.getElementById('logoutBtn');
+  const logoutModal = document.getElementById('logoutModal');
+  const cancelLogout = document.getElementById('cancelLogout');
 
+  logoutBtn.addEventListener('click', () => {
+    logoutModal.classList.remove('hidden');
+  });
+
+  cancelLogout.addEventListener('click', () => {
+    logoutModal.classList.add('hidden');
+  });
+
+  // Optional: close modal on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      logoutModal.classList.add('hidden');
+    }
+  });
+</script>
     <script>
         // Image Zoom Functionality
         function imageZoom(imgID, resultID) {

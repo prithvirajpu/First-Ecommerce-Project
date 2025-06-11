@@ -13,13 +13,12 @@ from django.db.models import Q
 from django.conf import settings
 from django.core.mail import send_mail
 from django.urls import reverse
-from django.contrib.auth.tokens import PasswordResetTokenGenerator  # For generating reset tokens
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode  # For encoding/decoding user ID
+from django.contrib.auth.tokens import PasswordResetTokenGenerator  
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode 
 from django.utils.encoding import force_bytes, force_str
 
 
-OTP_EXPIRY_SECONDS = 600  # OTP expires after 10 minutes (optional enhancement)
-
+OTP_EXPIRY_SECONDS = 600
 
 @never_cache
 def signup_view(request):
@@ -27,7 +26,7 @@ def signup_view(request):
         return redirect('user_dashboard')
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
-        email = request.POST.get('email', '').strip().lower()  # Normalize email
+        email = request.POST.get('email', '').strip().lower()  
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
 
@@ -58,7 +57,6 @@ def signup_view(request):
         if errors:
             return render(request, 'user_app/signup.html', {'errors': errors})
 
-        # Generate OTP and save signup data + timestamp in session
         otp = random.randint(100000, 999999)
         request.session['signup_data'] = {
             'username': username,
@@ -88,24 +86,20 @@ def verify_otp_view(request):
         return redirect('user_dashboard')
     signup_data = request.session.get('signup_data')
     if not signup_data:
-        return redirect('signup')  # Prevent direct access without signup
-
+        return redirect('signup')  
     if request.method == 'POST':
         entered_otp = request.POST.get('otp', '').strip()
 
-        # Validate OTP format
         if len(entered_otp) != 6 or not entered_otp.isdigit():
             messages.error(request, "Enter a valid 6-digit OTP.")
             return render(request, 'user_app/verify_otp.html')
 
-        # Check if OTP expired
         otp_created_at = signup_data.get('otp_created_at', 0)
         if time.time() - otp_created_at > OTP_EXPIRY_SECONDS:
             messages.error(request, "OTP expired. Please resend and try again.")
             return render(request, 'user_app/verify_otp.html')
 
         if entered_otp == signup_data['otp']:
-            # Create user and login
             user = CustomUser.objects.create_user(
                 username=signup_data['username'],
                 email=signup_data['email'],
@@ -156,7 +150,6 @@ def forgot_password_view(request):
 
         try:
             user = CustomUser.objects.get(email=email)
-            # Generate a token for password reset
             token_generator = PasswordResetTokenGenerator()
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -237,7 +230,6 @@ def login_view(request):
                     messages.error(request, "Your account is currently suspended.")
                 else:
                     login(request, user)
-                    print(f"Logged in user: {request.user}") 
                     return redirect('user_dashboard')
             else:
                 form.add_error(None, "Invalid username or password.")
@@ -252,24 +244,12 @@ def user_dashboard(request):
     if request.user.is_superuser:
         return redirect('admin_dashboard')
     
-    # Get all non-deleted products
     all_products = Product.objects.filter(is_deleted=False)
     
-    # For "Best Selling" section: Select 4 random products
     best_selling_products = random.sample(list(all_products), min(4, len(all_products))) if all_products else []
     
-    # For "Featured" section: Select another 4 random products
     remaining_products = [p for p in all_products if p not in best_selling_products]
     featured_products = random.sample(list(remaining_products), min(4, len(remaining_products))) if remaining_products else []
-    
-    # Debugging: Print product details
-    print("Best Selling Products:")
-    for product in best_selling_products:
-        print(f"Product: {product.name}, Image: {product.image}, Image URL: {product.image_url}")
-    
-    print("Featured Products:")
-    for product in featured_products:
-        print(f"Product: {product.name}, Image: {product.image}, Image URL: {product.image_url}")
     
     context = {
         'best_selling_products': best_selling_products,
@@ -345,15 +325,12 @@ def user_product_list(request):
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
 
-    # Fetch related products
     related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
 
-    # Fetch available sizes from ProductSizeStock where quantity > 0
     sizes = ProductSizeStock.objects.filter(product=product, quantity__gt=0).values_list('size', flat=True)
 
-    # Optional: Get full size display names (e.g., "Small" instead of "S")
-    size_choices = dict(ProductSizeStock.SIZE_CHOICES)  # {'S': 'Small', 'M': 'Medium', 'L': 'Large'}
-    sizes = [size for size in sizes]  # Ensure sizes is a list
+    size_choices = dict(ProductSizeStock.SIZE_CHOICES)  
+    sizes = [size for size in sizes] 
 
     return render(request, 'user_app/product_detail.html', {
         'product': product,
