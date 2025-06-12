@@ -286,7 +286,6 @@
           >
             <!-- Link the entire image container to the product detail page -->
             <a href="{% url 'product_detail' slug=product.slug %}">
-              {# CHANGED: Pass slug=product.slug #}
               <div class="product-image-container">
   {% if product.image_url %}
     <img
@@ -324,7 +323,6 @@
                   class="hover:text-blue-600"
                   >{{ product.name }}</a
                 >
-                {# CHANGED: Pass slug=product.slug #}
               </h3>
               <p class="text-gray-600 text-sm mb-3 line-clamp-2">
                 {{ product.description|truncatewords:10 }}
@@ -337,7 +335,6 @@
                   href="{% url 'product_detail' slug=product.slug %}"
                   class="text-sm btn-primary py-2 px-3"
                 >
-                  {# CHANGED: Pass slug=product.slug #} View Details
                 </a>
               </div>
             </div>

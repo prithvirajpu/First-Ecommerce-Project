@@ -36,7 +36,8 @@ def signup_view(request):
             errors['username'] = "Username is required."
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', username):
             errors['username'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
-        
+        elif username == "_" * len(username):
+            errors['username']= "Username cannot be only underscores."
         elif CustomUser.objects.filter(username=username).exists():
             errors['username'] = "Username already taken."
 
@@ -53,6 +54,8 @@ def signup_view(request):
             errors['password2'] = "Passwords do not match."
         elif len(password1) < 6:
             errors['password1'] = "Password must be at least 6 characters."
+        elif password1.is_digit():
+            errors['password1']="Password can not contain only numbers."
 
         if errors:
             return render(request, 'user_app/signup.html', {'errors': errors})
@@ -263,10 +266,28 @@ def user_product_list(request):
     query = request.GET.get('q', '').strip()
     category = request.GET.get('category', 'all')
     sort = request.GET.get('sort', 'newest')
-    categories = Category.objects.filter(is_active=True, is_deleted=False)
 
     # For brands, get list of IDs from GET param (e.g. ?brand=1&brand=3)
     brand_ids = request.GET.getlist('brand')  # returns a list of brand ids as strings
+
+    # Retrieve price filter values
+    min_price_str = request.GET.get('min_price')
+    max_price_str = request.GET.get('max_price')
+
+    # Convert prices to float, handling potential errors
+    min_price = None
+    if min_price_str:
+        try:
+            min_price = float(min_price_str)
+        except ValueError:
+            pass # Ignore if not a valid number
+
+    max_price = None
+    if max_price_str:
+        try:
+            max_price = float(max_price_str)
+        except ValueError:
+            pass # Ignore if not a valid number
 
     # Base queryset
     products = Product.objects.filter(
@@ -282,11 +303,21 @@ def user_product_list(request):
 
     # Filter by brands if any selected
     if brand_ids:
-        products = products.filter(brand__id__in=brand_ids)
+        # Ensure brand_ids are integers if your brand IDs are integers, otherwise keep as strings
+        # Assuming brand IDs are integers for filtering by __in
+        products = products.filter(brand__id__in=brand_ids) # brand__id__in for multiple values
 
     # Apply search filter
     if query:
-        products = products.filter(name__istartswith=query)
+        # Use Q objects for OR conditions (name OR description) for a more comprehensive search
+        products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
+
+    # Apply price filters
+    if min_price is not None:
+        products = products.filter(price__gte=min_price)
+
+    if max_price is not None:
+        products = products.filter(price__lte=max_price)
 
     # Sorting
     if sort == 'price_low':
@@ -294,28 +325,34 @@ def user_product_list(request):
     elif sort == 'price_high':
         products = products.order_by('-price')
     else:
-        products = products.order_by('-created_at')
+        products = products.order_by('-created_at') # Assuming 'created_at' field for newest
 
     brands = Brand.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True, is_deleted=False) # Keep this here to ensure it's available
 
     # Pagination
     paginator = Paginator(products, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    product_count = products.count() # Get count after all filters are applied
+
     context = {
         'page_obj': page_obj,
         'query': query,
         'category': category,
         'sort': sort,
-        'product_count': products.count(),
-        'sizes_list': ['S', 'M', 'L'],
+        'product_count': product_count,
+        'sizes_list': ['S', 'M', 'L'], # If you plan to implement this filter, you'll need logic for it
         'categories': categories,
         'brands': brands,
-        'selected_brands': brand_ids,  # Pass selected brand ids to template
+        'selected_brands': brand_ids,
+        'min_price': min_price, # Pass the float value back to the template
+        'max_price': max_price, # Pass the float value back to the template
     }
 
     return render(request, 'user_app/user_product_list.html', context)
+
 
 @never_cache
 @login_required(login_url='login')

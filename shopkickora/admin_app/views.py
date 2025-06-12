@@ -48,6 +48,7 @@ def admin_logout(request):
     request.session.flush()  
     return redirect('admin_login')
 
+
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def user_list(request):
@@ -61,6 +62,7 @@ def user_list(request):
     page_obj=paginator.get_page(page_number)
     context={'users':page_obj,'query':query}
     return render(request,'admin_app/user_list.html',context)
+
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
@@ -112,6 +114,8 @@ def add_category(request):
             errors['name'] = "Category name is required."
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
             errors['name'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
+        elif name == "_" * len(name):
+            errors['name']= "Username cannot be only underscores."
         elif Category.objects.filter(name__iexact=name).exists():
             errors['name'] = f'Category "{name}" already exists.'
 
@@ -135,18 +139,16 @@ def edit_category(request, category_id):
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
 
-        # Check for no changes
         if name == category.name and description == category.description:
             messages.info(request, "No changes detected.")
             return redirect('category_list')
 
-        # Validations
         if not name:
             errors['name'] = "Category name is required."
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
             errors['name'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
-        elif '__' in name:
-            errors['name'] = "Category name cannot contain consecutive underscores (e.g., '__')."
+        elif name == "_" * len(name):
+            errors['name']= "Username cannot be only underscores."
         elif Category.objects.filter(name__iexact=name).exclude(id=category.id).exists():
             errors['name'] = f'Category \"{name}\" already exists.'
 
@@ -160,7 +162,6 @@ def edit_category(request, category_id):
                 }
             })
 
-        # If everything is valid, update and save
         category.name = name
         category.description = description
         category.save()
@@ -181,12 +182,10 @@ def toggle_category_status(request,category_id):
     return redirect('category_list')
 
 
-
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def product_list(request):
-    query = request.GET.get('q', '')  # Search query
-
+    query = request.GET.get('q', '')  
     products = Product.objects.prefetch_related('size_stocks').order_by('-created_at')
 
     if query:
@@ -206,7 +205,7 @@ def product_list(request):
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def add_product(request):
     categories = Category.objects.filter(is_deleted=False)
-    brands = Brand.objects.filter(status='active')
+    brands = Brand.objects.filter(is_active=True)
     errors = {}
 
     if request.method == 'POST':
@@ -217,7 +216,6 @@ def add_product(request):
         brand_id = request.POST.get('brand')
         images = request.FILES.getlist('images')
 
-        # ✅ Size-based stock inputs
         stock_s = request.POST.get('stock_S')
         stock_m = request.POST.get('stock_M')
         stock_l = request.POST.get('stock_L')
@@ -228,33 +226,32 @@ def add_product(request):
             'price': price,
             'category_id': category_id,
             'brand_id': brand_id,
-            'stock_S': stock_s,  # ✅
-            'stock_M': stock_m,  # ✅
-            'stock_L': stock_l,  # ✅
+            'stock_S': stock_s,  
+            'stock_M': stock_m,  
+            'stock_L': stock_l,  
         }
 
-        # ✅ Check image count
-        if len(images) < 3:
+        
+        if len(images) < 3 :
             errors['format'] = "Please upload at least 3 images."
 
-        # ✅ Product name validation
         allowed_extensions = ['jpg', 'jpeg', 'png', 'webp']
         if not name:
             errors['name'] = 'Must enter the name'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
             errors['name'] = ("Please enter a product name with at least one letter. "
                               "Only letters, numbers, spaces, hyphens, and underscores are allowed.")
+        elif name == "_" * len(name):
+            errors['name']= "Username cannot be only underscores."
         elif Product.objects.filter(name__iexact=name).exists():
             errors['name'] = "The product name already exists"
 
-        # ✅ Image extension validation
         for image in images:
             ext = image.name.split('.')[-1].lower()
             if ext not in allowed_extensions:
                 errors['format'] = "Invalid file format"
                 break
 
-        # ✅ Price validation
         try:
             price_val = float(price)
             if price_val <= 0:
@@ -262,7 +259,6 @@ def add_product(request):
         except (ValueError, TypeError):
             errors['price'] = "Enter a valid number for price."
 
-        # ✅ Validate size stock
         if not stock_s or not stock_m or not stock_l:
             errors['stock_sizes'] = "All sizes (S, M, L) must have stock."
         try:
@@ -332,7 +328,7 @@ def add_product(request):
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     categories = Category.objects.filter(is_deleted=False)
-    brands = Brand.objects.filter(status='active')
+    brands = Brand.objects.filter(is_active=True)
     existing_images = ProductImage.objects.filter(product=product)
     errors = {}
 
@@ -378,7 +374,8 @@ def edit_product(request, product_id):
                 "Please enter a product name with at least one letter. "
                 "Only letters, numbers, spaces, hyphens, and underscores are allowed."
             )
-
+        elif name == "_" * len(name):
+            errors['name']= "Username cannot be only underscores."
         # Validate price
         try:
             price_val = float(price)
@@ -534,6 +531,8 @@ def add_brand(request):
         # --- Brand Name Validations ---
         if not name:
             errors['name'] = 'Must enter the name.'
+        elif name == "_" * len(name):
+            errors['name']= "Username cannot be only underscores."
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
             errors['name'] = (
                 "Please enter a brand name with at least one letter. "
@@ -588,6 +587,8 @@ def edit_brand(request, brand_id):
         if not re.match(r'^[A-Za-z]+(?: [A-Za-z]+)*$', name):
             errors['name'] = "Brand name should only contain letters and spaces, without leading/trailing spaces or underscores."
 
+        elif name == "_" * len(name):
+            errors['name']= "Username cannot be only underscores."
         # Check for name duplication (only if changed and pattern is valid)
         elif name.lower() != brand.name.lower():
             if Brand.objects.filter(name__iexact=name).exclude(id=brand.id).exists():

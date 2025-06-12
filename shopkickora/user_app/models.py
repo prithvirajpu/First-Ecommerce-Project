@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
+from django.utils.text import slugify
 # Create your models here.
 
 class CustomUser(AbstractUser):
@@ -43,6 +44,17 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            # Add a loop to ensure uniqueness if a slug already exists
+            original_slug = self.slug
+            count = 1
+            while Product.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{count}"
+                count += 1
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return self.name
 

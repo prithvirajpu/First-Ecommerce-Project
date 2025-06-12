@@ -96,19 +96,23 @@
                 </nav>
                 <div class="flex items-center space-x-4">
                     <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
-                        <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
-                        <input type="text" name="q" value="{{ query }}" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
-                        {% if query %}
-                            <a href="{% url 'user_product_list' %}?sort={{ sort }}" class="ml-2 text-gray-500 hover:text-gray-700">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </a>
-                        {% else %}
-                            <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
-                                <i data-lucide="search" class="w-4 h-4"></i>
-                            </button>
-                        {% endif %}
-                        <input type="hidden" name="sort" value="{{ sort }}">
-                    </form>
+    <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
+    <input type="text" name="q" value="{{ query }}" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
+    {% if query %}
+        <a href="{% url 'user_product_list' %}?sort={{ sort }}{% if category %}&category={{ category }}{% endif %}{% for brand_id in selected_brands %}&brand={{ brand_id }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="ml-2 text-gray-500 hover:text-gray-700">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </a>
+    {% else %}
+        <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
+            <i data-lucide="search" class="w-4 h-4"></i>
+        </button>
+    {% endif %}
+    <input type="hidden" name="sort" value="{{ sort }}">
+    {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+    {% for brand_id in selected_brands %}<input type="hidden" name="brand" value="{{ brand_id }}">{% endfor %}
+    {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+    {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+</form>
                     <button class="relative">
                         <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
                         <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
@@ -206,33 +210,24 @@
                     </div>
                 </div>
 
-                <div class="filter-section p-6">
-                    <h3 class="text-lg font-semibold mb-4">Price</h3>
-                    <form method="get" class="mb-6">
-                        <div class="w-full">
-                            <label for="minPrice" class="block text-sm font-medium text-gray-700 mb-2">Filter by Price</label>
-                            <div class="flex items-center space-x-4">
-                                <span>$<span id="minPriceLabel">0</span></span>
-                                <input type="range" id="minPrice" name="min_price" min="0" max="5000" value="{{ min_price|default:0 }}"
-                                        class="w-full price-range-slider" oninput="updateRangeLabels()">
-                                <input type="range" id="maxPrice" name="max_price" min="0" max="5000" value="{{ max_price|default:5000 }}"
-                                        class="w-full price-range-slider" oninput="updateRangeLabels()">
-                                <span>$<span id="maxPriceLabel">5000</span></span>
-                            </div>
-                            <input type="hidden" name="q" value="{{ query }}">
-                            <input type="hidden" name="category" value="{{ category }}">
-                            <input type="hidden" name="sort" value="{{ sort }}">
-                            {% for brand_id in selected_brands %}
-                                <input type="hidden" name="brand" value="{{ brand_id }}">
-                            {% endfor %}
-                            <div class="mt-4">
-                                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                                    Apply Price
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+                <div class="filter-section p-6"> {# Re-using your existing filter-section styling #}
+    <form action="{% url 'user_product_list' %}" method="GET" class="space-y-6">
+        <div>
+            <h3 class="text-lg font-semibold mb-4">PRICE RANGE</h3> {# Adjusted text to match existing h3 style #}
+            <div class="flex space-x-2">
+                <input type="number" name="min_price" placeholder="Min" value="{{ request.GET.min_price }}" class="border border-gray-300 rounded-md px-3 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-gray-500" step="0.01" min="0">
+                <input type="number" name="max_price" placeholder="Max" value="{{ request.GET.max_price }}" class="border border-gray-300 rounded-md px-3 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-gray-500" step="0.01" min="0">
+            </div>
+        </div>
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="category" value="{{ category }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        {% for brand_id in selected_brands %}
+            <input type="hidden" name="brand" value="{{ brand_id }}">
+        {% endfor %}
+        <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">Apply Filters</button> {# Adjusted button style to match your other filter buttons #}
+    </form>
+</div>
             </div>
 
             <div class="lg:w-3/4">
@@ -487,36 +482,6 @@
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
         });
-
-        function updateRangeLabels() {
-            const minInput = document.getElementById('minPrice');
-            const maxInput = document.getElementById('maxPrice');
-            const minLabel = document.getElementById('minPriceLabel');
-            const maxLabel = document.getElementById('maxPriceLabel');
-
-            let min = parseInt(minInput.value);
-            let max = parseInt(maxInput.value);
-
-            // Corrected logic:
-            // Ensure min slider does not go above max slider
-            if (min > max) {
-                minInput.value = max;
-                min = max;
-            }
-            // Ensure max slider does not go below min slider
-            if (max < min) {
-                maxInput.value = min;
-                max = min;
-            }
-
-            minLabel.innerText = min;
-            maxLabel.innerText = max;
-        }
-
-
-        // Initialize labels on page load
-        document.addEventListener('DOMContentLoaded', updateRangeLabels);
-
 
         const sizeButtons = document.querySelectorAll('.size-button');
         sizeButtons.forEach(button => {

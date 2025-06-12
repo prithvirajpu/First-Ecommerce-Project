@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'admin_app.middleware.DisableCacheMiddleware', 
+    'admin_app.middleware.BlockedUserMiddleware',
 ]
 
 ROOT_URLCONF = 'shopkickora.urls'
