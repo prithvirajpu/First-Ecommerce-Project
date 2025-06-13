@@ -15,8 +15,7 @@ class Category(models.Model):
     description = models.TextField(blank=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)  # ✅ ADD THIS
-
+    is_active = models.BooleanField(default=True)  
     def __str__(self):
         return self.name
     
@@ -26,6 +25,7 @@ class Brand(models.Model):
     logo=models.ImageField(upload_to='brand_logos/',blank=True,null=True)
     created_at=models.DateTimeField(auto_now_add=True)
     is_active=models.BooleanField(default=True)
+    status = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -47,7 +47,6 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
-            # Add a loop to ensure uniqueness if a slug already exists
             original_slug = self.slug
             count = 1
             while Product.objects.filter(slug=self.slug).exists():

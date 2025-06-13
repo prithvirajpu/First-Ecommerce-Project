@@ -115,37 +115,13 @@
               class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >Home</a
             >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Men</a
-            >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Women</a
-            >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Kids</a
-            >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Sale</a
-            >
-            <a
-              href="#"
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Contact</a
-            >
+            <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+            
             {% if user.is_authenticated %}
-            <a
-              href="{% url 'user_dashboard' %}"
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Dashboard</a
-            >
+            
+      
             <button
               id="logoutBtn"
               class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
@@ -189,37 +165,13 @@
               class="text-gray-700 hover:text-blue-600 font-medium py-2"
               >Home</a
             >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium py-2"
-              >Men</a
-            >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium py-2"
-              >Women</a
-            >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium py-2"
-              >Kids</a
-            >
-            <a
-              href=""
-              class="text-gray-700 hover:text-blue-600 font-medium py-2"
-              >Sale</a
-            >
-            <a
-              href="#"
-              class="text-gray-700 hover:text-blue-600 font-medium py-2"
-              >Contact</a
-            >
+            <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+            
+            
             {% if user.is_authenticated %}
-            <a
-              href="{% url 'user_dashboard' %}"
-              class="text-gray-700 hover:text-blue-600 font-medium py-2"
-              >Dashboard</a
-            >
+           
             <a
               href="{% url 'logout' %}"
               class="text-gray-700 hover:text-blue-600 font-medium py-2"

@@ -12,5 +12,4 @@ class CustomGoogleOAuth2Adapter(GoogleOAuth2Adapter):
 
 class CustomAccountAdapter(DefaultAccountAdapter):
     def populate_username(self, request, user):
-        # Make username equal to email
         user.username = user.email

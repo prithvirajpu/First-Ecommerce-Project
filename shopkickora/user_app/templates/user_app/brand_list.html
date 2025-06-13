@@ -30,7 +30,6 @@
         <th>Logo</th>
         <th>Name</th>
         <th>Description</th>
-        <th>Status</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -47,7 +46,6 @@
           </td>
           <td>{{ brand.name }}</td>
           <td>{{ brand.description|truncatechars:50 }}</td>
-          <td>{{ brand.status }}</td>
           <td>
             <a href="{% url 'edit_brand' brand.id %}" class="btn btn-warning btn-sm">Edit</a>
             <a href="#" 

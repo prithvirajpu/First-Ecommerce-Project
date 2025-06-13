@@ -1,4 +1,3 @@
-import re
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -8,6 +7,7 @@ from .models import Brand, Category, CustomUser, Product, ProductSizeStock
 from user_app.forms import LoginForm
 import random
 import time
+import re
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.conf import settings
@@ -69,7 +69,6 @@ def signup_view(request):
             'otp_created_at': time.time()
         }
 
-        # Send OTP email
         send_mail(
             'Your ShopKickora OTP',
             f'Your OTP for ShopKickora signup is: {otp}',
@@ -157,13 +156,11 @@ def forgot_password_view(request):
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            # Create reset URL
             reset_url = request.build_absolute_uri(
                 reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
             )
             print("Password reset URL:", reset_url)
 
-            # Send password reset email
             send_mail(
                 'ShopKickora Password Reset',
                 f'Click the link to reset your password: {reset_url}',
@@ -205,7 +202,6 @@ def reset_password_view(request, uidb64, token):
             if errors:
                 return render(request, 'user_app/reset_password.html', {'errors': errors, 'uidb64': uidb64, 'token': token})
 
-            # Update the user's password
             user.set_password(password1)
             user.save()
             messages.success(request, "Password reset successfully. Please log in with your new password.")
@@ -220,8 +216,6 @@ def reset_password_view(request, uidb64, token):
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('user_dashboard')
-
-
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -231,6 +225,10 @@ def login_view(request):
             if user is not None:
                 if user.is_blocked:
                     messages.error(request, "Your account is currently suspended.")
+                    return render(request, 'user_app/login.html', {'form': form})
+                elif not user.is_active:
+                    messages.error(request,'Your account is inactive.')
+                    return render(request, 'user_app/login.html', {'form': form})
                 else:
                     login(request, user)
                     return redirect('user_dashboard')
@@ -260,6 +258,7 @@ def user_dashboard(request):
     }
     return render(request, 'user_app/dashboard.html', context)
 
+
 @never_cache
 @login_required(login_url='login')
 def user_product_list(request):
@@ -267,29 +266,26 @@ def user_product_list(request):
     category = request.GET.get('category', 'all')
     sort = request.GET.get('sort', 'newest')
 
-    # For brands, get list of IDs from GET param (e.g. ?brand=1&brand=3)
-    brand_ids = request.GET.getlist('brand')  # returns a list of brand ids as strings
+    brand_ids = request.GET.getlist('brand')  
 
-    # Retrieve price filter values
+
     min_price_str = request.GET.get('min_price')
     max_price_str = request.GET.get('max_price')
 
-    # Convert prices to float, handling potential errors
     min_price = None
     if min_price_str:
         try:
             min_price = float(min_price_str)
         except ValueError:
-            pass # Ignore if not a valid number
+            pass 
 
     max_price = None
     if max_price_str:
         try:
             max_price = float(max_price_str)
         except ValueError:
-            pass # Ignore if not a valid number
+            pass 
 
-    # Base queryset
     products = Product.objects.filter(
         is_deleted=False,
         category__is_deleted=False,
@@ -297,45 +293,36 @@ def user_product_list(request):
         brand__is_active=True
     )
 
-    # Filter by category
     if category != 'all':
         products = products.filter(category__id=category)
 
-    # Filter by brands if any selected
     if brand_ids:
-        # Ensure brand_ids are integers if your brand IDs are integers, otherwise keep as strings
-        # Assuming brand IDs are integers for filtering by __in
-        products = products.filter(brand__id__in=brand_ids) # brand__id__in for multiple values
+        products = products.filter(brand__id__in=brand_ids) 
 
-    # Apply search filter
     if query:
-        # Use Q objects for OR conditions (name OR description) for a more comprehensive search
         products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
 
-    # Apply price filters
     if min_price is not None:
         products = products.filter(price__gte=min_price)
 
     if max_price is not None:
         products = products.filter(price__lte=max_price)
 
-    # Sorting
     if sort == 'price_low':
         products = products.order_by('price')
     elif sort == 'price_high':
         products = products.order_by('-price')
     else:
-        products = products.order_by('-created_at') # Assuming 'created_at' field for newest
+        products = products.order_by('-created_at')
 
     brands = Brand.objects.filter(is_active=True)
-    categories = Category.objects.filter(is_active=True, is_deleted=False) # Keep this here to ensure it's available
+    categories = Category.objects.filter(is_active=True, is_deleted=False) 
 
-    # Pagination
     paginator = Paginator(products, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    product_count = products.count() # Get count after all filters are applied
+    product_count = products.count() 
 
     context = {
         'page_obj': page_obj,
@@ -343,12 +330,12 @@ def user_product_list(request):
         'category': category,
         'sort': sort,
         'product_count': product_count,
-        'sizes_list': ['S', 'M', 'L'], # If you plan to implement this filter, you'll need logic for it
+        'sizes_list': ['S', 'M', 'L'], 
         'categories': categories,
         'brands': brands,
         'selected_brands': brand_ids,
-        'min_price': min_price, # Pass the float value back to the template
-        'max_price': max_price, # Pass the float value back to the template
+        'min_price': min_price, 
+        'max_price': max_price, 
     }
 
     return render(request, 'user_app/user_product_list.html', context)
@@ -370,7 +357,7 @@ def product_detail(request, slug):
         'product': product,
         'related_products': related_products,
         'sizes': sizes,
-        'size_choices': size_choices,  # Optional: If you want to display full size names
+        'size_choices': size_choices,  
     })
 
 @never_cache

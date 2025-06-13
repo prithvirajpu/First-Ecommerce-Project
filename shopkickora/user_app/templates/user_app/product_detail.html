@@ -6,24 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>shopKickora - {{ product.name|default:"Product" }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            500: '#ff4d4f',
+                            600: '#f5222d',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
         }
-        
         .size-box {
             transition: all 0.2s ease;
         }
-        
         .size-box.selected {
             background-color: #1a202c;
             color: white;
         }
-        
         .img-zoom-container {
             position: relative;
             display: inline-block;
@@ -34,7 +60,6 @@
             width: 550px;
             overflow: hidden;
         }
-
         .img-zoom-lens {
             position: absolute;
             border: 1px solid #d4d4d4;
@@ -44,8 +69,8 @@
             cursor: none;
             z-index: 10;
             display: none;
+            pointer-events: none;
         }
-
         .img-zoom-result {
             position: absolute;
             top: 0;
@@ -57,14 +82,14 @@
             background-color: #fff;
             z-index: 100;
             display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-
         #mainImage {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            display: block;
         }
-
         .thumbnail {
             width: 80px;
             height: 80px;
@@ -75,65 +100,75 @@
             transition: border-color 0.2s ease;
             border-radius: 4px;
         }
-
         .thumbnail:hover {
             border-color: #1a202c;
         }
-
         .thumbnail.active {
             border-color: #1a202c;
             background-color: #f1f5f9;
         }
-
         .w-\[550px\] {
             width: 550px;
         }
+        @media (max-width: 768px) {
+            .img-zoom-result {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 300px;
+                height: 300px;
+            }
+        }
     </style>
 </head>
-<body class="bg-white">
-    <header class="border-b border-gray-200">
-        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center space-x-8">
-                <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold">shopKickora</a>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="{% url 'user_dashboard' %}" class="text-sm hover:text-gray-500">Home</a>
-                    <div class="relative group">
-                        <a href="{% url 'user_product_list' %}" class="text-sm hover:text-gray-500 flex items-center">
-                            Categories <i class="fas fa-chevron-down ml-1 text-xs"></i>
-                        </a>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                     </div>
-                    <a href="{% url 'user_product_list' %}" class="text-sm hover:text-gray-500 flex items-center">
-                        Explore All <i class="fas fa-chevron-down ml-1 text-xs"></i>
-                    </a>
-                    <a href="#" class="text-sm hover:text-gray-500">About</a>
+                    <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+                    {% if user.is_authenticated %}
                     <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Logout</button>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Login</a>
+                    <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Sign Up</a>
+                    {% endif %}
                 </nav>
+                <div class="flex items-center space-x-4">
+                    <button class="relative">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+                    <button class="md:hidden" id="mobile-menu-btn">
+                        <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <form action="{% url 'user_product_list' %}" method="GET" class="relative hidden md:block">
-                    <input type="text" name="q" placeholder="Search products" class="border border-gray-300 rounded-md pl-8 pr-4 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500">
-                    <i class="fas fa-search absolute left-3 top-2 text-gray-400 text-sm"></i>
-                </form>
-                <a href="#" class="text-gray-700 hover:text-gray-900 relative">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                </a>
-                <a href="#" class="text-gray-700 hover:text-gray-900">
-                    <i class="fas fa-user"></i>
-                </a>
-                <button class="md:hidden" id="mobile-menu-btn">
-                    <i class="fas fa-bars text-gray-700"></i>
-                </button>
-            </div>
+            <nav class="md:hidden hidden pb-4" id="mobile-menu">
+                <div class="flex flex-col space-y-2">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Categories</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Logout</a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Login</a>
+                    <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Sign Up</a>
+                    {% endif %}
+                </div>
+            </nav>
         </div>
-        <nav class="md:hidden hidden pb-4 px-4" id="mobile-menu">
-            <div class="flex flex-col space-y-2">
-                <a href="{% url 'user_dashboard' %}" class="text-sm hover:text-gray-500 py-2">Home</a>
-                <a href="{% url 'user_product_list' %}" class="text-sm hover:text-gray-500 py-2">Categories</a>
-                <a href="{% url 'user_product_list' %}" class="text-sm hover:text-gray-500 py-2">Explore All</a>
-                <a href="#" class="text-sm hover:text-gray-500 py-2">About</a>
-            </div>
-        </nav>
     </header>
 
     <div class="container mx-auto px-4 py-2">
@@ -151,6 +186,8 @@
             <div class="space-y-4 relative">
                 <div class="img-zoom-container">
                     <img id="mainImage" src="{% if product.images.all %}{{ product.images.all.0.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% static 'user_app/default-shoe.jpg' %}{% endif %}" alt="{{ product.name|default:'Product' }}">
+                    <div class="img-zoom-lens"></div>
+                    <div id="myresult" class="img-zoom-result"></div>
                 </div>
                 {% if product.images.all %}
                     <div class="flex justify-center space-x-2 mt-2 w-[550px] mx-auto">
@@ -159,7 +196,6 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                <div id="myresult" class="img-zoom-result"></div>
             </div>
 
             <div>
@@ -272,15 +308,14 @@
                 <div class="flex space-x-4">
                     <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-twitter"></i></a>
-                    <a href="#" classkeyboard_arrow_right class="text-gray-500 hover:text-gray-900"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-instagram"></i></a>
                     <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-pinterest"></i></a>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Logout Confirmation Modal -->
-    <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden10 hidden">
+    <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
         <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
             <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
             <p class="mb-6 text-gray-600">Are you sure you want to log out?</p>
@@ -292,6 +327,8 @@
     </div>
 
     <script>
+        lucide.createIcons();
+
         const logoutBtn = document.getElementById('logoutBtn');
         const logoutModal = document.getElementById('logoutModal');
         const cancelLogout = document.getElementById('cancelLogout');
@@ -310,59 +347,77 @@
             }
         });
 
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
         function imageZoom(imgID, resultID) {
             const img = document.getElementById(imgID);
             const result = document.getElementById(resultID);
+            const container = img.parentElement;
 
-            let existingLens = img.parentElement.querySelector('.img-zoom-lens');
+            let existingLens = container.querySelector('.img-zoom-lens');
             if (existingLens) {
                 existingLens.remove();
             }
 
-            const lens = document.createElement("DIV");
-            lens.setAttribute("class", "img-zoom-lens");
-            img.parentElement.insertBefore(lens, img);
+            const lens = document.createElement('div');
+            lens.className = 'img-zoom-lens';
+            container.insertBefore(lens, img);
 
-            let cx, cy;
+            const fallbackImage = 'https://via.placeholder.com/550';
 
-            function updateZoomRatios() {
-                if (img.naturalWidth === 0) {
-                    img.onload = () => {
-                        cx = result.offsetWidth / lens.offsetWidth;
-                        cy = result.offsetHeight / lens.offsetHeight;
-                        result.style.backgroundImage = `url('${img.src}')`;
-                        result.style.backgroundSize = `${img.naturalWidth * cx}px ${img.naturalHeight * cy}px`;
+            function preloadImage(src) {
+                return new Promise((resolve, reject) => {
+                    const tempImg = new Image();
+                    tempImg.src = src;
+                    tempImg.onload = () => {
+                        console.log('Image preloaded:', src, 'Dimensions:', tempImg.naturalWidth, 'x', tempImg.naturalHeight);
+                        resolve(tempImg);
                     };
-                    return;
-                }
-
-                cx = result.offsetWidth / lens.offsetWidth;
-                cy = result.offsetHeight / lens.offsetHeight;
-                result.style.backgroundImage = `url('${img.src}')`;
-                result.style.backgroundSize = `${img.naturalWidth * cx}px ${img.naturalHeight * cy}px`;
+                    tempImg.onerror = () => {
+                        console.error('Failed to preload image:', src);
+                        reject();
+                    };
+                });
             }
 
-            updateZoomRatios();
+            let cx, cy;
+            async function initializeZoom(imageSrc) {
+                try {
+                    const loadedImg = await preloadImage(imageSrc);
+                    cx = result.offsetWidth / lens.offsetWidth; // 700 / 100 = 7
+                    cy = result.offsetHeight / lens.offsetHeight; // 550 / 100 = 5.5
+                    result.style.backgroundImage = `url('${loadedImg.src}')`;
+                    result.style.backgroundSize = `${loadedImg.naturalWidth * cx}px ${loadedImg.naturalHeight * cy}px`;
+                    console.log('Zoom initialized: cx:', cx, 'cy:', cy, 'Background size:', result.style.backgroundSize);
+                } catch (error) {
+                    console.warn('Using fallback image');
+                    await initializeZoom(fallbackImage);
+                }
+            }
 
-            function handleMouseMove(e) {
+            function moveLens(e) {
                 e.preventDefault();
                 const pos = getCursorPos(e);
-                let x = pos.x - (lens.offsetWidth / 2);
-                let y = pos.y - (lens.offsetHeight / 2);
+                let x = pos.x - lens.offsetWidth / 2;
+                let y = pos.y - lens.offsetHeight / 2;
 
                 x = Math.max(0, Math.min(x, img.offsetWidth - lens.offsetWidth));
                 y = Math.max(0, Math.min(y, img.offsetHeight - lens.offsetHeight));
 
-                lens.style.left = x + "px";
-                lens.style.top = y + "px";
-
+                lens.style.left = `${x}px`;
+                lens.style.top = `${y}px`;
                 result.style.backgroundPosition = `-${x * cx}px -${y * cy}px`;
+                console.log('Lens position:', x, y, 'Background position:', result.style.backgroundPosition);
             }
 
             function handleMouseEnter() {
+                initializeZoom(img.src);
                 lens.style.display = 'block';
                 result.style.display = 'block';
-                updateZoomRatios();
             }
 
             function handleMouseLeave() {
@@ -370,41 +425,36 @@
                 result.style.display = 'none';
             }
 
-            img.addEventListener("mousemove", handleMouseMove);
-            lens.addEventListener("mousemove", handleMouseMove);
-            img.addEventListener("touchmove", handleMouseMove);
-            lens.addEventListener("touchmove", handleMouseMove);
-
-            img.addEventListener("mouseenter", handleMouseEnter);
-            lens.addEventListener("mouseenter", handleMouseEnter);
-
-            img.addEventListener("mouseleave", handleMouseLeave);
-            lens.addEventListener("mouseleave", handleMouseLeave);
-
             function getCursorPos(e) {
-                let x = 0, y = 0;
-                const a = img.getBoundingClientRect();
-                e = e || window.event;
-
-                const imgX = a.left + window.pageXOffset;
-                const imgY = a.top + window.pageYOffset;
-
-                if (e.pageX) {
-                    x = e.pageX;
-                    y = e.pageY;
-                } else if (e.clientX) {
-                    x = e.clientX + document.documentElement.scrollLeft;
-                    y = e.clientY + document.documentElement.scrollTop;
-                } else if (e.touches && e.touches.length > 0) {
-                    x = e.touches[0].pageX;
-                    y = e.touches[0].pageY;
+                const rect = img.getBoundingClientRect();
+                const containerStyle = getComputedStyle(container);
+                const paddingLeft = parseFloat(containerStyle.paddingLeft);
+                const paddingTop = parseFloat(containerStyle.paddingTop);
+                let x, y;
+                if (e.type.startsWith('touch')) {
+                    const touch = e.touches[0];
+                    x = touch.pageX - rect.left - paddingLeft - window.pageXOffset;
+                    y = touch.pageY - rect.top - paddingTop - window.pageYOffset;
+                } else {
+                    x = e.pageX - rect.left - paddingLeft - window.pageXOffset;
+                    y = e.pageY - rect.top - paddingTop - window.pageYOffset;
                 }
-
-                x = x - imgX;
-                y = y - imgY;
-
                 return { x, y };
             }
+
+            img.removeEventListener('mousemove', moveLens);
+            img.removeEventListener('touchmove', moveLens);
+            img.removeEventListener('mouseenter', handleMouseEnter);
+            img.removeEventListener('mouseleave', handleMouseLeave);
+            lens.removeEventListener('mousemove', moveLens);
+            lens.removeEventListener('touchmove', moveLens);
+
+            img.addEventListener('mousemove', moveLens);
+            img.addEventListener('touchmove', moveLens, { passive: false });
+            img.addEventListener('mouseenter', handleMouseEnter);
+            img.addEventListener('mouseleave', handleMouseLeave);
+            lens.addEventListener('mousemove', moveLens);
+            lens.addEventListener('touchmove', moveLens, { passive: false });
         }
 
         function changeImage(imageUrl, element) {
@@ -416,11 +466,11 @@
             });
             element.classList.add('active');
 
-            imageZoom("mainImage", "myresult");
+            imageZoom('mainImage', 'myresult');
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            imageZoom("mainImage", "myresult");
+        document.addEventListener('DOMContentLoaded', function() {
+            imageZoom('mainImage', 'myresult');
         });
 
         function decreaseQuantity() {
@@ -448,13 +498,6 @@
                 document.getElementById('cart-size').value = size;
                 document.getElementById('addToCartBtn').disabled = false;
             });
-        });
-
-        document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenu) {
-                mobileMenu.classList.toggle('hidden');
-            }
         });
     </script>
 </body>

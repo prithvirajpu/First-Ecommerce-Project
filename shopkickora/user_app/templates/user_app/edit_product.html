@@ -35,7 +35,6 @@
           <textarea class="form-control" name="description" rows="3" required>{{ form_data.description|default:product.description }}</textarea>
         </div>
 
-        <!-- Price, Category, Brand side by side using flex and gap -->
         <div class="d-flex flex-wrap mb-3" style="gap: 12px;">
           <div style="flex: 1 1 200px; max-width: 200px;">
             <label for="category" class="form-label fw-semibold">Category</label>
@@ -146,7 +145,6 @@
           {% endif %}
         </div>
 
-        <!-- Add More Images (reduced width) -->
         <div class="mb-3" style="max-width: 400px;">
           <label for="images" class="form-label fw-semibold">Add More Images  </label>
           <input
