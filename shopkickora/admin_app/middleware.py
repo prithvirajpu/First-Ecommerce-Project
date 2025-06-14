@@ -12,7 +12,6 @@ class DisableCacheMiddleware(MiddlewareMixin):
         return response
 
 
-
 class BlockedUserMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -21,10 +20,11 @@ class BlockedUserMiddleware:
         user = request.user
 
         if user.is_authenticated and not user.is_superuser:
-            if user.is_blocked:  
+            if user.is_blocked:
                 logout(request)
                 messages.error(request, "Your account has been blocked by admin.")
-                return redirect(reverse('login'))  
+                return redirect(reverse('login'))
 
         response = self.get_response(request)
         return response
+

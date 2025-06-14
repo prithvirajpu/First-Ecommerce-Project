@@ -26,7 +26,7 @@ def signup_view(request):
         return redirect('user_dashboard')
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
-        email = request.POST.get('email', '').strip().lower()  
+        email = request.POST.get('email', '').strip().lower()
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
 
@@ -54,7 +54,7 @@ def signup_view(request):
             errors['password2'] = "Passwords do not match."
         elif len(password1) < 6:
             errors['password1'] = "Password must be at least 6 characters."
-        elif password1.is_digit():
+        elif password1.isdigit():
             errors['password1']="Password can not contain only numbers."
 
         if errors:
@@ -88,7 +88,7 @@ def verify_otp_view(request):
         return redirect('user_dashboard')
     signup_data = request.session.get('signup_data')
     if not signup_data:
-        return redirect('signup')  
+        return redirect('signup') 
     if request.method == 'POST':
         entered_otp = request.POST.get('otp', '').strip()
 
@@ -100,7 +100,6 @@ def verify_otp_view(request):
         if time.time() - otp_created_at > OTP_EXPIRY_SECONDS:
             messages.error(request, "OTP expired. Please resend and try again.")
             return render(request, 'user_app/verify_otp.html')
-
         if entered_otp == signup_data['otp']:
             user = CustomUser.objects.create_user(
                 username=signup_data['username'],
@@ -225,7 +224,7 @@ def login_view(request):
             if user is not None:
                 if user.is_blocked:
                     messages.error(request, "Your account is currently suspended.")
-                    return render(request, 'user_app/login.html', {'form': form})
+                    return redirect('login')
                 elif not user.is_active:
                     messages.error(request,'Your account is inactive.')
                     return render(request, 'user_app/login.html', {'form': form})
@@ -242,8 +241,9 @@ def login_view(request):
 @never_cache
 @login_required(login_url='login')
 def user_dashboard(request):
-    if request.user.is_superuser:
-        return redirect('admin_dashboard')
+    if request.user.is_blocked:
+        logout(request)
+        return redirect('login')
     
     all_products = Product.objects.filter(is_deleted=False)
     
@@ -300,7 +300,7 @@ def user_product_list(request):
         products = products.filter(brand__id__in=brand_ids) 
 
     if query:
-        products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
+        products = products.filter(name__icontains =query )
 
     if min_price is not None:
         products = products.filter(price__gte=min_price)
@@ -316,13 +316,13 @@ def user_product_list(request):
         products = products.order_by('-created_at')
 
     brands = Brand.objects.filter(is_active=True)
-    categories = Category.objects.filter(is_active=True, is_deleted=False) 
+    categories = Category.objects.filter(is_active=True, is_deleted=False)
 
     paginator = Paginator(products, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    product_count = products.count() 
+    product_count = products.count()
 
     context = {
         'page_obj': page_obj,
@@ -334,7 +334,7 @@ def user_product_list(request):
         'categories': categories,
         'brands': brands,
         'selected_brands': brand_ids,
-        'min_price': min_price, 
+        'min_price': min_price,
         'max_price': max_price, 
     }
 
@@ -351,7 +351,7 @@ def product_detail(request, slug):
     sizes = ProductSizeStock.objects.filter(product=product, quantity__gt=0).values_list('size', flat=True)
 
     size_choices = dict(ProductSizeStock.SIZE_CHOICES)  
-    sizes = [size for size in sizes] 
+    sizes = [size for size in sizes]
 
     return render(request, 'user_app/product_detail.html', {
         'product': product,

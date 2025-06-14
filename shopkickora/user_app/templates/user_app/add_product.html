@@ -110,8 +110,8 @@
         <label for="images" class="form-label">Product Images (minimum 3)</label>
         <input type="file" name="images" id="images" class="form-control" accept="image/*" multiple required>
         {# Consider showing a specific error here if less than 3 images are selected or if file types are wrong #}
-        {% if errors.images %}
-          <p class="error-text">{{ errors.images }}</p>
+        {% if errors.format %}
+          <p style="color:red">{{ errors.format }}</p>
         {% endif %}
       </div>
 

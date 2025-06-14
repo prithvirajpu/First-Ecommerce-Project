@@ -6,10 +6,9 @@ from .forms import AdminLoginForm
 from django.core.paginator import Paginator
 from django.db.models import Q
 from user_app.models import CustomUser,Product, ProductImage, Category, Brand, ProductSizeStock
-from django.contrib.auth.decorators import user_passes_test 
+from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
-
 
 
 @never_cache
