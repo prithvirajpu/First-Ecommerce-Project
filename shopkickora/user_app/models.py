@@ -6,6 +6,9 @@ from django.utils.text import slugify
 
 class CustomUser(AbstractUser):
     is_blocked=models.BooleanField(default=False)
+    profile_image=models.ImageField(upload_to='profiles/',default='profile/default.png')
+    otp_code=models.CharField(max_length=6,blank=True,null=True)
+    otp_created_at=models.DateTimeField(blank=True,null=True)
 
     def __str__(self):
         return self.username

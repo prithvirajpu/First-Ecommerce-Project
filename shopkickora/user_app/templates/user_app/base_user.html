@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}shopKickora{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
+                    <a href="#" class="text-blue-600 font-medium">Categories</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
+                        <input type="text" name="q" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
+                        <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    <button class="relative">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+                    <a href="{% url 'user_profile' %}" class="text-gray-700 hover:text-blue-600 transition-colors">
+                        <i data-lucide="user" class="w-6 h-6"></i>
+                    </a>
+                    <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 transition-colors">
+                        <i data-lucide="log-out" class="w-6 h-6"></i>
+                    </button>
+                    <button class="md:hidden" id="mobileMenuBtn">
+                        <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
+                    </button>
+                </div>
+            </div>
+            <nav class="md:hidden hidden pb-4" id="mobile-menu">
+                <div class="flex flex-col space-y-2">
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
+                    <a href="#" class="text-blue-600 font-medium py-2">Categories</a>
+                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contact</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold">shopKickora</span>
+                    </div>
+                    <p class="text-gray-400 mb-4 text-sm sm:text-base">Your trusted partner for premium footwear. Quality, comfort, and style in every step.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Size Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Shipping Info</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
+                    <ul class="space-y-2 text-sm sm:text-base">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Men's Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Women's Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Kids' Shoes</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Accessories</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+                    <div class="space-y-2 text-gray-400 text-sm sm:text-base">
+                        <p class="flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                            123 Fashion Street, NY 10001
+                        </p>
+                        <p class="flex items-center">
+                            <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                            (555) 123-4567
+                        </p>
+                        <p class="flex items-center">
+                            <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                            info@shopkickora.com
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
+                <p>© 2025 shopKickora. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
+            <p class="mb-6 text-gray-600">Are you sure you want to log out?</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancelLogout" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                <a href="{% url 'logout' %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const cancelLogout = document.getElementById('cancelLogout');
+
+        logoutBtn.addEventListener('click', () => {
+            logoutModal.classList.remove('hidden');
+        });
+
+        cancelLogout.addEventListener('click', () => {
+            logoutModal.classList.add('hidden');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                logoutModal.classList.add('hidden');
+            }
+        });
+
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

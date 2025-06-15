@@ -22,4 +22,6 @@ urlpatterns = [
              success_url='/verify-otp/'
          ), 
          name='password_reset'),
+
+    path('profile/',views.user_profile,name='user_profile'),
 ]

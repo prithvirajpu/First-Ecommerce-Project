@@ -158,6 +158,31 @@
             <div class="text-danger small">{{ errors.format }}</div>
           {% endif %}
         </div>
+        <!-- FRONT -->
+<label>Front View</label>
+<input type="file" id="frontInput" accept="image/*">
+<img id="frontPreview" style="max-height: 300px;">
+<input type="hidden" name="image_front">
+
+<!-- BACK -->
+<label>Back View</label>
+<input type="file" id="backInput" accept="image/*">
+<img id="backPreview" style="max-height: 300px;">
+<input type="hidden" name="image_back">
+
+<!-- SIDE -->
+<label>Side View</label>
+<input type="file" id="sideInput" accept="image/*">
+<img id="sidePreview" style="max-height: 300px;">
+<input type="hidden" name="image_side">
+
+<!-- Crop Button (must be clicked before submitting) -->
+<button type="button" onclick="cropAll()">Crop All</button>
+
+<!-- Submit -->
+{% csrf_token %}
+<button type="submit">Save</button>
+
 
         {% if images %}
   <div class="mb-3">
@@ -226,4 +251,5 @@
   }, 5000);
   
 </script>
+
 {% endblock %}

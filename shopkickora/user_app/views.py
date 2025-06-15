@@ -360,6 +360,15 @@ def product_detail(request, slug):
         'size_choices': size_choices,  
     })
 
+@login_required
+def user_profile(request):
+    user=request.user
+    # addresses=Address.objects.filter(user=user)
+    # orders=Orders.objects.filter(user=user).order_by('-created_at')
+    return render(request,'user_app/profile.html',{'user':user})
+
+
+
 @never_cache
 def logout_view(request):
     logout(request)
