@@ -141,6 +141,10 @@ class Cart(models.Model):
     class Meta:
         unique_together = ('user', 'product', 'size')  # one cart item per product per size
 
+    @property
+    def get_size_display(self):
+        return dict(ProductSizeStock.SIZE_CHOICES).get(self.size, self.size)
+
     def __str__(self):
         return f"{self.user} - {self.product.name} ({self.get_size_display()})"
 

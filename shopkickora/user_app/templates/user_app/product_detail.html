@@ -242,17 +242,22 @@
                     </div>
                 </div>
 
-                <div class="flex space-x-4 mb-4">
-                    <form action="" method="POST" class="w-full">
-                        {% csrf_token %}
-                        <input type="hidden" name="size" id="cart-size" value="{{ selected_size|default_if_none:'' }}">
-                        <input type="hidden" name="quantity" id="cart-quantity" value="1">
-                        <button type="submit" id="addToCartBtn" class="bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800 w-full" {% if not selected_size %}disabled{% endif %}>ADD TO CART</button>
-                    </form>
-                    <button class="border border-gray-300 p-3 rounded hover:bg-gray-50">
-                        <i class="far fa-heart"></i>
-                    </button>
-                </div>
+               <div class="flex space-x-4 mb-4">
+    <form action="{% url 'add_to_cart' product.id %}" method="POST" class="w-full">
+        {% csrf_token %}
+        <input type="hidden" name="size" id="cart-size" value="{{ selected_size|default_if_none:'' }}">
+        <input type="hidden" name="quantity" id="cart-quantity" value="1">
+        <button type="submit" id="addToCartBtn"
+            class="bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800 w-full"
+            {% if not selected_size %}disabled{% endif %}>
+            ADD TO CART
+        </button>
+    </form>
+    <button class="border border-gray-300 p-3 rounded hover:bg-gray-50">
+        <i class="far fa-heart"></i>
+    </button>
+</div>
+
             </div>
         </div>
 

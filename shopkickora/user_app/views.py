@@ -22,7 +22,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.views.decorators.cache import never_cache
 
 from django.core.paginator import Paginator
-
+from decimal import Decimal
 from .models import (
     Brand, Category, CustomUser, Product,
     ProductSizeStock, Address, EmailChangeToken,Wishlist,Cart
@@ -31,17 +31,23 @@ from .models import (
 from user_app.forms import LoginForm, ProfileImageForm
 
 
-MAX_QUANTITY_PER_ITEM = 5  # Set your max limit
+MAX_QUANTITY_PER_ITEM = 5  # Can also move to settings if preferred
+
+from django.conf import settings
+MAX_QUANTITY_PER_ITEM = getattr(settings, 'MAX_CART_ITEM_QUANTITY', 5)
 
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_deleted=False)
     size = request.POST.get("size")
+    quantity = int(request.POST.get("quantity", 1))
 
+    # Validate category
     if product.category and product.category.is_deleted:
         messages.error(request, "This product's category is not available.")
         return redirect('product_detail', slug=product.slug)
 
+    # Validate size stock
     try:
         size_stock = ProductSizeStock.objects.get(product=product, size=size)
     except ProductSizeStock.DoesNotExist:
@@ -52,29 +58,41 @@ def add_to_cart(request, product_id):
         messages.error(request, "Out of stock.")
         return redirect('product_detail', slug=product.slug)
 
+    # Limit quantity to max
+    quantity = min(quantity, size_stock.quantity, MAX_QUANTITY_PER_ITEM)
+
+    # Get or create cart item
     cart_item, created = Cart.objects.get_or_create(
         user=request.user, product=product, size=size,
-        defaults={'quantity': 1}
+        defaults={'quantity': quantity}
     )
+
     if not created:
-        if cart_item.quantity < size_stock.quantity:
-            cart_item.quantity += 1
+        new_quantity = cart_item.quantity + quantity
+        max_allowed = min(size_stock.quantity, MAX_QUANTITY_PER_ITEM)
+        if new_quantity <= max_allowed:
+            cart_item.quantity = new_quantity
             cart_item.save()
+            messages.info(request, "Product quantity updated in cart.")
         else:
-            messages.warning(request, "Maximum quantity reached.")
-            return redirect('product_detail', slug=product.slug)
+            cart_item.quantity = max_allowed
+            cart_item.save()
+            messages.warning(request, "Maximum quantity reached for this item.")
+    else:
+        messages.success(request, "Product added to cart.")
 
     # Remove from wishlist
     Wishlist.objects.filter(user=request.user, product=product).delete()
 
-    messages.success(request, "Product added to cart.")
-    return redirect('user_cart')
+    return redirect('cart_view')
+
+
 
 @login_required
 def cart_view(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    grand_total = Decimal('0.00')
 
-    grand_total = 0
     for item in cart_items:
         try:
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
@@ -82,7 +100,7 @@ def cart_view(request):
         except ProductSizeStock.DoesNotExist:
             item.max_quantity = 0
 
-        item.total_price = item.product.price * item.quantity
+        item.total_price = Decimal(item.product.price) * item.quantity
         grand_total += item.total_price
 
     return render(request, 'user_app/cart.html', {
@@ -90,23 +108,37 @@ def cart_view(request):
         'grand_total': grand_total
     })
 
+@login_required
+def increment_quantity(request, item_id):
+    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+    try:
+        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
+    except ProductSizeStock.DoesNotExist:
+        messages.error(request, "Stock info not found.")
+        return redirect('cart_view')
+
+    if cart_item.quantity < min(stock.quantity, MAX_QUANTITY_PER_ITEM):
+        cart_item.quantity += 1
+        cart_item.save()
+    else:
+        messages.warning(request, "Maximum quantity reached.")
+    return redirect('cart_view')
 
 @login_required
-def update_cart_quantity(request, cart_id):
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
-
-        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
-
-        if action == 'increment' and cart_item.quantity < stock.quantity:
-            cart_item.quantity += 1
-        elif action == 'decrement' and cart_item.quantity > 1:
-            cart_item.quantity -= 1
-
+def decrement_quantity(request, item_id):
+    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
         cart_item.save()
-    return redirect('user_cart')
+    else:
+        cart_item.delete()
+    return redirect('cart_view')
 
+@login_required
+def remove_from_cart(request, item_id):
+    Cart.objects.filter(id=item_id, user=request.user).delete()
+    messages.success(request, "Item removed from cart.")
+    return redirect('cart_view')
 
 OTP_EXPIRY_SECONDS = 600
 
