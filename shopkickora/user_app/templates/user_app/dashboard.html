@@ -1,12 +1,6 @@
+{% extends 'user_app/base_user.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>shopKickora - Premium Footwear Collection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+{% block extra_css %}
     <script>
       tailwind.config = {
         theme: {
@@ -88,75 +82,15 @@
         background-color: #0284c7; /* primary-600 */
       }
     </style>
+    {% endblock %}
   </head>
+  {% block content %}
+        
   <body class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="bg-white shadow-md sticky top-0 z-50">
-      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between py-4">
-          <!-- Logo -->
-          <div class="flex items-center space-x-2">
-            <div
-              class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"
-            >
-              <i data-lucide="zap" class="w-5 h-5 text-white"></i>
-            </div>
-            <a
-              href="{% url 'user_dashboard' %}"
-              class="text-2xl font-bold text-gray-800"
-              >shopKickora</a
-            >
-          </div>
+    
 
-          <!-- Desktop Navigation -->
-          <nav class="hidden md:flex space-x-6">
-            <a
-              href="{% url 'user_dashboard' %}"
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Home</a
-            >
-            <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
-            
-            {% if user.is_authenticated %}
-            
-      
-            <button
-              id="logoutBtn"
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-            >
-              Logout
-            </button>
-            {% else %}
-            <a
-              href="{% url 'login' %}"
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Login</a
-            >
-            <a
-              href="{% url 'signup' %}"
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-              >Sign Up</a
-            >
-            {% endif %}
-          </nav>
-
-          <!-- Cart and Mobile Menu -->
-          <div class="flex items-center space-x-4">
-            <button class="relative">
-              <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
-              <span
-                class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                >0</span
-              >
-            </button>
-            <button class="md:hidden" id="mobile-menu-btn">
-              <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
-            </button>
-          </div>
-        </div>
-
+        
         <!-- Mobile Navigation -->
         <nav class="md:hidden hidden pb-4" id="mobile-menu">
           <div class="flex flex-col space-y-2">
@@ -324,6 +258,7 @@
         </div>
       </div>
     </section>
+    {% endblock %}
 
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-12 mt-auto">

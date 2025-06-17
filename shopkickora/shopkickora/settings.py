@@ -209,6 +209,8 @@ STATICFILES_DIRS = [
     BASE_DIR / "user_app" / "static",
 ]
 
+SITE_URL = 'http://127.0.0.1:8000'  # Or your domain
+DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
 
 
 

@@ -1,21 +1,111 @@
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth import login, authenticate, logout
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-from .models import Brand, Category, CustomUser, Product, ProductSizeStock
-from user_app.forms import LoginForm
 import random
-import time
 import re
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.conf import settings
-from django.core.mail import send_mail
+import time
+
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.contrib.auth.tokens import PasswordResetTokenGenerator  
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode 
+from django.conf import settings
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.core.exceptions import ValidationError
+from django.core.signing import TimestampSigner
+from django.core.validators import validate_email
+from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.forms import PasswordChangeForm
+
+from django.views.decorators.cache import never_cache
+
+from django.core.paginator import Paginator
+
+from .models import (
+    Brand, Category, CustomUser, Product,
+    ProductSizeStock, Address, EmailChangeToken,Wishlist,Cart
+)
+
+from user_app.forms import LoginForm, ProfileImageForm
+
+
+MAX_QUANTITY_PER_ITEM = 5  # Set your max limit
+
+@login_required
+def add_to_cart(request, product_id):
+    product = get_object_or_404(Product, id=product_id, is_deleted=False)
+    size = request.POST.get("size")
+
+    if product.category and product.category.is_deleted:
+        messages.error(request, "This product's category is not available.")
+        return redirect('product_detail', slug=product.slug)
+
+    try:
+        size_stock = ProductSizeStock.objects.get(product=product, size=size)
+    except ProductSizeStock.DoesNotExist:
+        messages.error(request, "Selected size is not available.")
+        return redirect('product_detail', slug=product.slug)
+
+    if size_stock.quantity <= 0:
+        messages.error(request, "Out of stock.")
+        return redirect('product_detail', slug=product.slug)
+
+    cart_item, created = Cart.objects.get_or_create(
+        user=request.user, product=product, size=size,
+        defaults={'quantity': 1}
+    )
+    if not created:
+        if cart_item.quantity < size_stock.quantity:
+            cart_item.quantity += 1
+            cart_item.save()
+        else:
+            messages.warning(request, "Maximum quantity reached.")
+            return redirect('product_detail', slug=product.slug)
+
+    # Remove from wishlist
+    Wishlist.objects.filter(user=request.user, product=product).delete()
+
+    messages.success(request, "Product added to cart.")
+    return redirect('user_cart')
+
+@login_required
+def cart_view(request):
+    cart_items = Cart.objects.filter(user=request.user).select_related('product')
+
+    grand_total = 0
+    for item in cart_items:
+        try:
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            item.max_quantity = stock.quantity
+        except ProductSizeStock.DoesNotExist:
+            item.max_quantity = 0
+
+        item.total_price = item.product.price * item.quantity
+        grand_total += item.total_price
+
+    return render(request, 'user_app/cart.html', {
+        'cart_items': cart_items,
+        'grand_total': grand_total
+    })
+
+
+@login_required
+def update_cart_quantity(request, cart_id):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
+
+        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
+
+        if action == 'increment' and cart_item.quantity < stock.quantity:
+            cart_item.quantity += 1
+        elif action == 'decrement' and cart_item.quantity > 1:
+            cart_item.quantity -= 1
+
+        cart_item.save()
+    return redirect('user_cart')
 
 
 OTP_EXPIRY_SECONDS = 600
@@ -360,14 +450,274 @@ def product_detail(request, slug):
         'size_choices': size_choices,  
     })
 
+
 @login_required
 def user_profile(request):
-    user=request.user
-    # addresses=Address.objects.filter(user=user)
-    # orders=Orders.objects.filter(user=user).order_by('-created_at')
-    return render(request,'user_app/profile.html',{'user':user})
+    user = request.user
+    address = Address.objects.filter(user=user, is_default=True).first()
+
+    if request.method == 'POST':
+        form = ProfileImageForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile image updated successfully.")
+            return redirect('user_profile')
+        else:
+            # Show detailed form errors for debugging
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = ProfileImageForm(instance=user)
+
+    context = {
+        'user': user,
+        'address': address,
+        'form': form  # ✅ important to pass form in context
+    }
+    return render(request, 'user_app/profile.html', context)
+
+@login_required
+def remove_profile_image(request):
+    user = request.user
+    if request.method == 'POST':
+        if user.profile_image and user.profile_image.name != 'profiles/default_user.png':
+            user.profile_image.delete(save=False)  # Delete image from disk
+        user.profile_image = 'profiles/default.png'  # Reset to default image
+        user.save()
+        messages.success(request, "Profile image removed.")
+    return redirect('user_profile')
 
 
+@login_required
+def verify_email_change(request, token):
+    try:
+        email_token = EmailChangeToken.objects.get(token=token, user=request.user)
+    except EmailChangeToken.DoesNotExist:
+        messages.error(request, "Invalid or expired verification link.")
+        return redirect('user_profile')
+
+    request.user.email = email_token.new_email
+    request.user.save()
+    email_token.delete()
+
+    messages.success(request, "Your email address has been updated.")
+    return redirect('user_profile')
+
+
+
+@login_required
+def edit_profile(request):
+    user = request.user
+    address = Address.objects.filter(user=user, is_default=True).first()
+    errors = {}
+
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        street_address = request.POST.get('street_address')
+
+        # --- Validation ---
+        if not full_name:
+            errors['full_name'] = "Full name is required."
+
+        if not email:
+            errors['email'] = "Email is required."
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors['email'] = "Enter a valid email address."
+
+        if not phone or not phone.isdigit() or len(phone) != 10:
+            errors['phone'] = "Enter a valid 10-digit phone number."
+
+        if not street_address:
+            errors['street_address'] = "Street address is required."
+
+        # --- If any errors, re-render the form ---
+        if errors:
+            context = {
+                'address': address,
+                'user': user,
+                'errors': errors,
+                'form_data': {
+                    'full_name': full_name,
+                    'email': email,
+                    'phone': phone,
+                    'street_address': street_address
+                }
+            }
+            return render(request, 'user_app/edit_profile.html', context)
+
+        # --- Update Address (without touching email) ---
+        if address:
+            address.full_name = full_name
+            address.mobile = phone
+            address.street_address = street_address
+            address.save()
+        else:
+            Address.objects.create(
+                user=user,
+                full_name=full_name,
+                mobile=phone,
+                email=user.email,  # keep verified email
+                street_address=street_address,
+                district='Default',
+                state='Default',
+                country='Default',
+                pincode=123456,
+                is_default=True
+            )
+
+        # --- Send verification email if email changed ---
+        if email != user.email:
+            token = get_random_string(64)
+            EmailChangeToken.objects.update_or_create(
+                user=user,
+                defaults={'new_email': email, 'token': token}
+            )
+            verification_link = f"{settings.SITE_URL}/verify-email-change/{token}/"
+            send_mail(
+                subject='Verify your new email address',
+                message=f'Click the link to verify your new email: {verification_link}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            messages.info(request, "A verification link was sent to your new email address. Please confirm to update.")
+        else:
+            messages.success(request, "Profile updated successfully.")
+
+        return redirect('user_profile')
+
+    # --- GET request ---
+    context = {
+        'address': address,
+        'user': user
+    }
+    return render(request, 'user_app/edit_profile.html', context)
+
+
+@login_required
+def change_password(request):
+    if not request.user.has_usable_password():
+        messages.error(request, "Your account was created using Google login. Please use Google to sign in.", extra_tags='change_password')
+        return redirect('user_profile')  # Or show a different page
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important: Keep user logged in
+            messages.success(request, 'Your password was successfully updated!', extra_tags='change_password')
+            return redirect('user_profile')  # Redirect to profile or any success page
+        else:
+            messages.error(request, 'Please correct the errors below.', extra_tags='change_password')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'user_app/change_password.html', {'form': form})
+
+
+
+@login_required
+def address_view(request):
+    user = request.user
+    addresses = Address.objects.filter(user=user)
+
+    if request.method == "POST":
+        full_name = request.POST.get("full_name")
+        mobile = request.POST.get("mobile")
+        street = request.POST.get("street")
+        district = request.POST.get("district")
+        state = request.POST.get("state")
+        pincode = request.POST.get("pincode")
+        country = request.POST.get("country")
+
+        # Make all existing addresses non-default
+        Address.objects.filter(user=user).update(is_default=False)
+
+        # Save the new address
+        Address.objects.create(
+            user=user,
+            full_name=full_name,
+            mobile=mobile,
+            street_address=street,
+            district=district,
+            state=state,
+            pincode=pincode,
+            country=country,
+            is_default=True,
+        )
+        messages.success(request, "Address added successfully!")
+        return redirect('address_view')
+
+    return render(request, 'user_app/address.html', {'addresses': addresses})
+
+
+@login_required
+def add_address(request):
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name')
+        mobile = request.POST.get('mobile')
+        street = request.POST.get('street')
+        district = request.POST.get('district')
+        state = request.POST.get('state')
+        pincode = request.POST.get('pincode')
+        country = request.POST.get('country')
+
+        if not all([full_name, mobile, street, district, state, pincode, country]):
+            messages.error(request, 'All fields are required.')
+            return redirect('add_address')
+
+        Address.objects.create(
+            user=request.user,
+            full_name=full_name,
+            mobile=mobile,
+            street_address=street,
+            district=district,
+            state=state,
+            pincode=pincode,
+            country=country
+        )
+
+        messages.success(request, 'Address added successfully.')
+        return redirect('address_view')
+
+    return render(request, 'user_app/add_address.html')
+
+@login_required
+def edit_address(request, address_id):
+    address = get_object_or_404(Address, id=address_id, user=request.user)
+
+    if request.method == 'POST':
+        address.full_name = request.POST.get("full_name")
+        address.mobile = request.POST.get("mobile")
+        address.street_address = request.POST.get("street")
+        address.district = request.POST.get("district")
+        address.state = request.POST.get("state")
+        address.pincode = request.POST.get("pincode")
+        address.country = request.POST.get("country")
+        address.save()
+
+        messages.success(request, "Address updated successfully!")
+        return redirect('address_view')
+
+    return render(request, 'user_app/edit_address.html', {'address': address})
+
+@login_required
+def delete_address(request, address_id):
+    address = get_object_or_404(Address, id=address_id, user=request.user)
+
+    if address.is_default:
+        next_address = Address.objects.filter(user=request.user).exclude(id=address_id).first()
+        if next_address:
+            next_address.is_default = True
+            next_address.save()
+
+    address.delete()
+    messages.success(request, "Address deleted successfully.")
+    return redirect('address_view')
 
 @never_cache
 def logout_view(request):

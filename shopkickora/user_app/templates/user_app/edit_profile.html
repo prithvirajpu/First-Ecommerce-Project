@@ -1,0 +1,192 @@
+{% extends 'user_app/base_user.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - shopKickora{% endblock %} {# Updated title #}
+
+{% block extra_css %}
+<style>
+    .sidebar-item {
+        transition: all 0.3s ease;
+    }
+    .sidebar-item:hover {
+        background-color: #99d0c9;
+        transform: translateX(4px);
+    }
+    .sidebar-item.active {
+        background-color: #e0f2fe;
+        border-right: 3px solid #509b8d;
+        color: #75ad9c;
+    }
+    .profile-card {
+        background: linear-gradient(135deg, #f0f9ff 0%, #66e6c8 100%);
+    }
+    .info-item {
+        transition: all 0.2s ease;
+    }
+    .info-item:hover {
+        background-color: #f8fafc;
+        transform: translateY(-1px);
+    }
+    /* Styles for form elements - ensuring consistency */
+    .form-input {
+        width: 100%;
+        margin-top: 0.25rem;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db; /* gray-300 */
+        border-radius: 0.25rem; /* rounded */
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+        outline: none;
+        transition: all 0.15s ease-in-out;
+    }
+    .form-input:focus {
+        border-color: #6b7280; /* gray-500 */
+        box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.5); /* focus:ring-2 focus:ring-gray-500 */
+    }
+    .errorlist {
+        color: #ef4444; /* red-500 */
+        font-size: 0.875rem; /* text-sm */
+        margin-top: 0.25rem;
+        list-style: none;
+        padding-left: 0;
+    }
+    .errorlist li {
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <div class="lg:w-1/4">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <nav class="space-y-2">
+                    {# Updated hrefs with Django URL tags, assuming these URLs exist #}
+                    <a href="{% url 'user_profile' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <span class="font-medium">Profile</span>
+                    </a>
+                    <a href="" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="font-medium">Orders</span>
+                    </a>
+                    <a href="" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                        <span class="font-medium">Wallet</span>
+                    </a>
+                    <a href="" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <span class="font-medium">Address</span>
+                    </a>
+                    <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <span class="font-medium">Password</span>
+                    </a>
+                    <a href="" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="gift" class="w-5 h-5"></i>
+                        <span class="font-medium">Refer & Earn</span>
+                    </a>
+                    <a href="{% url 'logout' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                        <span class="font-medium">Logout</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="lg:w-3/4"> 
+            <div class="bg-white p-6 rounded-lg shadow-md"> {# Removed mt-10 and mx-auto #}
+                <h2 class="text-xl font-semibold mb-6">Edit Profile</h2>
+
+                {# Display Django messages #}
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <div class="p-3 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="id_full_name" class="block text-gray-700">Full Name</label>
+                        <input type="text" id="id_full_name" name="full_name" value="{{ request.user.get_full_name|default:request.user.username }}"
+                               class="form-input"> {# Applied common input class #}
+                        {% if errors.full_name %}
+                        <p class="text-red-500 text-sm mt-1">{{ errors.full_name }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_email" class="block text-gray-700">Email</label>
+                        <input type="email" id="id_email" name="email" value="{{ request.user.email }}"
+                               class="form-input"> {# Applied common input class #}
+                        {% if errors.email %}
+                            <p class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_phone" class="block text-gray-700">Phone</label>
+                        <input type="tel" id="id_phone" name="phone" value="{{ address.mobile|default:'' }}"
+                               class="form-input"> {# Applied common input class #}
+                        {% if errors.phone %}
+                            <p class="text-red-500 text-sm mt-1">{{ errors.phone }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_street_address" class="block text-gray-700">Street Address</label>
+                        <textarea id="id_street_address" name="street_address" rows="3" class="form-input">{{ address.street_address|default:'' }}</textarea> {# Applied common input class #}
+                        {% if errors.street_address %}
+                            <p class="text-red-500 text-sm mt-1">{{ errors.street_address }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-right">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Sidebar active state management
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        const currentPath = window.location.pathname;
+
+        sidebarItems.forEach(item => {
+            const itemHref = item.getAttribute('href');
+            // Ensure itemHref is not null or empty and compare paths
+            if (itemHref) {
+                // Normalize paths to handle trailing slashes consistently
+                const normalizedItemHref = itemHref.endsWith('/') ? itemHref : itemHref + '/';
+                const normalizedCurrentPath = currentPath.endsWith('/') ? currentPath : currentPath + '/';
+
+                // Check if the current path starts with the item's href
+                // Or if it's an exact match for the profile root
+                if (normalizedCurrentPath.startsWith(normalizedItemHref) ||
+                    (itemHref === "{% url 'user_profile' %}" && normalizedCurrentPath === "/profile/")) {
+                    
+                    // Remove active class from all items first to ensure only one is active
+                    sidebarItems.forEach(i => i.classList.remove('active')); 
+                    item.classList.add('active');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

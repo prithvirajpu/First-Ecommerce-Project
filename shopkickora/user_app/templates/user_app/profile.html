@@ -1,4 +1,5 @@
 {% extends 'user_app/base_user.html' %}
+{% load static %}
 
 {% block title %}Profile - shopKickora{% endblock %}
 
@@ -8,16 +9,16 @@
         transition: all 0.3s ease;
     }
     .sidebar-item:hover {
-        background-color: #f1f5f9;
+        background-color: #99d0c9;
         transform: translateX(4px);
     }
     .sidebar-item.active {
         background-color: #e0f2fe;
-        border-right: 3px solid #0ea5e9;
-        color: #0369a1;
+        border-right: 3px solid #509b8d;
+        color: #75ad9c;
     }
     .profile-card {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        background: linear-gradient(135deg, #f0f9ff 0%, #66e6c8 100%);
     }
     .info-item {
         transition: all 0.2s ease;
@@ -48,21 +49,17 @@
                         <i data-lucide="wallet" class="w-5 h-5"></i>
                         <span class="font-medium">Wallet</span>
                     </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <a href="{% url 'address_view' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
                         <i data-lucide="map-pin" class="w-5 h-5"></i>
                         <span class="font-medium">Address</span>
                     </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
                         <i data-lucide="lock" class="w-5 h-5"></i>
                         <span class="font-medium">Password</span>
                     </a>
                     <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
                         <i data-lucide="gift" class="w-5 h-5"></i>
                         <span class="font-medium">Refer & Earn</span>
-                    </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                        <span class="font-medium">Logout</span>
                     </a>
                 </nav>
             </div>
@@ -72,15 +69,48 @@
         <div class="lg:w-3/4">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <!-- Profile Header -->
+                 {% if messages %}
+                            <div id="message-container" class="mt-4 space-y-2">
+                                {% for message in messages %}
+                                <div class="fade-message {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% endif %} p-3 rounded-md">
+                                    {{ message }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
                 <div class="profile-card p-8 text-center">
+                    
                     <div class="relative inline-block">
-                        <img src="/placeholder.svg?height=120&width=120" alt="Profile Picture" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
-                        <button class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors">
-                            <i data-lucide="camera" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-4">{{request.user}}</h1>
-                    <p class="text-gray-600 mt-2">Member since </p>
+                            {% if request.user.profile_image %}
+                        <img src="{% if request.user.profile_image %}{{ request.user.profile_image.url }}{% else %}{{ MEDIA_URL }}profiles/default.png{% endif %}"
+     alt="Profile Picture"
+     class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
+
+                            {% endif %}
+                           {% if user.profile_image and user.profile_image.name != 'profiles/default.png' %}
+                                <form method="POST" action="{% url 'remove_profile_image' %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="absolute bottom-0 left-0  bg-red-600 text-white p-1.5 rounded-full shadow hover:bg-red-700 transition">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+
+
+                            <form id="profileImageForm" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <label for="profileImageUpload" class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                                        <i data-lucide="camera" class="w-4 h-4"></i>
+                                    </label>
+                                    <input type="file" id="profileImageUpload" name="profile_image" accept="image/*" class="hidden" onchange="document.getElementById('profileImageForm').submit();">
+                                </form>
+
+                        </div>
+
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-4">{{ request.user.get_full_name|default:request.user.username }}</h1>
+                    <p class="text-gray-600 mt-2">Member since {{ request.user.date_joined|date:"F j, Y" }} </p>
                 </div>
 
                 <!-- Profile Information -->
@@ -94,7 +124,9 @@
                                 </div>
                                 <div class="flex-1">
                                     <label class="text-sm text-gray-500 font-medium">Full Name</label>
-                                    <p class="text-lg font-semibold text-gray-800">request.user</p>
+                                    <p class="text-lg font-semibold text-gray-800">
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -107,7 +139,7 @@
                                 </div>
                                 <div class="flex-1">
                                     <label class="text-sm text-gray-500 font-medium">Email</label>
-                                    <p class="text-lg font-semibold text-gray-800">prithvirajpu999@gmail.com</p>
+                                    <p class="text-lg font-semibold text-gray-800">{{ request.user.email }}</p>
                                 </div>
                             </div>
                         </div>
@@ -120,7 +152,14 @@
                                 </div>
                                 <div class="flex-1">
                                     <label class="text-sm text-gray-500 font-medium">Phone</label>
-                                    <p class="text-lg font-semibold text-gray-800">9072513338</p>
+                                    {% if address %}
+                                            <p class="text-lg font-semibold text-gray-800">{{ address.mobile }}</p>
+                                            {% else %}
+                                            <p class="text-lg font-semibold text-gray-800 text-gray-500 italic">
+                                                No phone number set.
+                                            </p>
+                                            {% endif %}
+
                                 </div>
                             </div>
                         </div>
@@ -141,10 +180,10 @@
 
                     <!-- Edit Profile Button -->
                     <div class="mt-8 flex justify-end">
-                        <button id="editProfileBtn" class="bg-gray-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition-colors flex items-center space-x-2 shadow-lg">
+                        <a href="{% url 'edit_profile' %}"><button id="editProfileBtn" class="bg-gray-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition-colors flex items-center space-x-2 shadow-lg">
                             <i data-lucide="edit" class="w-5 h-5"></i>
                             <span>Edit Profile</span>
-                        </button>
+                        </button></a>
                     </div>
                 </div>
             </div>
@@ -152,105 +191,11 @@
     </div>
 </div>
 
-<!-- Edit Profile Modal -->
-<div id="editProfileModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-gray-800">Edit Profile</h2>
-                <button id="closeEditModal" class="text-gray-500 hover:text-gray-700">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            
-            <form id="editProfileForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    <input type="text" id="editFullName" value="prithviraj" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" id="editEmail" value="prithvirajpu999@gmail.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input type="tel" id="editPhone" value="9072513338" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                    <textarea id="editAddress" rows="3" placeholder="Enter your address" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" id="cancelEdit" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Edit Profile Modal functionality
-    const editProfileBtn = document.getElementById('editProfileBtn');
-    const editProfileModal = document.getElementById('editProfileModal');
-    const closeEditModal = document.getElementById('closeEditModal');
-    const cancelEdit = document.getElementById('cancelEdit');
-    const editProfileForm = document.getElementById('editProfileForm');
-
-    // Open modal
-    editProfileBtn.addEventListener('click', () => {
-        editProfileModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    });
-
-    // Close modal functions
-    function closeModal() {
-        editProfileModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
-
-    closeEditModal.addEventListener('click', closeModal);
-    cancelEdit.addEventListener('click', closeModal);
-
-    // Close modal on escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !editProfileModal.classList.contains('hidden')) {
-            closeModal();
-        }
-    });
-
-    // Close modal when clicking outside
-    editProfileModal.addEventListener('click', (e) => {
-        if (e.target === editProfileModal) {
-            closeModal();
-        }
-    });
-
-    // Handle form submission
-    editProfileForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        // Get form values
-        const fullName = document.getElementById('editFullName').value;
-        const email = document.getElementById('editEmail').value;
-        const phone = document.getElementById('editPhone').value;
-        const address = document.getElementById('editAddress').value;
-
-        // Here you would typically send the data to your Django backend
-        // For now, we'll just show a success message
-        alert('Profile updated successfully!');
-        closeModal();
-        
-        // You can add actual form submission logic here
-        // Example: fetch('/update-profile/', { method: 'POST', ... })
-    });
-
+    
     // Sidebar active state management
     const sidebarItems = document.querySelectorAll('.sidebar-item');
     sidebarItems.forEach(item => {
@@ -264,5 +209,16 @@
 
     // Initialize Lucide icons
     lucide.createIcons();
+
+    // Auto-fade flash messages after 5 seconds
+    setTimeout(() => {
+        const messages = document.querySelectorAll('.fade-message');
+        messages.forEach(msg => {
+            msg.style.transition = 'opacity 1s ease';
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 1000); // remove from DOM after fade
+        });
+    }, 5000); // 5 seconds
 </script>
+
 {% endblock %}

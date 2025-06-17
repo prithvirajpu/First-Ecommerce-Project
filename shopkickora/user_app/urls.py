@@ -24,4 +24,16 @@ urlpatterns = [
          name='password_reset'),
 
     path('profile/',views.user_profile,name='user_profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    # urls.py
+    path('verify-email-change/<str:token>/', views.verify_email_change, name='verify_email_change'),
+    path('change-password/', views.change_password, name='change_password'),
+    path('remove-profile-image/', views.remove_profile_image, name='remove_profile_image'),
+    path('address/', views.address_view, name='address_view'),
+    path('address/add/', views.add_address, name='add_address'),
+    path('address/edit/<int:address_id>/', views.edit_address, name='edit_address'),
+    path('address/delete/<int:address_id>/', views.delete_address, name='delete_address'),
+    path('cart/', views.cart_view, name='user_cart'),
+
+
 ]

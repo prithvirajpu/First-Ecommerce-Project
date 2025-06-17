@@ -1,17 +1,50 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
-# Create your models here.
+from django.db import models
+from django.contrib.auth import get_user_model
 
+
+
+
+
+class EmailChangeToken(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    new_email = models.EmailField()
+    token = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} -{self.new_email}"
 class CustomUser(AbstractUser):
+    is_email_verified = models.BooleanField(default=True)
     is_blocked=models.BooleanField(default=False)
-    profile_image=models.ImageField(upload_to='profiles/',default='profile/default.png')
+    profile_image=models.ImageField(upload_to='profiles/',default='profiles/default.png',null=True,blank=True)
     otp_code=models.CharField(max_length=6,blank=True,null=True)
     otp_created_at=models.DateTimeField(blank=True,null=True)
 
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
     def __str__(self):
         return self.username
+
+class Address(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='addresses')
+    full_name=models.CharField(max_length=255)
+    district=models.CharField(max_length=100)
+    state=models.CharField(max_length=100)
+    country=models.CharField(max_length=100)
+    is_default=models.BooleanField(default=False)
+    pincode=models.IntegerField()
+    street_address=models.TextField()
+    email=models.EmailField()
+    mobile=models.CharField(max_length=15)
+
+    def __str__(self):
+        return f"{self.full_name}, {self.street_address}, {self.district}, {self.pincode}"
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -90,3 +123,35 @@ class ProductSizeStock(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.get_size_display()} ({self.quantity})"
+
+
+class Cart(models.Model):
+    SIZE_CHOICES = [
+        ('S', 'Small'),
+        ('M', 'Medium'),
+        ('L', 'Large'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='cart_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.CharField(max_length=1, choices=SIZE_CHOICES)
+    quantity = models.PositiveIntegerField(default=1)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product', 'size')  # one cart item per product per size
+
+    def __str__(self):
+        return f"{self.user} - {self.product.name} ({self.get_size_display()})"
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='wishlist_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_by')
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')  # Prevent duplicates
+        ordering = ['-added_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name}"
