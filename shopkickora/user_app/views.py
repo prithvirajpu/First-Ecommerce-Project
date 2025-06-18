@@ -1,7 +1,9 @@
 import random
 import re
 import time
+import json
 
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.conf import settings
@@ -18,6 +20,8 @@ from django.contrib.auth import login, authenticate, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.messages import get_messages
+
 
 from django.views.decorators.cache import never_cache
 
@@ -28,40 +32,100 @@ from .models import (
     ProductSizeStock, Address, EmailChangeToken,Wishlist,Cart
 )
 
-from user_app.forms import LoginForm, ProfileImageForm
-
-
-MAX_QUANTITY_PER_ITEM = 5  # Can also move to settings if preferred
-
+from user_app.forms import LoginForm, ProfileImageForm 
 from django.conf import settings
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+
+
+
+@login_required
+@csrf_exempt  # Optional: Use only if you're not sending the CSRF token in headers
+def add_to_cart_from_wishlist(request, product_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            size = data.get('size')
+            quantity = int(data.get('quantity', 1))
+
+            product = Product.objects.get(id=product_id, is_deleted=False)
+
+            cart_item, created = Cart.objects.get_or_create(
+                user=request.user,
+                product=product,
+                size=size,
+                defaults={'quantity': quantity}
+            )
+
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
+
+            # ✅ Remove item from wishlist after adding to cart
+            Wishlist.objects.filter(user=request.user, product=product).delete()
+
+            return JsonResponse({'success': True})
+        
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Product not found'})
+        
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
+
+@login_required
+def wishlist_view(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+    return render(request, 'user_app/wishlist.html', {'wishlist_items': wishlist_items})
+
+
+@require_POST
+@login_required
+def toggle_wishlist(request,product_id):
+    if not product_id:
+        return JsonResponse({'status': 'error', 'message': 'Product ID required'}, status=400)
+
+    try:
+        product = Product.objects.get(id=product_id, is_deleted=False)
+        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+
+        if not created:
+            wishlist_item.delete()
+            return JsonResponse({'status': 'removed'})
+        else:
+            return JsonResponse({'status': 'added'})
+    except Product.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+
+
+
 MAX_QUANTITY_PER_ITEM = getattr(settings, 'MAX_CART_ITEM_QUANTITY', 5)
+
 
 @login_required
 def add_to_cart(request, product_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
     product = get_object_or_404(Product, id=product_id, is_deleted=False)
     size = request.POST.get("size")
     quantity = int(request.POST.get("quantity", 1))
 
-    # Validate category
     if product.category and product.category.is_deleted:
-        messages.error(request, "This product's category is not available.")
-        return redirect('product_detail', slug=product.slug)
+        return JsonResponse({"status": "error", "message": "This product's category is not available."})
 
-    # Validate size stock
     try:
         size_stock = ProductSizeStock.objects.get(product=product, size=size)
     except ProductSizeStock.DoesNotExist:
-        messages.error(request, "Selected size is not available.")
-        return redirect('product_detail', slug=product.slug)
+        return JsonResponse({"status": "error", "message": "Selected size is not available."})
 
     if size_stock.quantity <= 0:
-        messages.error(request, "Out of stock.")
-        return redirect('product_detail', slug=product.slug)
+        return JsonResponse({"status": "error", "message": "Out of stock."})
 
-    # Limit quantity to max
     quantity = min(quantity, size_stock.quantity, MAX_QUANTITY_PER_ITEM)
 
-    # Get or create cart item
     cart_item, created = Cart.objects.get_or_create(
         user=request.user, product=product, size=size,
         defaults={'quantity': quantity}
@@ -73,18 +137,18 @@ def add_to_cart(request, product_id):
         if new_quantity <= max_allowed:
             cart_item.quantity = new_quantity
             cart_item.save()
-            messages.info(request, "Product quantity updated in cart.")
+            message = "Product quantity updated in cart."
         else:
             cart_item.quantity = max_allowed
             cart_item.save()
-            messages.warning(request, "Maximum quantity reached for this item.")
+            message = "Maximum quantity reached for this item."
     else:
-        messages.success(request, "Product added to cart.")
+        message = "Product added to cart."
 
     # Remove from wishlist
     Wishlist.objects.filter(user=request.user, product=product).delete()
 
-    return redirect('cart_view')
+    return JsonResponse({"status": "success", "message": message})
 
 
 
@@ -137,8 +201,7 @@ def decrement_quantity(request, item_id):
 @login_required
 def remove_from_cart(request, item_id):
     Cart.objects.filter(id=item_id, user=request.user).delete()
-    messages.success(request, "Item removed from cart.")
-    return redirect('cart_view')
+    return redirect('/cart/?removed=true')
 
 OTP_EXPIRY_SECONDS = 600
 
@@ -337,6 +400,9 @@ def reset_password_view(request, uidb64, token):
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('user_dashboard')
+    storage = get_messages(request)
+    for _ in storage:
+        pass
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -373,10 +439,16 @@ def user_dashboard(request):
     
     remaining_products = [p for p in all_products if p not in best_selling_products]
     featured_products = random.sample(list(remaining_products), min(4, len(remaining_products))) if remaining_products else []
-    
+
+    # ✅ Get all wishlist product IDs for current user
+    wishlist_products = []
+    if request.user.is_authenticated:
+        wishlist_products = Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
+
     context = {
         'best_selling_products': best_selling_products,
         'featured_products': featured_products,
+        'wishlist_products': list(wishlist_products),  # important!
     }
     return render(request, 'user_app/dashboard.html', context)
 
@@ -546,7 +618,6 @@ def edit_profile(request):
 
     if request.method == 'POST':
         full_name = request.POST.get('full_name')
-        email = request.POST.get('email')
         phone = request.POST.get('phone')
         street_address = request.POST.get('street_address')
 
@@ -554,36 +625,26 @@ def edit_profile(request):
         if not full_name:
             errors['full_name'] = "Full name is required."
 
-        if not email:
-            errors['email'] = "Email is required."
-        else:
-            try:
-                validate_email(email)
-            except ValidationError:
-                errors['email'] = "Enter a valid email address."
-
         if not phone or not phone.isdigit() or len(phone) != 10:
             errors['phone'] = "Enter a valid 10-digit phone number."
 
         if not street_address:
             errors['street_address'] = "Street address is required."
 
-        # --- If any errors, re-render the form ---
+        # --- If any validation errors ---
         if errors:
-            context = {
+            return render(request, 'user_app/edit_profile.html', {
                 'address': address,
                 'user': user,
                 'errors': errors,
                 'form_data': {
                     'full_name': full_name,
-                    'email': email,
                     'phone': phone,
                     'street_address': street_address
                 }
-            }
-            return render(request, 'user_app/edit_profile.html', context)
+            })
 
-        # --- Update Address (without touching email) ---
+        # --- Save or create default address ---
         if address:
             address.full_name = full_name
             address.mobile = phone
@@ -594,7 +655,7 @@ def edit_profile(request):
                 user=user,
                 full_name=full_name,
                 mobile=phone,
-                email=user.email,  # keep verified email
+                email=user.email,  # use current user email
                 street_address=street_address,
                 district='Default',
                 state='Default',
@@ -603,33 +664,14 @@ def edit_profile(request):
                 is_default=True
             )
 
-        # --- Send verification email if email changed ---
-        if email != user.email:
-            token = get_random_string(64)
-            EmailChangeToken.objects.update_or_create(
-                user=user,
-                defaults={'new_email': email, 'token': token}
-            )
-            verification_link = f"{settings.SITE_URL}/verify-email-change/{token}/"
-            send_mail(
-                subject='Verify your new email address',
-                message=f'Click the link to verify your new email: {verification_link}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-            messages.info(request, "A verification link was sent to your new email address. Please confirm to update.")
-        else:
-            messages.success(request, "Profile updated successfully.")
-
+        messages.success(request, "Profile updated successfully.")
         return redirect('user_profile')
 
     # --- GET request ---
-    context = {
+    return render(request, 'user_app/edit_profile.html', {
         'address': address,
         'user': user
-    }
-    return render(request, 'user_app/edit_profile.html', context)
+    })
 
 
 @login_required

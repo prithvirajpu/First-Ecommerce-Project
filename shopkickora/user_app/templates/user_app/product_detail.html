@@ -1,509 +1,372 @@
+{% extends 'user_app/base_user.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>shopKickora - {{ product.name|default:"Product" }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        },
-                        accent: {
-                            500: '#ff4d4f',
-                            600: '#f5222d',
-                        },
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                },
-            },
-        };
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-        .size-box {
-            transition: all 0.2s ease;
-        }
-        .size-box.selected {
-            background-color: #1a202c;
-            color: white;
-        }
-        .img-zoom-container {
-            position: relative;
-            display: inline-block;
-            border: 1px solid #d4d4d4;
-            background-color: #f9fafb;
-            padding: 1rem;
-            height: 480px;
-            width: 550px;
-            overflow: hidden;
-        }
-        .img-zoom-lens {
-            position: absolute;
-            border: 1px solid #d4d4d4;
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.3);
-            cursor: none;
-            z-index: 10;
-            display: none;
-            pointer-events: none;
-        }
+
+{% block title %}shopKickora - {{ product.name|default:"Product" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .size-box {
+        transition: all 0.2s ease;
+    }
+    .size-box.selected {
+        background-color: #1a202c;
+        color: white;
+    }
+    .img-zoom-container {
+        position: relative;
+        display: inline-block;
+        border: 1px solid #d4d4d4;
+        background-color: #f9fafb;
+        padding: 1rem;
+        height: 480px;
+        width: 550px;
+        overflow: hidden;
+    }
+    .img-zoom-lens {
+        position: absolute;
+        border: 1px solid #d4d4d4;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: none;
+        z-index: 10;
+        display: none;
+        pointer-events: none;
+    }
+    .img-zoom-result {
+        position: absolute;
+        top: 0;
+        left: 105%;
+        border: 1px solid #d4d4d4;
+        width: 700px;
+        height: 550px;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        z-index: 100;
+        display: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #mainImage {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 1px solid #d4d4d4;
+        padding: 4px;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+        border-radius: 4px;
+    }
+    .thumbnail:hover {
+        border-color: #1a202c;
+    }
+    .thumbnail.active {
+        border-color: #1a202c;
+        background-color: #f1f5f9;
+    }
+    .w-\[550px\] {
+        width: 550px;
+    }
+    @media (max-width: 768px) {
         .img-zoom-result {
-            position: absolute;
-            top: 0;
-            left: 105%;
-            border: 1px solid #d4d4d4;
-            width: 700px;
-            height: 550px;
-            background-repeat: no-repeat;
-            background-color: #fff;
-            z-index: 100;
-            display: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
         }
-        #mainImage {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-        }
-        .thumbnail {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border: 1px solid #d4d4d4;
-            padding: 4px;
-            cursor: pointer;
-            transition: border-color 0.2s ease;
-            border-radius: 4px;
-        }
-        .thumbnail:hover {
-            border-color: #1a202c;
-        }
-        .thumbnail.active {
-            border-color: #1a202c;
-            background-color: #f1f5f9;
-        }
-        .w-\[550px\] {
-            width: 550px;
-        }
-        @media (max-width: 768px) {
-            .img-zoom-result {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 300px;
-                height: 300px;
-            }
-        }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col">
-    <header class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-4">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <i data-lucide="zap" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
-                </div>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
-                    {% if user.is_authenticated %}
-                    <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Logout</button>
-                    {% else %}
-                    <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Login</a>
-                    <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Sign Up</a>
-                    {% endif %}
-                </nav>
-                <div class="flex items-center space-x-4">
-                    <button class="relative">
-                        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
-                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                    </button>
-                    <button class="md:hidden" id="mobile-menu-btn">
-                        <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
-                    </button>
-                </div>
-            </div>
-            <nav class="md:hidden hidden pb-4" id="mobile-menu">
-                <div class="flex flex-col space-y-2">
-                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Categories</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
-                    {% if user.is_authenticated %}
-                    <a href="{% url 'logout' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Logout</a>
-                    {% else %}
-                    <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Login</a>
-                    <a href="{% url 'signup' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Sign Up</a>
-                    {% endif %}
-                </div>
-            </nav>
-        </div>
-    </header>
+    }
+</style>
+{% endblock %}
 
-    <div class="container mx-auto px-4 py-2">
-        <div class="flex text-xs text-gray-500">
-            <a href="{% url 'user_dashboard' %}" class="hover:underline">Home</a>
-            <span class="mx-2">/</span>
-            <a href="{% url 'user_product_list' %}" class="hover:underline">Products</a>
-            <span class="mx-2">/</span>
-            <span>{{ product.name|default:"Product" }}</span>
-        </div>
+{% block content %}
+<div class="container mx-auto px-4 py-2">
+    <div class="flex text-xs text-gray-500">
+        <a href="{% url 'user_dashboard' %}" class="hover:underline">Home</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'user_product_list' %}" class="hover:underline">Products</a>
+        <span class="mx-2">/</span>
+        <span>{{ product.name|default:"Product" }}</span>
     </div>
-
-    <main class="container mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="space-y-4 relative">
-                <div class="img-zoom-container">
-                    <img id="mainImage" src="{% if product.images.all %}{{ product.images.all.0.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% static 'user_app/default-shoe.jpg' %}{% endif %}" alt="{{ product.name|default:'Product' }}">
-                    <div class="img-zoom-lens"></div>
-                    <div id="myresult" class="img-zoom-result"></div>
-                </div>
-                {% if product.images.all %}
-                    <div class="flex justify-center space-x-2 mt-2 w-[550px] mx-auto">
-                        {% for image in product.images.all|slice:":3" %}
-                            <img src="{{ image.image.url }}" alt="{{ product.name|default:'Product' }} thumbnail" class="thumbnail {% if forloop.first %}active{% endif %}" onclick="changeImage('{{ image.image.url }}', this)">
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div>
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center">
-                        <div class="flex text-yellow-400 mr-2">
-                            {% for i in "12345" %}
-                                <i class="fas fa-star {% if forloop.counter <= product.rating|default:4 %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
-                            {% endfor %}
-                        </div>
-                        <span class="text-sm text-gray-500">{{ product.reviews_count|default:"0" }} reviews</span>
-                    </div>
-                    <button class="text-gray-500 hover:text-gray-900">
-                        <i class="fas fa-share-alt"></i>
-                    </button>
-                </div>
-
-                <h1 class="text-2xl font-bold mb-2">{{ product.name|default:"Product" }}</h1>
-                <p class="text-2xl font-bold mb-6">${{ product.price|floatformat:2|default:"0.00" }}</p>
-
-                <div class="mb-6">
-                    <h3 class="text-sm font-medium mb-2">AVAILABLE TYPES</h3>
-                    <div class="flex space-x-2">
-                        <button class="px-4 py-1 border border-gray-300 rounded text-sm bg-gray-100">Men</button>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <h3 class="text-sm font-medium mb-2">SELECT SIZE</h3>
-                    <div class="grid grid-cols-5 gap-2">
-                        {% for size in sizes %}
-                            <button class="size-box border border-gray-300 rounded text-center py-2 hover:border-gray-900 {% if selected_size == size %}selected{% endif %}" data-size="{{ size }}">{{ size }}</button>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" id="selected-size" value="{{ selected_size|default_if_none:'' }}">
-                </div>
-
-                <div class="mb-6">
-                    <h3 class="text-sm font-medium mb-2">QUANTITY</h3>
-                    <div class="flex items-center border border-gray-300 rounded w-max">
-                        <button id="decreaseBtn" class="px-3 py-1 text-lg" onclick="decreaseQuantity()">−</button>
-                        <input id="quantity" type="text" value="1" class="w-8 text-center focus:outline-none" readonly>
-                        <button id="increaseBtn" class="px-3 py-1 text-lg" onclick="increaseQuantity()">+</button>
-                    </div>
-                </div>
-
-               <div class="flex space-x-4 mb-4">
-    <form action="{% url 'add_to_cart' product.id %}" method="POST" class="w-full">
-        {% csrf_token %}
-        <input type="hidden" name="size" id="cart-size" value="{{ selected_size|default_if_none:'' }}">
-        <input type="hidden" name="quantity" id="cart-quantity" value="1">
-        <button type="submit" id="addToCartBtn"
-            class="bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800 w-full"
-            {% if not selected_size %}disabled{% endif %}>
-            ADD TO CART
-        </button>
-    </form>
-    <button class="border border-gray-300 p-3 rounded hover:bg-gray-50">
-        <i class="far fa-heart"></i>
-    </button>
 </div>
 
+<main class="container mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="space-y-4 relative">
+            <div class="img-zoom-container">
+                <img id="mainImage" src="{% if product.images.all %}{{ product.images.all.0.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% static 'user_app/default-shoe.jpg' %}{% endif %}" alt="{{ product.name|default:'Product' }}">
+                <div class="img-zoom-lens"></div>
+                <div id="myresult" class="img-zoom-result"></div>
             </div>
+            {% if product.images.all %}
+                <div class="flex justify-center space-x-2 mt-2 w-[550px] mx-auto">
+                    {% for image in product.images.all|slice:":3" %}
+                        <img src="{{ image.image.url }}" alt="{{ product.name|default:'Product' }} thumbnail" class="thumbnail {% if forloop.first %}active{% endif %}" onclick="changeImage('{{ image.image.url }}', this)">
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
 
-        <div class="mt-16 border-t border-gray-200 pt-8">
-            <div class="flex border-b border-gray-200">
-                <span class="text-sm font-medium pb-4 border-b-2 border-gray-900 mr-8">Details</span>
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <div class="flex text-yellow-400 mr-2">
+                        {% for i in "12345" %}
+                            <i class="fas fa-star {% if forloop.counter <= product.rating|default:4 %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="text-sm text-gray-500">{{ product.reviews_count|default:"0" }} reviews</span>
+                </div>
+                <button class="text-gray-500 hover:text-gray-900">
+                    <i class="fas fa-share-alt"></i>
+                </button>
             </div>
 
-            <div class="py-8">
-                <p class="text-gray-700 mb-4">{{ product.description|default:"No description available." }}</p>
-            </div>
-        </div>
-    </main>
+            <h1 class="text-2xl font-bold mb-2">{{ product.name|default:"Product" }}</h1>
+            <p class="text-2xl font-bold mb-6">${{ product.price|floatformat:2|default:"0.00" }}</p>
 
-    <footer class="bg-gray-100 mt-16 pt-12 pb-8">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <h3 class="font-bold text-lg mb-4">shopKickora</h3>
-                    <p class="text-gray-600 text-sm">The best place to find premium footwear for all your needs.</p>
-                </div>
-                <div>
-                    <h4 class="font-medium mb-4">Shop</h4>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li><a href="{% url 'user_product_list' %}?category=men" class="hover:text-gray-900">Men's Shoes</a></li>
-                        <li><a href="{% url 'user_product_list' %}?category=women" class="hover:text-gray-900">Women's Shoes</a></li>
-                        <li><a href="{% url 'user_product_list' %}?category=kids" class="hover:text-gray-900">Kids' Shoes</a></li>
-                        <li><a href="{% url 'user_product_list' %}?sort=newest" class="hover:text-gray-900">New Arrivals</a></li>
-                        <li><a href="{% url 'user_product_list' %}?sort=sale" class="hover:text-gray-900">Sale</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-medium mb-4">Company</h4>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li><a href="#" class="hover:text-gray-900">About Us</a></li>
-                        <li><a href="#" class="hover:text-gray-900">Careers</a></li>
-                        <li><a href="#" class="hover:text-gray-900">Contact</a></li>
-                        <li><a href="#" class="hover:text-gray-900">Blog</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-medium mb-4">Customer Service</h4>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li><a href="#" class="hover:text-gray-900">Help Center</a></li>
-                        <li><a href="#" class="hover:text-gray-900">Shipping & Returns</a></li>
-                        <li><a href="#" class="hover:text-gray-900">Size Guide</a></li>
-                        <li><a href="#" class="hover:text-gray-900">FAQ</a></li>
-                    </ul>
+            <div class="mb-6">
+                <h3 class="text-sm font-medium mb-2">AVAILABLE TYPES</h3>
+                <div class="flex space-x-2">
+                    <button class="px-4 py-1 border border-gray-300 rounded text-sm bg-gray-100">Men</button>
                 </div>
             </div>
-            <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-sm text-gray-500 mb-4 md:mb-0">© 2025 shopKickora. All rights reserved.</p>
-                <div class="flex space-x-4">
-                    <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="text-gray-500 hover:text-gray-900"><i class="fab fa-pinterest"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
 
-    <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
-        <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
-            <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
-            <p class="mb-6 text-gray-600">Are you sure you want to log out?</p>
-            <div class="flex justify-end space-x-4">
-                <button id="cancelLogout" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-                <a href="{% url 'logout' %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Logout</a>
+            <div class="mb-6">
+                <h3 class="text-sm font-medium mb-2">SELECT SIZE</h3>
+                <div class="grid grid-cols-5 gap-2">
+                    {% for size in sizes %}
+                        <button class="size-box border border-gray-300 rounded text-center py-2 hover:border-gray-900 {% if selected_size == size %}selected{% endif %}" data-size="{{ size }}">{{ size }}</button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="selected-size" value="{{ selected_size|default_if_none:'' }}">
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-medium mb-2">QUANTITY</h3>
+                <div class="flex items-center border border-gray-300 rounded w-max">
+                    <button id="decreaseBtn" class="px-3 py-1 text-lg" onclick="decreaseQuantity()">−</button>
+                    <input id="quantity" type="text" value="1" class="w-8 text-center focus:outline-none" readonly>
+                    <button id="increaseBtn" class="px-3 py-1 text-lg" onclick="increaseQuantity()">+</button>
+                </div>
+            </div>
+
+            <div class="flex space-x-4 mb-4">
+                <form id="addToCartForm" class="w-full">
+    {% csrf_token %}
+    <input type="hidden" name="size" id="cart-size" value="{{ selected_size|default_if_none:'' }}">
+    <input type="hidden" name="quantity" id="cart-quantity" value="1">
+    <button type="submit" id="addToCartBtn"
+        class="bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800 w-full"
+        {% if not selected_size %}disabled{% endif %}>
+        ADD TO CART
+    </button>
+</form>
+
+           <div 
+    class="wishlist-toggle border border-gray-300 rounded hover:bg-gray-100 cursor-pointer w-11 h-11 flex items-center justify-center" 
+    data-product-id="{{ product.id }}" 
+    aria-label="Toggle Wishlist"
+>
+    <i class="{% if is_in_wishlist %}fas{% else %}far{% endif %} fa-heart text-lg text-red-500"></i>
+</div>
+
+
+
+
             </div>
         </div>
     </div>
 
-    <script>
-        lucide.createIcons();
+    <div class="mt-16 border-t border-gray-200 pt-8">
+        <div class="flex border-b border-gray-200">
+            <span class="text-sm font-medium pb-4 border-b-2 border-gray-900 mr-8">Details</span>
+        </div>
+        <div class="py-8">
+            <p class="text-gray-700 mb-4">{{ product.description|default:"No description available." }}</p>
+        </div>
+    </div>
+</main>
+{% endblock %}
 
-        const logoutBtn = document.getElementById('logoutBtn');
-        const logoutModal = document.getElementById('logoutModal');
-        const cancelLogout = document.getElementById('cancelLogout');
+{% block extra_js %}
+<script>
+document.getElementById('addToCartForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-        logoutBtn.addEventListener('click', () => {
-            logoutModal.classList.remove('hidden');
-        });
+    const size = document.getElementById("cart-size").value;
+    const quantity = document.getElementById("cart-quantity").value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        cancelLogout.addEventListener('click', () => {
-            logoutModal.classList.add('hidden');
-        });
+    const response = await fetch("{% url 'add_to_cart' product.id %}", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken,
+        },
+        body: new URLSearchParams({
+            size: size,
+            quantity: quantity,
+        }),
+    });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                logoutModal.classList.add('hidden');
-            }
-        });
+    const data = await response.json();
 
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+    showToast(data.message, data.status === "success" ? "success" : "error");
+});
 
-        function imageZoom(imgID, resultID) {
-            const img = document.getElementById(imgID);
-            const result = document.getElementById(resultID);
-            const container = img.parentElement;
+    function imageZoom(imgID, resultID) {
+        const img = document.getElementById(imgID);
+        const result = document.getElementById(resultID);
+        const container = img.parentElement;
 
-            let existingLens = container.querySelector('.img-zoom-lens');
-            if (existingLens) {
-                existingLens.remove();
-            }
-
-            const lens = document.createElement('div');
-            lens.className = 'img-zoom-lens';
-            container.insertBefore(lens, img);
-
-            const fallbackImage = 'https://via.placeholder.com/550';
-
-            function preloadImage(src) {
-                return new Promise((resolve, reject) => {
-                    const tempImg = new Image();
-                    tempImg.src = src;
-                    tempImg.onload = () => {
-                        console.log('Image preloaded:', src, 'Dimensions:', tempImg.naturalWidth, 'x', tempImg.naturalHeight);
-                        resolve(tempImg);
-                    };
-                    tempImg.onerror = () => {
-                        console.error('Failed to preload image:', src);
-                        reject();
-                    };
-                });
-            }
-
-            let cx, cy;
-            async function initializeZoom(imageSrc) {
-                try {
-                    const loadedImg = await preloadImage(imageSrc);
-                    cx = result.offsetWidth / lens.offsetWidth; // 700 / 100 = 7
-                    cy = result.offsetHeight / lens.offsetHeight; // 550 / 100 = 5.5
-                    result.style.backgroundImage = `url('${loadedImg.src}')`;
-                    result.style.backgroundSize = `${loadedImg.naturalWidth * cx}px ${loadedImg.naturalHeight * cy}px`;
-                    console.log('Zoom initialized: cx:', cx, 'cy:', cy, 'Background size:', result.style.backgroundSize);
-                } catch (error) {
-                    console.warn('Using fallback image');
-                    await initializeZoom(fallbackImage);
-                }
-            }
-
-            function moveLens(e) {
-                e.preventDefault();
-                const pos = getCursorPos(e);
-                let x = pos.x - lens.offsetWidth / 2;
-                let y = pos.y - lens.offsetHeight / 2;
-
-                x = Math.max(0, Math.min(x, img.offsetWidth - lens.offsetWidth));
-                y = Math.max(0, Math.min(y, img.offsetHeight - lens.offsetHeight));
-
-                lens.style.left = `${x}px`;
-                lens.style.top = `${y}px`;
-                result.style.backgroundPosition = `-${x * cx}px -${y * cy}px`;
-                console.log('Lens position:', x, y, 'Background position:', result.style.backgroundPosition);
-            }
-
-            function handleMouseEnter() {
-                initializeZoom(img.src);
-                lens.style.display = 'block';
-                result.style.display = 'block';
-            }
-
-            function handleMouseLeave() {
-                lens.style.display = 'none';
-                result.style.display = 'none';
-            }
-
-            function getCursorPos(e) {
-                const rect = img.getBoundingClientRect();
-                const containerStyle = getComputedStyle(container);
-                const paddingLeft = parseFloat(containerStyle.paddingLeft);
-                const paddingTop = parseFloat(containerStyle.paddingTop);
-                let x, y;
-                if (e.type.startsWith('touch')) {
-                    const touch = e.touches[0];
-                    x = touch.pageX - rect.left - paddingLeft - window.pageXOffset;
-                    y = touch.pageY - rect.top - paddingTop - window.pageYOffset;
-                } else {
-                    x = e.pageX - rect.left - paddingLeft - window.pageXOffset;
-                    y = e.pageY - rect.top - paddingTop - window.pageYOffset;
-                }
-                return { x, y };
-            }
-
-            img.removeEventListener('mousemove', moveLens);
-            img.removeEventListener('touchmove', moveLens);
-            img.removeEventListener('mouseenter', handleMouseEnter);
-            img.removeEventListener('mouseleave', handleMouseLeave);
-            lens.removeEventListener('mousemove', moveLens);
-            lens.removeEventListener('touchmove', moveLens);
-
-            img.addEventListener('mousemove', moveLens);
-            img.addEventListener('touchmove', moveLens, { passive: false });
-            img.addEventListener('mouseenter', handleMouseEnter);
-            img.addEventListener('mouseleave', handleMouseLeave);
-            lens.addEventListener('mousemove', moveLens);
-            lens.addEventListener('touchmove', moveLens, { passive: false });
+        let existingLens = container.querySelector('.img-zoom-lens');
+        if (existingLens) {
+            existingLens.remove();
         }
 
-        function changeImage(imageUrl, element) {
-            const mainImage = document.getElementById('mainImage');
-            mainImage.src = imageUrl;
+        const lens = document.createElement('div');
+        lens.className = 'img-zoom-lens';
+        container.insertBefore(lens, img);
 
-            document.querySelectorAll('.thumbnail').forEach(thumb => {
-                thumb.classList.remove('active');
+        const fallbackImage = 'https://via.placeholder.com/550';
+
+        function preloadImage(src) {
+            return new Promise((resolve, reject) => {
+                const tempImg = new Image();
+                tempImg.src = src;
+                tempImg.onload = () => {
+                    console.log('Image preloaded:', src, 'Dimensions:', tempImg.naturalWidth, 'x', tempImg.naturalHeight);
+                    resolve(tempImg);
+                };
+                tempImg.onerror = () => {
+                    console.error('Failed to preload image:', src);
+                    reject();
+                };
             });
-            element.classList.add('active');
-
-            imageZoom('mainImage', 'myresult');
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            imageZoom('mainImage', 'myresult');
-        });
-
-        function decreaseQuantity() {
-            const quantityInput = document.getElementById('quantity');
-            let quantity = parseInt(quantityInput.value);
-            if (quantity > 1) {
-                quantityInput.value = quantity - 1;
-                document.getElementById('cart-quantity').value = quantity - 1;
+        let cx, cy;
+        async function initializeZoom(imageSrc) {
+            try {
+                const loadedImg = await preloadImage(imageSrc);
+                cx = result.offsetWidth / lens.offsetWidth; // 700 / 100 = 7
+                cy = result.offsetHeight / lens.offsetHeight; // 550 / 100 = 5.5
+                result.style.backgroundImage = `url('${loadedImg.src}')`;
+                result.style.backgroundSize = `${loadedImg.naturalWidth * cx}px ${loadedImg.naturalHeight * cy}px`;
+                console.log('Zoom initialized: cx:', cx, 'cy:', cy, 'Background size:', result.style.backgroundSize);
+            } catch (error) {
+                console.warn('Using fallback image');
+                await initializeZoom(fallbackImage);
             }
         }
 
-        function increaseQuantity() {
-            const quantityInput = document.getElementById('quantity');
-            let quantity = parseInt(quantityInput.value);
-            quantityInput.value = quantity + 1;
-            document.getElementById('cart-quantity').value = quantity + 1;
+        function moveLens(e) {
+            e.preventDefault();
+            const pos = getCursorPos(e);
+            let x = pos.x - lens.offsetWidth / 2;
+            let y = pos.y - lens.offsetHeight / 2;
+
+            x = Math.max(0, Math.min(x, img.offsetWidth - lens.offsetWidth));
+            y = Math.max(0, Math.min(y, img.offsetHeight - lens.offsetHeight));
+
+            lens.style.left = `${x}px`;
+            lens.style.top = `${y}px`;
+            result.style.backgroundPosition = `-${x * cx}px -${y * cy}px`;
+            console.log('Lens position:', x, y, 'Background position:', result.style.backgroundPosition);
         }
 
-        document.querySelectorAll('.size-box').forEach(button => {
-            button.addEventListener('click', function() {
-                document.querySelectorAll('.size-box').forEach(btn => btn.classList.remove('selected'));
-                this.classList.add('selected');
-                const size = this.getAttribute('data-size');
-                document.getElementById('selected-size').value = size;
-                document.getElementById('cart-size').value = size;
-                document.getElementById('addToCartBtn').disabled = false;
-            });
+        function handleMouseEnter() {
+            initializeZoom(img.src);
+            lens.style.display = 'block';
+            result.style.display = 'block';
+        }
+
+        function handleMouseLeave() {
+            lens.style.display = 'none';
+            result.style.display = 'none';
+        }
+
+        function getCursorPos(e) {
+            const rect = img.getBoundingClientRect();
+            const containerStyle = getComputedStyle(container);
+            const paddingLeft = parseFloat(containerStyle.paddingLeft);
+            const paddingTop = parseFloat(containerStyle.paddingTop);
+            let x, y;
+            if (e.type.startsWith('touch')) {
+                const touch = e.touches[0];
+                x = touch.pageX - rect.left - paddingLeft - window.pageXOffset;
+                y = touch.pageY - rect.top - paddingTop - window.pageYOffset;
+            } else {
+                x = e.pageX - rect.left - paddingLeft - window.pageXOffset;
+                y = e.pageY - rect.top - paddingTop - window.pageYOffset;
+            }
+            return { x, y };
+        }
+
+        img.removeEventListener('mousemove', moveLens);
+        img.removeEventListener('touchmove', moveLens);
+        img.removeEventListener('mouseenter', handleMouseEnter);
+        img.removeEventListener('mouseleave', handleMouseLeave);
+        lens.removeEventListener('mousemove', moveLens);
+        lens.removeEventListener('touchmove', moveLens);
+
+        img.addEventListener('mousemove', moveLens);
+        img.addEventListener('touchmove', moveLens, { passive: false });
+        img.addEventListener('mouseenter', handleMouseEnter);
+        img.addEventListener('mouseleave', handleMouseLeave);
+        lens.addEventListener('mousemove', moveLens);
+        lens.addEventListener('touchmove', moveLens, { passive: false });
+    }
+
+    function changeImage(imageUrl, element) {
+        const mainImage = document.getElementById('mainImage');
+        mainImage.src = imageUrl;
+
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
         });
-    </script>
-</body>
-</html>
+        element.classList.add('active');
+
+        imageZoom('mainImage', 'myresult');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        imageZoom('mainImage', 'myresult');
+    });
+
+    function decreaseQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        let quantity = parseInt(quantityInput.value);
+        if (quantity > 1) {
+            quantityInput.value = quantity - 1;
+            document.getElementById('cart-quantity').value = quantity - 1;
+        }
+    }
+
+    function increaseQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        let quantity = parseInt(quantityInput.value);
+        quantityInput.value = quantity + 1;
+        document.getElementById('cart-quantity').value = quantity + 1;
+    }
+
+    document.querySelectorAll('.size-box').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.size-box').forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            const size = this.getAttribute('data-size');
+            document.getElementById('selected-size').value = size;
+            document.getElementById('cart-size').value = size;
+            document.getElementById('addToCartBtn').disabled = false;
+        });
+    });
+</script>
+
+{% endblock %}

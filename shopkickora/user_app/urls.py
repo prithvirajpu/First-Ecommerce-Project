@@ -38,13 +38,9 @@ urlpatterns = [
     path('cart/increment/<int:item_id>/', views.increment_quantity, name='increment_quantity'),
     path('cart/decrement/<int:item_id>/', views.decrement_quantity, name='decrement_quantity'),
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
-    # path('update-cart/<int:cart_id>/', views.update_cart, name='update_cart'),
-    # path('remove-from-cart/<int:cart_id>/', views.remove_from_cart, name='remove_from_cart'),
-
-    # Wishlist
-    # path('wishlist/', views.wishlist_view, name='wishlist_view'),
-    # path('add-to-wishlist/<int:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),
-    # path('remove-from-wishlist/<int:wishlist_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    path('wishlist/', views.wishlist_view, name='wishlist_view'),
+    path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('add-to-cart-from-wishlist/<int:product_id>/', views.add_to_cart_from_wishlist, name='wishlist_add_to_cart'),
 
 
 
