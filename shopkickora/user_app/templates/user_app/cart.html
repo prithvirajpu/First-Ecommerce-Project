@@ -85,14 +85,13 @@
 
                                     <div class="quantity-control-group"> {# Wrapper for quantity controls #}
                                         {# Use <a> tag for decrement #}
-                                        <a href="{% url 'decrement_quantity' item.id %}" class="quantity-btn">
-                                            <i data-lucide="minus" class="w-4 h-4"></i>
-                                        </a>
+                                        <button class="quantity-btn update-cart" data-url="{% url 'decrement_quantity' item.id %}" data-action="decrement" data-id="{{ item.id }}">
+                                        <i data-lucide="minus" class="w-4 h-4"></i>
+                                    </button>
                                         <span id="quantity-{{ item.id }}">{{ item.quantity }}</span>
-                                        {# Use <a> tag for increment #}
-                                        <a href="{% url 'increment_quantity' item.id %}" class="quantity-btn">
-                                            <i data-lucide="plus" class="w-4 h-4"></i>
-                                        </a>
+<button class="quantity-btn update-cart" data-url="{% url 'increment_quantity' item.id %}" data-action="increment" data-id="{{ item.id }}">
+    <i data-lucide="plus" class="w-4 h-4"></i>
+</button>
                                     </div>
 
                                     {# Use <a> tag for removal #}
@@ -134,11 +133,13 @@
                         </div>
                     </div>
 
-                    <a href="" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 shadow-lg mb-4 block text-center">
-                        Proceed to Checkout
-                    </a>
+                    <button id="checkout-btn"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 shadow-lg mb-4 block text-center">
+                    Proceed to Checkout
+                </button>
 
-                    <a href="" class="w-full text-blue-600 hover:text-blue-700 font-medium py-2 transition-colors block text-center">
+
+                    <a href="{% url 'user_product_list' %}" class="w-full text-blue-600 hover:text-blue-700 font-medium py-2 transition-colors block text-center">
                         Continue Shopping
                     </a>
                 </div>
@@ -148,9 +149,66 @@
 </body>
 {% endblock %}
 {% block extra_js %}
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-    // Initialize Lucide icons
-    lucide.createIcons();
-    </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  lucide.createIcons();
+
+  const csrfToken = '{{ csrf_token }}';
+
+  document.querySelectorAll('.update-cart').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const url = this.dataset.url;
+      const action = this.dataset.action;
+      const itemId = this.dataset.id;
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+  if (data.status === 'success') {
+    if (data.deleted) {
+      const item = document.getElementById(`cart-item-${data.item_id}`);
+      if (item) item.remove();
+    } else {
+      document.getElementById(`quantity-${data.item_id}`).textContent = data.new_quantity;
+    }
+
+    document.getElementById('subtotal').textContent = `₹${data.subtotal}`;
+    document.getElementById('total').textContent = `₹${data.subtotal}`;
+  } else {
+    showToast(data.message || 'Error updating cart', 'warning');
+  }
+})
+
+      .catch(() => showToast('Something went wrong', 'error'));
+    });
+  });
+});
+</script>
+
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const checkoutBtn = document.getElementById("checkout-btn");
+    const cartIsEmpty = Number("{{ cart_items|length }}") === 0;
+
+    checkoutBtn.addEventListener("click", function () {
+      if (cartIsEmpty) {
+        showToast("Your cart is empty. Please add items before proceeding.", "warning");
+      } else {
+        window.location.href = "{% url 'checkout' %}";
+      }
+    });
+  });
+</script>
 {% endblock %}
+

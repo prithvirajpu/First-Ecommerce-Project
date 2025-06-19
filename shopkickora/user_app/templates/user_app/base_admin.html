@@ -82,6 +82,11 @@
           class="{% if request.path == '/myadmin/products/' %}active{% endif %}"
           >Products</a
         >
+        <a
+          href="{% url 'admin_order_list' %}"
+          class="{% if request.path == '/myadmin/products/' %}active{% endif %}"
+          >Orders</a
+        >
         <a href="#" data-bs-toggle="modal" data-bs-target="#logoutModal"
           >Logout</a
         >

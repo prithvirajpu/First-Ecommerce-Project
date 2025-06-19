@@ -20,5 +20,10 @@ urlpatterns = [
     path('brands/add/', views.add_brand, name='add_brand'),
     path('brands/edit/<int:brand_id>/', views.edit_brand, name='edit_brand'),
     path('brands/toggle/<int:brand_id>/', views.toggle_brand_status, name='toggle_brand_status'), 
+    path('orders/', views.admin_order_list, name='admin_order_list'),
+    path('orders/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
+    path('orders/update-status/<int:order_id>/', views.admin_update_order_status, name='admin_update_order_status'),
+    path('orders/return/approve/<int:order_item_id>/', views.approve_return, name='admin_approve_return'),
+
 ]
 

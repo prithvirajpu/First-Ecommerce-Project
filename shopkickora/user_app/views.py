@@ -29,13 +29,15 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 from .models import (
     Brand, Category, CustomUser, Product,
-    ProductSizeStock, Address, EmailChangeToken,Wishlist,Cart
+    ProductSizeStock, Address, EmailChangeToken,Wishlist,Cart,
+    Order,OrderItem,Cart
 )
 
 from user_app.forms import LoginForm, ProfileImageForm 
 from django.conf import settings
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.crypto import get_random_string
 
 
 
@@ -175,28 +177,72 @@ def cart_view(request):
 @login_required
 def increment_quantity(request, item_id):
     cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+
     try:
         stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
     except ProductSizeStock.DoesNotExist:
-        messages.error(request, "Stock info not found.")
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
         return redirect('cart_view')
 
-    if cart_item.quantity < min(stock.quantity, MAX_QUANTITY_PER_ITEM):
-        cart_item.quantity += 1
-        cart_item.save()
-    else:
-        messages.warning(request, "Maximum quantity reached.")
-    return redirect('cart_view')
+    if cart_item.quantity >= stock.quantity:
+        return JsonResponse({
+            'status': 'error',
+            'message': f"Only {stock.quantity} items left in stock"
+        })
+
+    if cart_item.quantity >= MAX_QUANTITY_PER_ITEM:
+        return JsonResponse({
+            'status': 'error',
+            'message': f"Maximum limit per item is {MAX_QUANTITY_PER_ITEM}"
+        })
+
+    cart_item.quantity += 1
+    cart_item.save()
+
+    subtotal = sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user))
+
+    return JsonResponse({
+        'status': 'success',
+        'item_id': cart_item.id,
+        'new_quantity': cart_item.quantity,
+        'subtotal': f"{subtotal:.2f}",
+    })
+
 
 @login_required
 def decrement_quantity(request, item_id):
+    if request.method != 'POST' or request.headers.get('x-requested-with') != 'XMLHttpRequest':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
     cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
+        new_quantity = cart_item.quantity
+        deleted = False
     else:
-        cart_item.delete()
-    return redirect('cart_view')
+        # Do not allow deleting, just return a warning
+        return JsonResponse({
+            'status': 'warning',
+            'message': 'Minimum quantity is 1',
+            'item_id': item_id,
+            'new_quantity': 1,
+            'deleted': False,
+        })
+
+    # Recalculate subtotal
+    cart_items = Cart.objects.filter(user=request.user)
+    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+
+    return JsonResponse({
+        'status': 'success',
+        'item_id': item_id,
+        'new_quantity': new_quantity,
+        'deleted': deleted,
+        'subtotal': f"{subtotal:.2f}",
+    })
 
 @login_required
 def remove_from_cart(request, item_id):
@@ -559,6 +605,7 @@ def product_detail(request, slug):
 def user_profile(request):
     user = request.user
     address = Address.objects.filter(user=user, is_default=True).first()
+    orders = Order.objects.filter(user=user).order_by('-created_at')  # latest first
 
     if request.method == 'POST':
         form = ProfileImageForm(request.POST, request.FILES, instance=user)
@@ -576,6 +623,7 @@ def user_profile(request):
 
     context = {
         'user': user,
+        'orders': orders,
         'address': address,
         'form': form  # ✅ important to pass form in context
     }
@@ -644,6 +692,17 @@ def edit_profile(request):
                 }
             })
 
+        # --- Update user name ---
+        if " " in full_name:
+            first_name, last_name = full_name.split(" ", 1)
+        else:
+            first_name = full_name
+            last_name = ""
+
+        user.first_name = first_name
+        user.last_name = last_name
+        user.save()
+
         # --- Save or create default address ---
         if address:
             address.full_name = full_name
@@ -655,7 +714,7 @@ def edit_profile(request):
                 user=user,
                 full_name=full_name,
                 mobile=phone,
-                email=user.email,  # use current user email
+                email=user.email,
                 street_address=street_address,
                 district='Default',
                 state='Default',
@@ -792,6 +851,137 @@ def delete_address(request, address_id):
     address.delete()
     messages.success(request, "Address deleted successfully.")
     return redirect('address_view')
+
+@login_required
+def checkout(request):
+    user = request.user
+    cart_items = Cart.objects.filter(user=user)
+    if not cart_items.exists():
+        return redirect('cart_view')
+    
+    addresses = Address.objects.filter(user=user)
+
+    default_address = addresses.filter(is_default=True).first()
+    
+    # Price calculations
+    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+
+    shipping_charge = 0
+    tax = 0
+    total = subtotal + shipping_charge + tax
+
+    context = {
+        'cart_items': cart_items,
+        'addresses': addresses,
+        'default_address': default_address,
+        'subtotal': subtotal,
+        'tax': tax,
+        'shipping': shipping_charge,
+        'total': total,
+    }
+
+    return render(request, 'user_app/checkout.html', context)
+
+
+
+
+@login_required
+def place_order(request):
+    if request.method == 'POST':
+        address_type = request.POST.get('selected_address')
+
+        # Get Cart Items
+        cart_items = Cart.objects.filter(user=request.user)
+        if not cart_items.exists():
+            return redirect('/checkout/?error=empty_cart')
+
+        # ✅ STOCK VALIDATION
+        from user_app.models import ProductSizeStock  # adjust if needed
+        out_of_stock_items = []
+        for item in cart_items:
+            try:
+                stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+                if item.quantity > stock.quantity:
+                    out_of_stock_items.append(item.product.name)
+            except ProductSizeStock.DoesNotExist:
+                out_of_stock_items.append(item.product.name)
+
+        if out_of_stock_items:
+            # Redirect with stock error message
+            return redirect('/checkout/?stock_error=true')
+
+        # Address Handling
+        if address_type != 'new':
+            try:
+                address = Address.objects.get(id=int(address_type), user=request.user)
+            except (ValueError, Address.DoesNotExist):
+                return redirect('/checkout/?error=invalid_address')
+        else:
+            full_name = request.POST.get('full_name')
+            mobile = request.POST.get('mobile')
+            street = request.POST.get('street')
+            district = request.POST.get('district')
+            state = request.POST.get('state')
+            pincode = request.POST.get('pincode')
+            country = request.POST.get('country')
+
+            if not mobile or not mobile.isdigit() or len(mobile) != 10:
+                return redirect('/checkout/?error=invalid_mobile')
+
+            address = Address.objects.create(
+                user=request.user,
+                full_name=full_name,
+                mobile=mobile,
+                street_address=street,
+                district=district,
+                state=state,
+                pincode=pincode,
+                country=country,
+                is_default=False
+            )
+
+        # Order Creation
+        order = Order.objects.create(
+            user=request.user,
+            address=address,
+            order_id=get_random_string(10).upper(),
+            status='PENDING',
+            total_amount=sum(item.product.price * item.quantity for item in cart_items)
+        )
+
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                size=item.size,
+                price=item.product.price
+            )
+
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            stock.quantity -= item.quantity
+            stock.save()
+
+        cart_items.delete()
+        return redirect('order_success', order_id=order.id)
+
+    return redirect('checkout')
+
+@login_required
+def order_success(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'user_app/order_success.html', {'order': order})
+
+login_required
+def user_order_detail(request, order_id):
+    order = Order.objects.select_related('address').get(id=order_id, user=request.user)
+    return render(request, 'user_app/order_detail.html', {'order': order})
+
+@login_required
+def user_order_list(request):
+    orders = Order.objects.filter(user=request.user).select_related('address').order_by('-created_at')
+    return render(request, 'user_app/order_list.html', {'orders': orders})
+
 
 @never_cache
 def logout_view(request):

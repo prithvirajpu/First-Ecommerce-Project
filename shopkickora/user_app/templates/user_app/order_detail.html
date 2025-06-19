@@ -1,0 +1,55 @@
+{% extends "user_app/base_user.html" %}
+{% load cart_extras %}
+
+{% block title %}Order #{{ order.order_id }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <h2 class="text-2xl font-bold mb-6">Order Details</h2>
+
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <p><strong>Order ID:</strong> {{ order.order_id }}</p>
+    <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+    <p><strong>Placed On:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
+    <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h4 class="text-lg font-semibold mb-2">Shipping Address</h4>
+    {% if order.address %}
+      <p>{{ order.address.street_address }}, {{ order.address.city }}, {{ order.address.state }} - {{ order.address.pincode }}</p>
+      <p><strong>Phone:</strong> {{ order.address.mobile }}</p>
+    {% else %}
+      <p class="text-gray-600">No address found.</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h4 class="text-lg font-semibold mb-4">Ordered Items</h4>
+    <table class="min-w-full text-left border">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 border">#</th>
+          <th class="p-2 border">Product</th>
+          <th class="p-2 border">Size</th>
+          <th class="p-2 border">Qty</th>
+          <th class="p-2 border">Price</th>
+          <th class="p-2 border">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.order_items.all %}
+        <tr>
+          <td class="p-2 border">{{ forloop.counter }}</td>
+          <td class="p-2 border">{{ item.product.name }}</td>
+          <td class="p-2 border">{{ item.size }}</td>
+          <td class="p-2 border">{{ item.quantity }}</td>
+          <td class="p-2 border">₹{{ item.price }}</td>
+          <td class="p-2 border">₹{{ item.price|multiply:item.quantity }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

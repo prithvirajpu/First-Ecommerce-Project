@@ -5,7 +5,8 @@ from django.contrib import messages
 from .forms import AdminLoginForm
 from django.core.paginator import Paginator
 from django.db.models import Q
-from user_app.models import CustomUser,Product, ProductImage, Category, Brand, ProductSizeStock
+from user_app.models import (CustomUser,Product, ProductImage, Category,
+        Brand, ProductSizeStock,Order,OrderItem,Wallet)
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
@@ -609,6 +610,77 @@ def toggle_brand_status(request, brand_id):
     brand.is_active =  not brand.is_active
     brand.save()
     return redirect('brand_list')
+
+@never_cache
+@user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
+def admin_order_list(request):
+    query=request.GET.get('q','')
+    status_filter=request.GET.get('status','')
+    orders=Order.objects.select_related('user').order_by('-created_at')
+
+    if query:
+        orders=orders.filter(Q (order_id__icontains=query) | 
+                            Q (user__email__icontails=query)|
+                            Q (user__full_name__icontains=query))
+    if status_filter:
+        orders=orders.filter(status=status_filter)
+    paginator=Paginator(orders,10)
+    page=request.GET.get('page')
+    order_page=paginator.get_page(page)
+    context={'orders':order_page,
+             'query':query,
+             'status_filter':status_filter}
+    return render(request,'admin_app/order_list.html',context)
+
+
+
+@never_cache
+@user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
+def admin_order_detail(request,order_id):
+    order=get_object_or_404(Order.objects.select_related('user','address'),id=order_id)
+    items=order.order_items.select_related('product')
+    context={'order':order,
+             'items':items}
+    return render(request,'admin_app/order_detail.html',context)
+
+
+@never_cache
+@user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
+def admin_update_order_status(request, order_id):
+    if request.method == "POST":
+        order = get_object_or_404(Order, id=order_id)
+        new_status = request.POST.get("status")
+
+        if new_status in dict(Order.STATUS_CHOICES).keys():
+            order.status = new_status
+            order.save()
+            messages.success(request, f"Order status updated to {order.get_status_display()}.")
+        else:
+            messages.error(request, "Invalid status selected.")
+
+    return redirect('admin_order_detail', order_id=order_id)
+
+@never_cache
+@user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
+def approve_return(request, order_item_id):
+    item = get_object_or_404(OrderItem, id=order_item_id)
+
+    if not item.is_return_requested or item.is_return_approved:
+        messages.warning(request, "Invalid or already approved return request.")
+        return redirect('admin_order_detail', order_id=item.order.id)
+
+    # Mark approved
+    item.is_return_approved = True
+    item.save()
+
+    # Refund to wallet
+    wallet, created = Wallet.objects.get_or_create(user=item.order.user)
+    refund_amount = item.price * item.quantity
+    wallet.balance += refund_amount
+    wallet.save()
+
+    messages.success(request, f"Return approved and ₹{refund_amount} refunded to user's wallet.")
+    return redirect('admin_order_detail', order_id=item.order.id)
 
 def admin_logout(request):
     logout(request)

@@ -1,0 +1,116 @@
+{% extends "user_app/base_user.html" %}
+{% block extra_css %}
+<style>
+    .sidebar-item {
+        transition: all 0.3s ease;
+    }
+    .sidebar-item:hover {
+        background-color: #99d0c9;
+        transform: translateX(4px);
+    }
+    .sidebar-item.active {
+        background-color: #e0f2fe;
+        border-right: 3px solid #509b8d;
+        color: #75ad9c;
+    }
+    .profile-card {
+        background: linear-gradient(135deg, #f0f9ff 0%, #66e6c8 100%);
+    }
+    .info-item {
+        transition: all 0.2s ease;
+    }
+    .info-item:hover {
+        background-color: #f8fafc;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar -->
+        <div class="lg:w-1/4">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <nav class="space-y-2">
+                    <a href="{% url 'user_profile' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <span class="font-medium">Profile</span>
+                    </a>
+                    <a href="{% url 'user_order_list' %}" class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="font-medium">Orders</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                        <span class="font-medium">Wallet</span>
+                    </a>
+                    <a href="{% url 'address_view' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <span class="font-medium">Address</span>
+                    </a>
+                    <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <span class="font-medium">Password</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="gift" class="w-5 h-5"></i>
+                        <span class="font-medium">Refer & Earn</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+        <!-- Orders Content -->
+        <div class="lg:w-3/4">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8">My Orders</h2>
+            {% if orders %}
+                <div class="space-y-4">
+                    {% for order in orders %}
+                        <div class="bg-white rounded-xl shadow-lg p-4 flex items-center justify-between" id="order-card-{{ order.id }}">
+                            <!-- Left: Order Info -->
+                            <div class="flex items-center space-x-4">
+                                <div class="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                    {% with order.order_items.first.product.images.first as first_image %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image.url }}" alt="{{ order.order_items.first.product.name }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <img src="/static/images/default-product.jpg" alt="No Image" class="w-full h-full object-cover">
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                                <div class="flex flex-col">
+                                    <h3 class="text-base font-semibold text-gray-800">
+                                        <a href="{% url 'user_order_detail' order.id %}" class="hover:underline">
+                                            Order #{{ order.order_id }}
+                                        </a>
+                                    </h3>
+                                    <p class="text-gray-500 text-xs mt-0.5">Placed on: {{ order.created_at|date:"M d, Y H:i" }}</p>
+                                    <p class="text-gray-500 text-xs">Total: ₹{{ order.total_amount }}</p>
+                                    <span class="text-xs px-2 py-0.5 rounded-full mt-1
+                                        {% if order.status == 'DELIVERED' %}
+                                            bg-green-100 text-green-700
+                                        {% elif order.status == 'CANCELLED' %}
+                                            bg-red-100 text-red-700
+                                        {% else %}
+                                            bg-yellow-100 text-yellow-700
+                                        {% endif %}
+                                    ">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- Right: Buttons -->
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'user_order_detail' order.id %}" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 transition">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600 text-center py-10">You have no orders yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

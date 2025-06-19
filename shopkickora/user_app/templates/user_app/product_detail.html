@@ -342,20 +342,24 @@ document.getElementById('addToCartForm').addEventListener('submit', async functi
     });
 
     function decreaseQuantity() {
-        const quantityInput = document.getElementById('quantity');
-        let quantity = parseInt(quantityInput.value);
-        if (quantity > 1) {
-            quantityInput.value = quantity - 1;
-            document.getElementById('cart-quantity').value = quantity - 1;
-        }
+    const quantityInput = document.getElementById('quantity');
+    let quantity = parseInt(quantityInput.value);
+    if (quantity > 1) {
+        quantityInput.value = quantity - 1;
+        document.getElementById('cart-quantity').value = quantity - 1;
     }
+}
 
-    function increaseQuantity() {
-        const quantityInput = document.getElementById('quantity');
-        let quantity = parseInt(quantityInput.value);
+function increaseQuantity() {
+    const quantityInput = document.getElementById('quantity');
+    let quantity = parseInt(quantityInput.value);
+    if (quantity < 5) {
         quantityInput.value = quantity + 1;
         document.getElementById('cart-quantity').value = quantity + 1;
+    } else {
+        showToast("Maximum quantity is 5", "warning");
     }
+}
 
     document.querySelectorAll('.size-box').forEach(button => {
         button.addEventListener('click', function() {
