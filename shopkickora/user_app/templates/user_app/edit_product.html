@@ -1,255 +1,299 @@
 {% extends "user_app/base_admin.html" %}
-{% block content %}
-<div class="container mt-4" style="max-width: 700px;">
-  <h3>Edit Product</h3>
-  <hr />
-  <div class="card shadow-sm border-primary">
-    <div class="card-body">
-      <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+{% load static %} 
 
-        {% if messages %}
-          <div>
-            {% for message in messages %}
-              <div 
-                class="alert alert-{{ message.tags }} alert-dismissible fade show"
-                role="alert"
-              >
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
+{% block title %}Edit Product - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center">
+  <div class="form-section" style="width: 100%; max-width: 700px;">
+    <h3 class="mb-4">Edit Product</h3>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="name" class="form-label">Product Name</label>
+        <input type="text" name="name" id="name" class="form-control" required value="{{ form_data.name|default:product.name }}">
+        {% if errors.name %}
+          <p class="error-text">{{ errors.name }}</p>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea name="description" id="description" class="form-control" rows="4" required>{{ form_data.description|default:product.description }}</textarea>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label for="category" class="form-label">Category</label>
+          <select name="category" id="category" class="form-select" required>
+            {% for category in categories %}
+              <option value="{{ category.id }}"
+                {% if form_data.category_id|stringformat:"s" == category.id|stringformat:"s" or category.id == product.category.id %} selected {% endif %}>
+                {{ category.name }}
+              </option>
             {% endfor %}
+          </select>
+          {% if errors.category %}
+            <p class="error-text">{{ errors.category }}</p>
+          {% endif %}
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label for="brand" class="form-label">Brand</label>
+          <select name="brand" id="brand" class="form-select" required>
+            {% for brand in brands %}
+              <option value="{{ brand.id }}"
+                {% if form_data.brand_id|stringformat:"s" == brand.id|stringformat:"s" or brand.id == product.brand.id %} selected {% endif %}>
+                {{ brand.name }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if errors.brand %}
+            <p class="error-text">{{ errors.brand }}</p>
+          {% endif %}
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label for="price" class="form-label">Price ($)</label>
+          <input type="number" name="price" id="price" step="0.01" class="form-control" required value="{{ form_data.price|default:product.price }}">
+          {% if errors.price %}
+            <p class="error-text">{{ errors.price }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Stock Quantity by Size</label>
+        <div class="row g-2">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text">S</span>
+              <input type="number" name="stock_S" min="0" class="form-control" placeholder="Qty for S" value="{{ form_data.stock_S|default:stock.stock_S }}">
+            </div>
           </div>
+
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text">M</span>
+              <input type="number" name="stock_M" min="0" class="form-control" placeholder="Qty for M" value="{{ form_data.stock_M|default:stock.stock_M }}">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text">L</span>
+              <input type="number" name="stock_L" min="0" class="form-control" placeholder="Qty for L" value="{{ form_data.stock_L|default:stock.stock_L }}">
+            </div>
+          </div>
+        </div>
+        <label for="discount_percentage">Discount (%)</label>
+        <input type="number" name="discount_percentage" id="discount_percentage" min="0" max="100"
+               value="{{ form_data.discount_percentage|default:product.discount_percentage }}"
+               class="form-input" placeholder="0-100">
+        {% if errors.discount_percentage %}
+          <p class="text-red-500 text-sm mt-1">{{ errors.discount_percentage }}</p>
         {% endif %}
 
+        {% if errors.stock_sizes %}
+          <p class="error-text">{{ errors.stock_sizes }}</p>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="images" class="form-label">Add/Replace Images (minimum 3)</label>
+        <input type="file" id="original-images" name="images" accept="image/*" multiple class="form-control">
+        <div id="image-preview-area" class="d-flex flex-wrap gap-3 mt-3"></div>
+        {% if errors.format %}
+          <p style="color:red">{{ errors.format }}</p>
+        {% endif %}
+      </div>
+
+      {% if images %}
         <div class="mb-3">
-          <label for="name" class="form-label fw-semibold">Product Name</label>
-          <input type="text" class="form-control" name="name" value="{{ form_data.name|default:product.name }}" required />
-          {% if errors.name %}
-            <div class="text-danger small">{{ errors.name }}</div>
-          {% endif %}
-        </div>
-
-        <div class="mb-3">
-          <label for="description" class="form-label fw-semibold">Description</label>
-          <textarea class="form-control" name="description" rows="3" required>{{ form_data.description|default:product.description }}</textarea>
-        </div>
-
-        <div class="d-flex flex-wrap mb-3" style="gap: 12px;">
-          <div style="flex: 1 1 200px; max-width: 200px;">
-            <label for="category" class="form-label fw-semibold">Category</label>
-            <select name="category" class="form-select" required style="width: 100%;">
-              {% for cat in categories %}
-                <option value="{{ cat.id }}"
-                  {% if form_data.category_id %}
-                    {% if form_data.category_id|stringformat:"s" == cat.id|stringformat:"s" %}
-                      selected
-                    {% endif %}
-                  {% else %}
-                    {% if cat.id == product.category.id %}
-                      selected
-                    {% endif %}
-                  {% endif %}
-                >
-                  {{ cat.name }}
-                </option>
-              {% endfor %}
-            </select>
-            {% if errors.category %}
-              <div class="text-danger small">{{ errors.category }}</div>
+          <label class="form-label fw-semibold">Existing Images:</label><br />
+          {% for img in images %}
+            {% if img.image %}
+              <img src="{{ img.image.url }}" alt="Product Image" class="me-2 mb-2" style="width: 80px; height: auto;" />
             {% endif %}
-          </div>
-
-          <div style="flex: 1 1 200px; max-width: 200px;">
-            <label for="brand" class="form-label fw-semibold">Brand</label>
-            <select name="brand" class="form-select" required style="width: 100%;">
-              {% for b in brands %}
-                <option value="{{ b.id }}"
-                  {% if form_data.brand_id %}
-                    {% if form_data.brand_id|stringformat:"s" == b.id|stringformat:"s" %}
-                      selected
-                    {% endif %}
-                  {% else %}
-                    {% if b.id == product.brand.id %}
-                      selected
-                    {% endif %}
-                  {% endif %}
-                >
-                  {{ b.name }}
-                </option>
-              {% endfor %}
-            </select>
-            {% if errors.brand %}
-              <div class="text-danger small">{{ errors.brand }}</div>
-            {% endif %}
-          </div>
-
-          <div style="flex: 1 1 200px; max-width: 200px;">
-            <label for="price" class="form-label fw-semibold">Price ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              class="form-control"
-              name="price"
-              value="{{ form_data.price|default:product.price }}"
-              required
-            />
-            {% if errors.price %}
-              <div class="text-danger small">{{ errors.price }}</div>
-            {% endif %}
-          </div>
+          {% endfor %}
         </div>
+      {% endif %}
 
-        <!-- Stock Sizes -->
-        <div class="mb-3">
-          <label class="form-label fw-semibold" style="display:block; max-width: 650px;">Stock Quantity by Size</label>
-          <div class="d-flex flex-wrap gap-3" style="max-width: 650px;">
-            <div class="input-group" style="max-width: 200px;">
-              <span class="input-group-text">S</span>
-              <input
-                type="number"
-                name="stock_S"
-                min="0"
-                class="form-control"
-                value="{{ form_data.stock_S|default:'0' }}"
-                required
-              />
-            </div>
-
-            <div class="input-group" style="max-width: 200px;">
-              <span class="input-group-text">M</span>
-              <input
-                type="number"
-                name="stock_M"
-                min="0"
-                class="form-control"
-                value="{{ form_data.stock_M|default:'0' }}"
-                required
-              />
-            </div>
-
-            <div class="input-group" style="max-width: 200px;">
-              <span class="input-group-text">L</span>
-              <input
-                type="number"
-                name="stock_L"
-                min="0"
-                class="form-control"
-                value="{{ form_data.stock_L|default:'0' }}"
-                required
-              />
-            </div>
-          </div>
-          {% if errors.stock_sizes %}
-            <div class="text-danger small">{{ errors.stock_sizes }}</div>
-          {% endif %}
-        </div>
-
-        <div class="mb-3" style="max-width: 400px;">
-          <label for="images" class="form-label fw-semibold">Add More Images  </label>
-          <input
-            type="file"
-            class="form-control"
-            name="images"
-            accept="image/*"
-            multiple
-          />
-          {% if errors.format %}
-            <div class="text-danger small">{{ errors.format }}</div>
-          {% endif %}
-        </div>
-        <!-- FRONT -->
-<label>Front View</label>
-<input type="file" id="frontInput" accept="image/*">
-<img id="frontPreview" style="max-height: 300px;">
-<input type="hidden" name="image_front">
-
-<!-- BACK -->
-<label>Back View</label>
-<input type="file" id="backInput" accept="image/*">
-<img id="backPreview" style="max-height: 300px;">
-<input type="hidden" name="image_back">
-
-<!-- SIDE -->
-<label>Side View</label>
-<input type="file" id="sideInput" accept="image/*">
-<img id="sidePreview" style="max-height: 300px;">
-<input type="hidden" name="image_side">
-
-<!-- Crop Button (must be clicked before submitting) -->
-<button type="button" onclick="cropAll()">Crop All</button>
-
-<!-- Submit -->
-{% csrf_token %}
-<button type="submit">Save</button>
-
-
-        {% if images %}
-  <div class="mb-3">
-    <label class="form-label fw-semibold">Existing Images:</label><br/>
-    {% for img in images %}
-  {% if img.image %}
-    <img src="{{ img.image.url }}" alt="Product Image" class="me-2 mb-2" style="width: 80px; height: auto;" />
-  {% endif %}
-{% endfor %}
-
+      <button type="submit" class="btn btn-primary">Update Product</button>
+      <a href="{% url 'product_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
   </div>
-{% endif %}
+</div>
 
-
-        <button type="submit" class="btn btn-primary">Update Product</button>
-        <a href="{% url 'product_list' %}" class="btn btn-secondary ms-2">Cancel</a>
-      </form>
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 700px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Crop Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="cropperImage" style="max-width: 100%; max-height: 400px;" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" id="skipCrop">Skip</button>
+        <button class="btn btn-primary" type="button" id="cropConfirm">Crop</button>
+      </div>
     </div>
   </div>
 </div>
-<!-- Logout Confirmation Modal -->
-    <div
-      class="modal fade"
-      id="logoutModal"
-      tabindex="-1"
-      aria-labelledby="logoutModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">Are you sure you want to logout?</div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <a href="{% url 'admin_logout' %}" class="btn btn-danger">Logout</a>
-          </div>
-        </div>
-      </div>
-    </div>
 {% endblock %}
-
-{% block script %}
+{% block extra_js %}
 <script>
-  // Auto dismiss alert messages after 5 seconds
-  setTimeout(function () {
-    const alerts = document.querySelectorAll(".alert");
-    alerts.forEach((alert) => {
-      alert.classList.remove("show");
-      alert.classList.add("fade");
-      setTimeout(() => alert.remove(), 500);
-    });
-  }, 5000);
-  
-</script>
+document.addEventListener("DOMContentLoaded", () => {
+  const fileInput = document.getElementById("original-images");
+  const previewArea = document.getElementById("image-preview-area");
+  const cropperImage = document.getElementById("cropperImage");
+  const cropModalEl = document.getElementById("cropperModal");
+  const cropModal = new bootstrap.Modal(cropModalEl);
+  const cropConfirmBtn = document.getElementById("cropConfirm");
+  const skipBtn = document.getElementById("skipCrop");
 
+  let cropper;
+  let croppedImages = [];
+  let imageQueue = [];
+  let currentIndex = 0;
+
+  fileInput.addEventListener("change", function () {
+    previewArea.innerHTML = '';
+    croppedImages = [];
+    imageQueue = Array.from(this.files);
+    currentIndex = 0;
+
+    if (imageQueue.length > 0) {
+      loadImageForCropping(imageQueue[currentIndex]);
+    }
+  });
+
+  function loadImageForCropping(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      cropperImage.src = e.target.result;
+
+      cropperImage.onload = function () {
+        cropModal.show();
+        setTimeout(() => {
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(cropperImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+          });
+        }, 100);
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  cropConfirmBtn.addEventListener("click", () => {
+    if (!cropper) return;
+
+    const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+    canvas.toBlob(blob => {
+      const originalFile = imageQueue[currentIndex];
+      const croppedFile = new File([blob], originalFile.name, {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+
+      croppedImages.push(croppedFile);
+
+      const imgPreview = document.createElement('img');
+      imgPreview.src = URL.createObjectURL(blob);
+      imgPreview.classList.add('me-2', 'mb-2', 'rounded');
+      imgPreview.style.maxWidth = '200px';
+      previewArea.appendChild(imgPreview);
+
+      cropper.destroy();
+      cropper = null;
+
+      currentIndex++;
+      if (currentIndex < imageQueue.length) {
+        loadImageForCropping(imageQueue[currentIndex]);
+      } else {
+        cropModal.hide();
+      }
+    }, 'image/jpeg');
+  });
+
+  skipBtn.addEventListener("click", () => {
+    const originalFile = imageQueue[currentIndex];
+    croppedImages.push(originalFile);
+
+    const imgPreview = document.createElement('img');
+    imgPreview.src = URL.createObjectURL(originalFile);
+    imgPreview.classList.add('me-2', 'mb-2', 'rounded');
+    imgPreview.style.maxWidth = '200px';
+    previewArea.appendChild(imgPreview);
+
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+
+    currentIndex++;
+    if (currentIndex < imageQueue.length) {
+      loadImageForCropping(imageQueue[currentIndex]);
+    } else {
+      cropModal.hide();
+    }
+  });
+
+  document.querySelector("form").addEventListener("submit", function (e) {
+    if (croppedImages.length > 0) {
+      e.preventDefault();  // Only prevent if new images were selected
+
+      const originalForm = this;
+      const formData = new FormData(originalForm);
+
+      formData.delete("images");
+
+      croppedImages.forEach(file => {
+        formData.append("images", file);
+      });
+
+      const csrfToken = document.querySelector("input[name=csrfmiddlewaretoken]").value;
+
+      fetch(originalForm.action, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken
+        },
+        body: formData
+      })
+        .then(res => {
+          if (res.redirected) {
+            window.location.href = res.url;
+          } else {
+            return res.text().then(html => {
+              document.open();
+              document.write(html);
+              document.close();
+            });
+          }
+        })
+        .catch(err => {
+          console.error("Upload failed:", err);
+          alert("Failed to upload product. Try again.");
+        });
+    }
+  });
+});
+</script>
 {% endblock %}

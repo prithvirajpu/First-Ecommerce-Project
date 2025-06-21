@@ -195,6 +195,7 @@ def product_list(request):
     }
     return render(request, 'user_app/product_list.html', context)
 
+
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def add_product(request):
@@ -213,39 +214,39 @@ def add_product(request):
         stock_s = request.POST.get('stock_S')
         stock_m = request.POST.get('stock_M')
         stock_l = request.POST.get('stock_L')
+        discount_percentage = request.POST.get('discount_percentage')
 
         form_data = {
             'name': name,
             'description': description,
             'price': price,
-            'category_id': category_id,
-            'brand_id': brand_id,
-            'stock_S': stock_s,  
-            'stock_M': stock_m,  
-            'stock_L': stock_l,  
+            'category': category_id,
+            'brand': brand_id,
+            'stock_S': stock_s,
+            'stock_M': stock_m,
+            'stock_L': stock_l,
+            'discount_percentage': discount_percentage,
         }
 
-        
-        if len(images) < 3 :
-            errors['format'] = "Please upload at least 3 images."
+        # Validate discount
+        try:
+            discount_val = int(discount_percentage or 0)
+            if not (0 <= discount_val <= 100):
+                errors['discount_percentage'] = "Discount must be between 0 and 100"
+        except (ValueError, TypeError):
+            errors['discount_percentage'] = "Invalid discount value"
 
-        allowed_extensions = ['jpg', 'jpeg', 'png', 'webp','avif']
+        # Validate name
         if not name:
             errors['name'] = 'Must enter the name'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
-            errors['name'] = ("Please enter a product name with at least one letter. "
-                              "Only letters, numbers, spaces, hyphens, and underscores are allowed.")
+            errors['name'] = "Please enter a product name with at least one letter. Only letters, numbers, spaces, hyphens, and underscores are allowed."
         elif name == "_" * len(name):
-            errors['name']= "Username cannot be only underscores."
+            errors['name'] = "Product name cannot be only underscores."
         elif Product.objects.filter(name__iexact=name).exists():
             errors['name'] = "The product name already exists"
 
-        for image in images:
-            ext = image.name.split('.')[-1].lower()
-            if ext not in allowed_extensions:
-                errors['format'] = "Invalid file format"
-                break
-
+        # Validate price
         try:
             price_val = float(price)
             if price_val <= 0:
@@ -253,17 +254,17 @@ def add_product(request):
         except (ValueError, TypeError):
             errors['price'] = "Enter a valid number for price."
 
-        if not stock_s or not stock_m or not stock_l:
-            errors['stock_sizes'] = "All sizes (S, M, L) must have stock."
+        # Validate stock
         try:
             s = int(stock_s)
             m = int(stock_m)
             l = int(stock_l)
-            if s <= 0 or m <= 0 or l <= 0:
-                errors['stock_sizes'] = "Stock values must be positive numbers."
+            if s < 0 or m < 0 or l < 0:
+                errors['stock_sizes'] = "Stock values must be non-negative."
         except:
-            errors['stock_sizes'] = "Must enter the stock."
+            errors['stock_sizes'] = "All sizes (S, M, L) must have valid stock."
 
+        # Validate category and brand
         try:
             category = Category.objects.get(id=category_id)
         except Category.DoesNotExist:
@@ -275,7 +276,20 @@ def add_product(request):
             errors['brand'] = "Invalid brand selected"
             brand = None
 
+        # Validate images
+        if len(images) < 3:
+            errors['format'] = "Please upload at least 3 images."
+        else:
+            allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+            for image in images:
+                ext = image.name.split('.')[-1].lower()
+                if ext not in allowed_extensions:
+                    errors['format'] = "Invalid image file format"
+                    break
+
+        # Return form with errors
         if errors:
+            print("FORM ERRORS:", errors)
             return render(request, 'user_app/add_product.html', {
                 'categories': categories,
                 'brands': brands,
@@ -283,30 +297,32 @@ def add_product(request):
                 'form_data': form_data
             })
 
-        total_stock = int(stock_s) + int(stock_m) + int(stock_l)
+        # ✅ All validations passed
+        total_stock = s + m + l
 
         product = Product.objects.create(
             name=name,
             description=description,
-            price=price,
+            price=price_val,
             stock=total_stock,
             category=category,
-            brand=brand
+            brand=brand,
+            discount_percentage=discount_val,
         )
 
         for image in images:
             ProductImage.objects.create(product=product, image=image)
 
         ProductSizeStock.objects.bulk_create([
-    ProductSizeStock(product=product, size='S', quantity=s),
-    ProductSizeStock(product=product, size='M', quantity=m),
-    ProductSizeStock(product=product, size='L', quantity=l),
-])
-
+            ProductSizeStock(product=product, size='S', quantity=s),
+            ProductSizeStock(product=product, size='M', quantity=m),
+            ProductSizeStock(product=product, size='L', quantity=l),
+        ])
 
         messages.success(request, "Product added successfully.")
         return redirect('product_list')
 
+    # GET method: render empty form
     return render(request, 'user_app/add_product.html', {
         'categories': categories,
         'brands': brands,
@@ -321,23 +337,17 @@ def edit_product(request, product_id):
     categories = Category.objects.filter(is_deleted=False)
     brands = Brand.objects.filter(is_active=True)
     existing_images = ProductImage.objects.filter(product=product)
+    size_stock = {s.size: s.quantity for s in ProductSizeStock.objects.filter(product=product)}
     errors = {}
 
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
         price = request.POST.get('price')
+        discount_percentage = request.POST.get('discount_percentage', '0') or '0'
         category_id = request.POST.get('category')
         brand_id = request.POST.get('brand')
         new_images = request.FILES.getlist('images')
-
-        delete_image_ids = request.POST.getlist('delete_images')
-        if delete_image_ids:
-            images_to_delete = ProductImage.objects.filter(product=product, id__in=delete_image_ids)
-            for img in images_to_delete:
-                if img.image:
-                    img.image.delete(save=False)  
-                img.delete()  
 
         stock_s = request.POST.get('stock_S')
         stock_m = request.POST.get('stock_M')
@@ -347,6 +357,7 @@ def edit_product(request, product_id):
             'name': name,
             'description': description,
             'price': price,
+            'discount_percentage': discount_percentage,
             'stock_S': stock_s,
             'stock_M': stock_m,
             'stock_L': stock_l,
@@ -354,16 +365,15 @@ def edit_product(request, product_id):
             'brand_id': brand_id,
         }
 
-        allowed_extensions = ['jpg', 'jpeg', 'png', 'webp','avif']
+        # Validate fields
         if not name:
-            errors['name'] = 'Must enter the name'
+            errors['name'] = 'Product name is required.'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
             errors['name'] = (
-                "Please enter a product name with at least one letter. "
-                "Only letters, numbers, spaces, hyphens, and underscores are allowed."
+                "Enter a valid product name (at least one letter, only letters, numbers, spaces, hyphens, underscores)."
             )
         elif name == "_" * len(name):
-            errors['name']= "Username cannot be only underscores."
+            errors['name'] = "Product name cannot be only underscores."
 
         try:
             price_val = float(price)
@@ -372,21 +382,12 @@ def edit_product(request, product_id):
         except (ValueError, TypeError):
             errors['price'] = "Enter a valid number for price."
 
-        existing_images = ProductImage.objects.filter(product=product)
-
-        MAX_IMAGES = 3
-        if new_images:
-            if len(new_images) != 3:
-                errors['format'] = "You must upload exactly 3 images to replace the existing ones."
-            else:
-                for image in new_images:
-                    ext = image.name.split('.')[-1].lower()
-                    if ext not in allowed_extensions:
-                        errors['format'] = "Invalid image file format. Allowed: jpg, jpeg, png, webp."
-                        break
-        else:
-            if existing_images.count() != 3:
-                errors['format'] = "Exactly 3 images are required. Please upload 3 images."
+        try:
+            discount_val = int(discount_percentage)
+            if not (0 <= discount_val <= 100):
+                errors['discount_percentage'] = "Discount must be between 0 and 100."
+        except ValueError:
+            errors['discount_percentage'] = "Discount must be a valid integer."
 
         try:
             category = Category.objects.get(id=category_id)
@@ -399,6 +400,7 @@ def edit_product(request, product_id):
             errors['brand'] = "Invalid brand selected"
             brand = None
 
+        # Stock Validation
         if not stock_s or not stock_m or not stock_l:
             errors['stock_sizes'] = "All sizes (S, M, L) must have stock."
         else:
@@ -406,12 +408,27 @@ def edit_product(request, product_id):
                 s = int(stock_s)
                 m = int(stock_m)
                 l = int(stock_l)
-                if s <= 0 or m <= 0 or l <= 0:
-                    errors['stock_sizes'] = "Stock values must be positive."
+                if s < 0 or m < 0 or l < 0:
+                    errors['stock_sizes'] = "Stock quantities must be non-negative."
             except ValueError:
-                errors['stock_sizes'] = "Stock values must be positive integers."
+                errors['stock_sizes'] = "Stock quantities must be integers."
 
+        # Image validations
+        allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+        if new_images:
+            if len(new_images) != 3:
+                errors['format'] = "You must upload exactly 3 images to replace existing ones."
+            else:
+                for image in new_images:
+                    ext = image.name.split('.')[-1].lower()
+                    if ext not in allowed_extensions:
+                        errors['format'] = "Invalid image format. Allowed: jpg, jpeg, png, webp, avif."
+                        break
+        else:
+            if existing_images.count() != 3:
+                errors['format'] = "Exactly 3 images are required. Please upload 3 images."
 
+        # On error
         if errors:
             return render(request, 'user_app/edit_product.html', {
                 'product': product,
@@ -420,16 +437,32 @@ def edit_product(request, product_id):
                 'errors': errors,
                 'form_data': form_data,
                 'images': existing_images,
+                'stock': {
+                    'stock_S': stock_s or size_stock.get('S', 0),
+                    'stock_M': stock_m or size_stock.get('M', 0),
+                    'stock_L': stock_l or size_stock.get('L', 0),
+                }
             })
 
+        # Save product
         product.name = name
         product.description = description
         product.price = price_val
+        product.discount_percentage = discount_val
         product.category = category
         product.brand = brand
         product.stock = s + m + l
         product.save()
 
+        # Update stock per size
+        for size, quantity in [('S', s), ('M', m), ('L', l)]:
+            ProductSizeStock.objects.update_or_create(
+                product=product,
+                size=size,
+                defaults={'quantity': quantity}
+            )
+
+        # Replace images
         if new_images and len(new_images) == 3:
             for img in existing_images:
                 if img.image:
@@ -438,32 +471,21 @@ def edit_product(request, product_id):
             for image in new_images:
                 ProductImage.objects.create(product=product, image=image)
 
-        for size, quantity in [('S', s), ('M', m), ('L', l)]:
-            ProductSizeStock.objects.update_or_create(
-                product=product,
-                size=size,
-                defaults={'quantity': quantity}
-            )
-
         messages.success(request, "Product updated successfully.")
         return redirect('product_list')
 
-    size_stock = {'S': 0, 'M': 0, 'L': 0}
-    for stock in ProductSizeStock.objects.filter(product=product):
-        size_stock[stock.size] = stock.quantity
-
+    # GET request
     form_data = {
         'name': product.name,
         'description': product.description,
         'price': product.price,
-        'stock_S': size_stock['S'],
-        'stock_M': size_stock['M'],
-        'stock_L': size_stock['L'],
+        'discount_percentage': product.discount_percentage,
+        'stock_S': size_stock.get('S', 0),
+        'stock_M': size_stock.get('M', 0),
+        'stock_L': size_stock.get('L', 0),
         'category_id': product.category.id if product.category else None,
         'brand_id': product.brand.id if product.brand else None,
     }
-
-    existing_images = ProductImage.objects.filter(product=product)
 
     return render(request, 'user_app/edit_product.html', {
         'product': product,
@@ -472,6 +494,11 @@ def edit_product(request, product_id):
         'errors': {},
         'form_data': form_data,
         'images': existing_images,
+        'stock': {
+            'stock_S': size_stock.get('S', 0),
+            'stock_M': size_stock.get('M', 0),
+            'stock_L': size_stock.get('L', 0),
+        }
     })
 
 

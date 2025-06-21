@@ -3,7 +3,11 @@ import re
 import time
 import json
 
-from django.http import JsonResponse
+
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from django.db import transaction
+from django.http import JsonResponse,HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.conf import settings
@@ -29,7 +33,7 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 from .models import (
     Brand, Category, CustomUser, Product,
-    ProductSizeStock, Address, EmailChangeToken,Wishlist,Cart,
+    ProductSizeStock, Address,Wishlist,Cart,
     Order,OrderItem,Cart
 )
 
@@ -152,26 +156,63 @@ def add_to_cart(request, product_id):
 
     return JsonResponse({"status": "success", "message": message})
 
+@login_required
+def validate_cart_stock(request):
+    cart_items = Cart.objects.filter(user=request.user)
+    out_of_stock = []
 
+    for item in cart_items:
+        try:
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            if item.quantity > stock.quantity:
+                out_of_stock.append({
+                    'product': item.product.name,
+                    'size': item.get_size_display(),
+                    'available': stock.quantity
+                })
+        except ProductSizeStock.DoesNotExist:
+            out_of_stock.append({
+                'product': item.product.name,
+                'size': item.get_size_display(),
+                'available': 0
+            })
+
+    if out_of_stock:
+        return JsonResponse({'status': 'error', 'items': out_of_stock})
+    
+    return JsonResponse({'status': 'ok'})
 
 @login_required
 def cart_view(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
     grand_total = Decimal('0.00')
+    stock_info = {}
+    original_total = Decimal('0.00')
+    total_discount = Decimal('0.00')
 
     for item in cart_items:
         try:
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
             item.max_quantity = stock.quantity
+            stock_info[item.id] = stock.quantity
         except ProductSizeStock.DoesNotExist:
             item.max_quantity = 0
+            stock_info[item.id] = 0
 
-        item.total_price = Decimal(item.product.price) * item.quantity
+        discounted_price = item.product.discounted_price
+        item.discounted_price = discounted_price
+        item.total_price = discounted_price * item.quantity
+
         grand_total += item.total_price
+        original_total += item.product.price * item.quantity
+        total_discount += (item.product.price - discounted_price) * item.quantity
 
     return render(request, 'user_app/cart.html', {
         'cart_items': cart_items,
-        'grand_total': grand_total
+        'grand_total': grand_total,           # Final total after discount
+        'original_total': original_total,     # Original price before discount
+        'total_discount': total_discount,     # Total discount amount
+        'stock_info': stock_info
     })
 
 @login_required
@@ -181,20 +222,26 @@ def increment_quantity(request, item_id):
     try:
         stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
     except ProductSizeStock.DoesNotExist:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
-        return redirect('cart_view')
+        return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
 
     if cart_item.quantity >= stock.quantity:
         return JsonResponse({
             'status': 'error',
-            'message': f"Only {stock.quantity} items left in stock"
+            'message': f"Only {stock.quantity} items left in stock",
+            'item_id': cart_item.id,
+            'new_quantity': cart_item.quantity,
+            'available_stock': stock.quantity,
+            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
         })
 
     if cart_item.quantity >= MAX_QUANTITY_PER_ITEM:
         return JsonResponse({
             'status': 'error',
-            'message': f"Maximum limit per item is {MAX_QUANTITY_PER_ITEM}"
+            'message': f"Maximum limit per item is {MAX_QUANTITY_PER_ITEM}",
+            'item_id': cart_item.id,
+            'new_quantity': cart_item.quantity,
+            'available_stock': stock.quantity,
+            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
         })
 
     cart_item.quantity += 1
@@ -206,6 +253,7 @@ def increment_quantity(request, item_id):
         'status': 'success',
         'item_id': cart_item.id,
         'new_quantity': cart_item.quantity,
+        'available_stock': stock.quantity,
         'subtotal': f"{subtotal:.2f}",
     })
 
@@ -217,29 +265,34 @@ def decrement_quantity(request, item_id):
 
     cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
 
+    try:
+        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
+    except ProductSizeStock.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
+
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
         new_quantity = cart_item.quantity
         deleted = False
     else:
-        # Do not allow deleting, just return a warning
         return JsonResponse({
             'status': 'warning',
             'message': 'Minimum quantity is 1',
             'item_id': item_id,
             'new_quantity': 1,
+            'available_stock': stock.quantity,
             'deleted': False,
+            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
         })
 
-    # Recalculate subtotal
-    cart_items = Cart.objects.filter(user=request.user)
-    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+    subtotal = sum(item.product.price * item.quantity for item in Cart.objects.filter(user=request.user))
 
     return JsonResponse({
         'status': 'success',
         'item_id': item_id,
         'new_quantity': new_quantity,
+        'available_stock': stock.quantity,
         'deleted': deleted,
         'subtotal': f"{subtotal:.2f}",
     })
@@ -641,20 +694,20 @@ def remove_profile_image(request):
     return redirect('user_profile')
 
 
-@login_required
-def verify_email_change(request, token):
-    try:
-        email_token = EmailChangeToken.objects.get(token=token, user=request.user)
-    except EmailChangeToken.DoesNotExist:
-        messages.error(request, "Invalid or expired verification link.")
-        return redirect('user_profile')
+# @login_required
+# def verify_email_change(request, token):
+#     try:
+#         email_token = EmailChangeToken.objects.get(token=token, user=request.user)
+#     except EmailChangeToken.DoesNotExist:
+#         messages.error(request, "Invalid or expired verification link.")
+#         return redirect('user_profile')
 
-    request.user.email = email_token.new_email
-    request.user.save()
-    email_token.delete()
+#     request.user.email = email_token.new_email
+#     request.user.save()
+#     email_token.delete()
 
-    messages.success(request, "Your email address has been updated.")
-    return redirect('user_profile')
+#     messages.success(request, "Your email address has been updated.")
+#     return redirect('user_profile')
 
 
 
@@ -665,21 +718,27 @@ def edit_profile(request):
     errors = {}
 
     if request.method == 'POST':
-        full_name = request.POST.get('full_name')
-        phone = request.POST.get('phone')
-        street_address = request.POST.get('street_address')
+        full_name = request.POST.get('full_name').strip()
+        phone = request.POST.get('phone').strip()
+        street_address = request.POST.get('street_address').strip()
 
         # --- Validation ---
         if not full_name:
             errors['full_name'] = "Full name is required."
-
-        if not phone or not phone.isdigit() or len(phone) != 10:
-            errors['phone'] = "Enter a valid 10-digit phone number."
-
+        elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', full_name):
+            errors['full_name'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
+        elif full_name == "_" * len(full_name):
+            errors['full_name']= "Username cannot be only underscores."
+        elif CustomUser.objects.exclude(id=user.id).filter(username=full_name).exists():
+            errors['full_name']='Username already exist.'
+        if not phone:
+            errors['phone']='Phone number is required'
+        elif not phone.isdigit() or len(phone)!=10:
+            errors['phone']='10 digits required'
         if not street_address:
             errors['street_address'] = "Street address is required."
 
-        # --- If any validation errors ---
+
         if errors:
             return render(request, 'user_app/edit_profile.html', {
                 'address': address,
@@ -790,18 +849,50 @@ def address_view(request):
 
 @login_required
 def add_address(request):
+    errors={}
     if request.method == 'POST':
-        full_name = request.POST.get('full_name')
-        mobile = request.POST.get('mobile')
-        street = request.POST.get('street')
-        district = request.POST.get('district')
-        state = request.POST.get('state')
-        pincode = request.POST.get('pincode')
-        country = request.POST.get('country')
+        full_name = request.POST.get('full_name').strip()
+        mobile = request.POST.get('mobile').strip()
+        street = request.POST.get('street').strip()
+        district = request.POST.get('district').strip()
+        state = request.POST.get('state').strip()
+        pincode = request.POST.get('pincode').strip()
+        country = request.POST.get('country').strip()
 
-        if not all([full_name, mobile, street, district, state, pincode, country]):
-            messages.error(request, 'All fields are required.')
-            return redirect('add_address')
+        if not full_name:
+            errors['full_name']='Name is required'
+        elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', full_name):
+            errors['full_name'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
+        elif full_name == "_" * len(full_name):
+            errors['full_name']= "Username cannot be only underscores."
+        if not mobile:
+            errors['mobile']='Mobile number is required'
+        elif not mobile.isdigit() or len(mobile)!=10:
+            errors['mobile']='10 digits required'
+        if not street:
+            errors['street']='Street is required'
+        if not district:
+            errors['district']='District is required'
+        if not state:
+            errors['state']='State is required'
+        if not pincode or len(pincode)!=6 or not pincode.isdigit():
+            errors['pincode']='Pincode is required and it should be 6 digits'
+        if not country:
+            errors['country']='Country is required'
+        if errors:
+            return render(request,'user_app/add_address.html',{'errors':errors,
+            'form_data': {
+            'full_name': full_name,
+            'mobile': mobile,
+            'street': street,
+            'district': district,
+            'state': state,
+            'pincode': pincode,
+            'country': country
+        }})
+        
+
+        
 
         Address.objects.create(
             user=request.user,
@@ -821,22 +912,72 @@ def add_address(request):
 
 @login_required
 def edit_address(request, address_id):
+    errors = {}
     address = get_object_or_404(Address, id=address_id, user=request.user)
 
     if request.method == 'POST':
-        address.full_name = request.POST.get("full_name")
-        address.mobile = request.POST.get("mobile")
-        address.street_address = request.POST.get("street")
-        address.district = request.POST.get("district")
-        address.state = request.POST.get("state")
-        address.pincode = request.POST.get("pincode")
-        address.country = request.POST.get("country")
+        full_name = request.POST.get("full_name", "").strip()
+        mobile = request.POST.get("mobile", "").strip()
+        street = request.POST.get("street", "").strip()
+        district = request.POST.get("district", "").strip()
+        state = request.POST.get("state", "").strip()
+        pincode = request.POST.get("pincode", "").strip()
+        country = request.POST.get("country", "").strip()
+
+        # Validation
+        if not full_name:
+            errors['full_name'] = 'Name is required'
+        elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', full_name):
+            errors['full_name'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
+        elif full_name == "_" * len(full_name):
+            errors['full_name'] = "Username cannot be only underscores."
+
+        if not mobile:
+            errors['mobile'] = 'Mobile number is required'
+        elif not mobile.isdigit() or len(mobile) != 10:
+            errors['mobile'] = '10 digits required'
+
+        if not street:
+            errors['street'] = 'Street is required'
+        if not district:
+            errors['district'] = 'District is required'
+        if not state:
+            errors['state'] = 'State is required'
+        if not pincode or not pincode.isdigit() or len(pincode) != 6:
+            errors['pincode'] = 'Pincode is required and it should be 6 digits'
+        if not country:
+            errors['country'] = 'Country is required'
+
+        if errors:
+            return render(request, 'user_app/edit_address.html', {
+                'errors': errors,
+                'form_data': {
+                    'full_name': full_name,
+                    'mobile': mobile,
+                    'street': street,
+                    'district': district,
+                    'state': state,
+                    'pincode': pincode,
+                    'country': country
+                },
+                'address': address
+            })
+
+        # Save to model
+        address.full_name = full_name
+        address.mobile = mobile
+        address.street_address = street
+        address.district = district
+        address.state = state
+        address.pincode = pincode
+        address.country = country
         address.save()
 
         messages.success(request, "Address updated successfully!")
         return redirect('address_view')
 
     return render(request, 'user_app/edit_address.html', {'address': address})
+
 
 @login_required
 def delete_address(request, address_id):
@@ -854,49 +995,62 @@ def delete_address(request, address_id):
 
 @login_required
 def checkout(request):
-    user = request.user
-    cart_items = Cart.objects.filter(user=user)
+    cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    
     if not cart_items.exists():
         return redirect('cart_view')
     
-    addresses = Address.objects.filter(user=user)
-
+    addresses = Address.objects.filter(user=request.user)
     default_address = addresses.filter(is_default=True).first()
-    
-    # Price calculations
-    subtotal = sum(item.product.price * item.quantity for item in cart_items)
 
-    shipping_charge = 0
-    tax = 0
-    total = subtotal + shipping_charge + tax
+    grand_total = Decimal('0.00')
+    original_total = Decimal('0.00')
+    total_discount = Decimal('0.00')
+
+    for item in cart_items:
+        discounted_price = item.product.discounted_price  # Should be a property/method in Product model
+        item.discounted_price = discounted_price
+        item.total_price = discounted_price * item.quantity
+
+        grand_total += item.total_price
+        original_total += item.product.price * item.quantity
+        total_discount += (item.product.price - discounted_price) * item.quantity
+
+    shipping_charge = Decimal('0.00')
+    tax = Decimal('0.00')
+    total = grand_total + shipping_charge + tax
 
     context = {
         'cart_items': cart_items,
         'addresses': addresses,
         'default_address': default_address,
-        'subtotal': subtotal,
-        'tax': tax,
+        'grand_total': grand_total,
+        'original_total': original_total,
+        'total_discount': total_discount,
         'shipping': shipping_charge,
+        'tax': tax,
         'total': total,
     }
 
     return render(request, 'user_app/checkout.html', context)
 
 
-
-
 @login_required
+@transaction.atomic
 def place_order(request):
     if request.method == 'POST':
-        address_type = request.POST.get('selected_address')
+        selected_address = request.POST.get('selected_address')
 
-        # Get Cart Items
+        # ✅ Handle missing selected_address
+        if not selected_address:
+            return redirect('/checkout/?error=invalid_address')
+
+        # ✅ Get Cart Items
         cart_items = Cart.objects.filter(user=request.user)
         if not cart_items.exists():
             return redirect('/checkout/?error=empty_cart')
 
         # ✅ STOCK VALIDATION
-        from user_app.models import ProductSizeStock  # adjust if needed
         out_of_stock_items = []
         for item in cart_items:
             try:
@@ -907,26 +1061,30 @@ def place_order(request):
                 out_of_stock_items.append(item.product.name)
 
         if out_of_stock_items:
-            # Redirect with stock error message
             return redirect('/checkout/?stock_error=true')
 
-        # Address Handling
-        if address_type != 'new':
+        # ✅ Address Handling
+        if selected_address != 'new':
             try:
-                address = Address.objects.get(id=int(address_type), user=request.user)
+                address_id = int(selected_address)
+                address = Address.objects.get(id=address_id, user=request.user)
             except (ValueError, Address.DoesNotExist):
                 return redirect('/checkout/?error=invalid_address')
         else:
-            full_name = request.POST.get('full_name')
-            mobile = request.POST.get('mobile')
-            street = request.POST.get('street')
-            district = request.POST.get('district')
-            state = request.POST.get('state')
-            pincode = request.POST.get('pincode')
-            country = request.POST.get('country')
+            # New address form data
+            full_name = request.POST.get('full_name', '').strip()
+            mobile = request.POST.get('mobile', '').strip()
+            street = request.POST.get('street', '').strip()
+            district = request.POST.get('district', '').strip()
+            state = request.POST.get('state', '').strip()
+            pincode = request.POST.get('pincode', '').strip()
+            country = request.POST.get('country', '').strip()
 
+            # Minimal phone validation
             if not mobile or not mobile.isdigit() or len(mobile) != 10:
                 return redirect('/checkout/?error=invalid_mobile')
+
+            # You can add more validation if needed
 
             address = Address.objects.create(
                 user=request.user,
@@ -940,29 +1098,33 @@ def place_order(request):
                 is_default=False
             )
 
-        # Order Creation
+        # ✅ Order Creation
         order = Order.objects.create(
             user=request.user,
             address=address,
             order_id=get_random_string(10).upper(),
             status='PENDING',
-            total_amount=sum(item.product.price * item.quantity for item in cart_items)
+            total_amount=sum(item.product.discounted_price * item.quantity for item in cart_items)
         )
 
+        # ✅ Order Items & Stock Update
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 quantity=item.quantity,
                 size=item.size,
-                price=item.product.price
+                price=item.product.discounted_price
             )
 
+            # Update stock
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
             stock.quantity -= item.quantity
             stock.save()
 
+        # ✅ Clear Cart
         cart_items.delete()
+
         return redirect('order_success', order_id=order.id)
 
     return redirect('checkout')
@@ -979,8 +1141,76 @@ def user_order_detail(request, order_id):
 
 @login_required
 def user_order_list(request):
-    orders = Order.objects.filter(user=request.user).select_related('address').order_by('-created_at')
-    return render(request, 'user_app/order_list.html', {'orders': orders})
+    search_query = request.GET.get('q', '')
+    orders = Order.objects.filter(user=request.user).select_related('address')
+
+    if search_query:
+        orders = orders.filter(order_id__icontains=search_query)
+
+    orders = orders.order_by('-created_at')
+    return render(request, 'user_app/order_list.html', {'orders': orders, 'search_query': search_query})
+
+
+@login_required
+@transaction.atomic
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    if order.status in ['DELIVERED', 'CANCELLED']:
+        messages.error(request, "You cannot cancel this order.")
+        return redirect('user_order_detail', order_id=order.id)
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '')
+        order.status = 'CANCELLED'
+        order.cancel_reason = reason
+        order.save()
+
+        # restore stock
+        for item in order.order_items.all():
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            stock.quantity += item.quantity
+            stock.save()
+
+        messages.success(request, "Order cancelled successfully.")
+        return redirect('user_order_list')
+
+    return render(request, 'user_app/cancel_order.html', {'order': order})
+
+@login_required
+def request_return(request, item_id):
+    item = get_object_or_404(OrderItem, id=item_id, order__user=request.user)
+
+    if item.order.status != 'DELIVERED' or item.is_return_requested:
+        messages.error(request, "Return not allowed.")
+        return redirect('user_order_detail', order_id=item.order.id)
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason')
+        if not reason:
+            messages.error(request, "Reason is required.")
+            return redirect('user_order_detail', order_id=item.order.id)
+
+        item.is_return_requested = True
+        item.return_reason = reason
+        item.return_requested_at = time.timezone.now()
+        item.save()
+        messages.success(request, "Return request submitted.")
+        return redirect('user_order_detail', order_id=item.order.id)
+
+    return render(request, 'user_app/return_item.html', {'item': item})
+
+
+
+@login_required
+def download_invoice(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    template = get_template('user_app/invoice.html')
+    html = template.render({'order': order})
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="invoice_{order.order_id}.pdf"'
+    pisa.CreatePDF(html, dest=response)
+    return response
 
 
 @never_cache

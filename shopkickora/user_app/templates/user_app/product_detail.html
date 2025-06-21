@@ -1,5 +1,6 @@
 {% extends 'user_app/base_user.html' %}
 {% load static %}
+{% load cart_extras %}
 
 {% block title %}shopKickora - {{ product.name|default:"Product" }}{% endblock %}
 
@@ -129,7 +130,15 @@
             </div>
 
             <h1 class="text-2xl font-bold mb-2">{{ product.name|default:"Product" }}</h1>
-            <p class="text-2xl font-bold mb-6">${{ product.price|floatformat:2|default:"0.00" }}</p>
+            <div class="mb-6 flex items-center space-x-3">
+                {% if product.discount_percentage > 0 %}
+    <span class="text-2xl font-bold text-green-600">₹{{ product.discounted_price|floatformat:2 }}</span>
+    <span class="text-lg text-gray-500 line-through">₹{{ product.price|floatformat:2 }}</span>
+{% else %}
+    <span class="text-2xl font-bold text-gray-800">₹{{ product.price|floatformat:2 }}</span>
+{% endif %}
+
+            </div>
 
             <div class="mb-6">
                 <h3 class="text-sm font-medium mb-2">AVAILABLE TYPES</h3>
@@ -159,27 +168,22 @@
 
             <div class="flex space-x-4 mb-4">
                 <form id="addToCartForm" class="w-full">
-    {% csrf_token %}
-    <input type="hidden" name="size" id="cart-size" value="{{ selected_size|default_if_none:'' }}">
-    <input type="hidden" name="quantity" id="cart-quantity" value="1">
-    <button type="submit" id="addToCartBtn"
-        class="bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800 w-full"
-        {% if not selected_size %}disabled{% endif %}>
-        ADD TO CART
-    </button>
-</form>
-
-           <div 
-    class="wishlist-toggle border border-gray-300 rounded hover:bg-gray-100 cursor-pointer w-11 h-11 flex items-center justify-center" 
-    data-product-id="{{ product.id }}" 
-    aria-label="Toggle Wishlist"
->
-    <i class="{% if is_in_wishlist %}fas{% else %}far{% endif %} fa-heart text-lg text-red-500"></i>
-</div>
-
-
-
-
+                    {% csrf_token %}
+                    <input type="hidden" name="size" id="cart-size" value="{{ selected_size|default_if_none:'' }}">
+                    <input type="hidden" name="quantity" id="cart-quantity" value="1">
+                    <button type="submit" id="addToCartBtn"
+                        class="bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800 w-full"
+                        {% if not selected_size %}disabled{% endif %}>
+                        ADD TO CART
+                    </button>
+                </form>
+                <div 
+                    class="wishlist-toggle border border-gray-300 rounded hover:bg-gray-100 cursor-pointer w-11 h-11 flex items-center justify-center" 
+                    data-product-id="{{ product.id }}" 
+                    aria-label="Toggle Wishlist"
+                >
+                    <i class="{% if is_in_wishlist %}fas{% else %}far{% endif %} fa-heart text-lg text-red-500"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -221,127 +225,127 @@ document.getElementById('addToCartForm').addEventListener('submit', async functi
     showToast(data.message, data.status === "success" ? "success" : "error");
 });
 
-    function imageZoom(imgID, resultID) {
-        const img = document.getElementById(imgID);
-        const result = document.getElementById(resultID);
-        const container = img.parentElement;
+function imageZoom(imgID, resultID) {
+    const img = document.getElementById(imgID);
+    const result = document.getElementById(resultID);
+    const container = img.parentElement;
 
-        let existingLens = container.querySelector('.img-zoom-lens');
-        if (existingLens) {
-            existingLens.remove();
-        }
-
-        const lens = document.createElement('div');
-        lens.className = 'img-zoom-lens';
-        container.insertBefore(lens, img);
-
-        const fallbackImage = 'https://via.placeholder.com/550';
-
-        function preloadImage(src) {
-            return new Promise((resolve, reject) => {
-                const tempImg = new Image();
-                tempImg.src = src;
-                tempImg.onload = () => {
-                    console.log('Image preloaded:', src, 'Dimensions:', tempImg.naturalWidth, 'x', tempImg.naturalHeight);
-                    resolve(tempImg);
-                };
-                tempImg.onerror = () => {
-                    console.error('Failed to preload image:', src);
-                    reject();
-                };
-            });
-        }
-
-        let cx, cy;
-        async function initializeZoom(imageSrc) {
-            try {
-                const loadedImg = await preloadImage(imageSrc);
-                cx = result.offsetWidth / lens.offsetWidth; // 700 / 100 = 7
-                cy = result.offsetHeight / lens.offsetHeight; // 550 / 100 = 5.5
-                result.style.backgroundImage = `url('${loadedImg.src}')`;
-                result.style.backgroundSize = `${loadedImg.naturalWidth * cx}px ${loadedImg.naturalHeight * cy}px`;
-                console.log('Zoom initialized: cx:', cx, 'cy:', cy, 'Background size:', result.style.backgroundSize);
-            } catch (error) {
-                console.warn('Using fallback image');
-                await initializeZoom(fallbackImage);
-            }
-        }
-
-        function moveLens(e) {
-            e.preventDefault();
-            const pos = getCursorPos(e);
-            let x = pos.x - lens.offsetWidth / 2;
-            let y = pos.y - lens.offsetHeight / 2;
-
-            x = Math.max(0, Math.min(x, img.offsetWidth - lens.offsetWidth));
-            y = Math.max(0, Math.min(y, img.offsetHeight - lens.offsetHeight));
-
-            lens.style.left = `${x}px`;
-            lens.style.top = `${y}px`;
-            result.style.backgroundPosition = `-${x * cx}px -${y * cy}px`;
-            console.log('Lens position:', x, y, 'Background position:', result.style.backgroundPosition);
-        }
-
-        function handleMouseEnter() {
-            initializeZoom(img.src);
-            lens.style.display = 'block';
-            result.style.display = 'block';
-        }
-
-        function handleMouseLeave() {
-            lens.style.display = 'none';
-            result.style.display = 'none';
-        }
-
-        function getCursorPos(e) {
-            const rect = img.getBoundingClientRect();
-            const containerStyle = getComputedStyle(container);
-            const paddingLeft = parseFloat(containerStyle.paddingLeft);
-            const paddingTop = parseFloat(containerStyle.paddingTop);
-            let x, y;
-            if (e.type.startsWith('touch')) {
-                const touch = e.touches[0];
-                x = touch.pageX - rect.left - paddingLeft - window.pageXOffset;
-                y = touch.pageY - rect.top - paddingTop - window.pageYOffset;
-            } else {
-                x = e.pageX - rect.left - paddingLeft - window.pageXOffset;
-                y = e.pageY - rect.top - paddingTop - window.pageYOffset;
-            }
-            return { x, y };
-        }
-
-        img.removeEventListener('mousemove', moveLens);
-        img.removeEventListener('touchmove', moveLens);
-        img.removeEventListener('mouseenter', handleMouseEnter);
-        img.removeEventListener('mouseleave', handleMouseLeave);
-        lens.removeEventListener('mousemove', moveLens);
-        lens.removeEventListener('touchmove', moveLens);
-
-        img.addEventListener('mousemove', moveLens);
-        img.addEventListener('touchmove', moveLens, { passive: false });
-        img.addEventListener('mouseenter', handleMouseEnter);
-        img.addEventListener('mouseleave', handleMouseLeave);
-        lens.addEventListener('mousemove', moveLens);
-        lens.addEventListener('touchmove', moveLens, { passive: false });
+    let existingLens = container.querySelector('.img-zoom-lens');
+    if (existingLens) {
+        existingLens.remove();
     }
 
-    function changeImage(imageUrl, element) {
-        const mainImage = document.getElementById('mainImage');
-        mainImage.src = imageUrl;
+    const lens = document.createElement('div');
+    lens.className = 'img-zoom-lens';
+    container.insertBefore(lens, img);
 
-        document.querySelectorAll('.thumbnail').forEach(thumb => {
-            thumb.classList.remove('active');
+    const fallbackImage = 'https://via.placeholder.com/550';
+
+    function preloadImage(src) {
+        return new Promise((resolve, reject) => {
+            const tempImg = new Image();
+            tempImg.src = src;
+            tempImg.onload = () => {
+                console.log('Image preloaded:', src, 'Dimensions:', tempImg.naturalWidth, 'x', tempImg.naturalHeight);
+                resolve(tempImg);
+            };
+            tempImg.onerror = () => {
+                console.error('Failed to preload image:', src);
+                reject();
+            };
         });
-        element.classList.add('active');
-
-        imageZoom('mainImage', 'myresult');
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        imageZoom('mainImage', 'myresult');
-    });
+    let cx, cy;
+    async function initializeZoom(imageSrc) {
+        try {
+            const loadedImg = await preloadImage(imageSrc);
+            cx = result.offsetWidth / lens.offsetWidth; // 700 / 100 = 7
+            cy = result.offsetHeight / lens.offsetHeight; // 550 / 100 = 5.5
+            result.style.backgroundImage = `url('${loadedImg.src}')`;
+            result.style.backgroundSize = `${loadedImg.naturalWidth * cx}px ${loadedImg.naturalHeight * cy}px`;
+            console.log('Zoom initialized: cx:', cx, 'cy:', cy, 'Background size:', result.style.backgroundSize);
+        } catch (error) {
+            console.warn('Using fallback image');
+            await initializeZoom(fallbackImage);
+        }
+    }
 
-    function decreaseQuantity() {
+    function moveLens(e) {
+        e.preventDefault();
+        const pos = getCursorPos(e);
+        let x = pos.x - lens.offsetWidth / 2;
+        let y = pos.y - lens.offsetHeight / 2;
+
+        x = Math.max(0, Math.min(x, img.offsetWidth - lens.offsetWidth));
+        y = Math.max(0, Math.min(y, img.offsetHeight - lens.offsetHeight));
+
+        lens.style.left = `${x}px`;
+        lens.style.top = `${y}px`;
+        result.style.backgroundPosition = `-${x * cx}px -${y * cy}px`;
+        console.log('Lens position:', x, y, 'Background position:', result.style.backgroundPosition);
+    }
+
+    function handleMouseEnter() {
+        initializeZoom(img.src);
+        lens.style.display = 'block';
+        result.style.display = 'block';
+    }
+
+    function handleMouseLeave() {
+        lens.style.display = 'none';
+        result.style.display = 'none';
+    }
+
+    function getCursorPos(e) {
+        const rect = img.getBoundingClientRect();
+        const containerStyle = getComputedStyle(container);
+        const paddingLeft = parseFloat(containerStyle.paddingLeft);
+        const paddingTop = parseFloat(containerStyle.paddingTop);
+        let x, y;
+        if (e.type.startsWith('touch')) {
+            const touch = e.touches[0];
+            x = touch.pageX - rect.left - paddingLeft - window.pageXOffset;
+            y = touch.pageY - rect.top - paddingTop - window.pageYOffset;
+        } else {
+            x = e.pageX - rect.left - paddingLeft - window.pageXOffset;
+            y = e.pageY - rect.top - paddingTop - window.pageYOffset;
+        }
+        return { x, y };
+    }
+
+    img.removeEventListener('mousemove', moveLens);
+    img.removeEventListener('touchmove', moveLens);
+    img.removeEventListener('mouseenter', handleMouseEnter);
+    img.removeEventListener('mouseleave', handleMouseLeave);
+    lens.removeEventListener('mousemove', moveLens);
+    lens.removeEventListener('touchmove', moveLens);
+
+    img.addEventListener('mousemove', moveLens);
+    img.addEventListener('touchmove', moveLens, { passive: false });
+    img.addEventListener('mouseenter', handleMouseEnter);
+    img.addEventListener('mouseleave', handleMouseLeave);
+    lens.addEventListener('mousemove', moveLens);
+    lens.addEventListener('touchmove', moveLens, { passive: false });
+}
+
+function changeImage(imageUrl, element) {
+    const mainImage = document.getElementById('mainImage');
+    mainImage.src = imageUrl;
+
+    document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.classList.remove('active');
+    });
+    element.classList.add('active');
+
+    imageZoom('mainImage', 'myresult');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    imageZoom('mainImage', 'myresult');
+});
+
+function decreaseQuantity() {
     const quantityInput = document.getElementById('quantity');
     let quantity = parseInt(quantityInput.value);
     if (quantity > 1) {
@@ -361,16 +365,15 @@ function increaseQuantity() {
     }
 }
 
-    document.querySelectorAll('.size-box').forEach(button => {
-        button.addEventListener('click', function() {
-            document.querySelectorAll('.size-box').forEach(btn => btn.classList.remove('selected'));
-            this.classList.add('selected');
-            const size = this.getAttribute('data-size');
-            document.getElementById('selected-size').value = size;
-            document.getElementById('cart-size').value = size;
-            document.getElementById('addToCartBtn').disabled = false;
-        });
+document.querySelectorAll('.size-box').forEach(button => {
+    button.addEventListener('click', function() {
+        document.querySelectorAll('.size-box').forEach(btn => btn.classList.remove('selected'));
+        this.classList.add('selected');
+        const size = this.getAttribute('data-size');
+        document.getElementById('selected-size').value = size;
+        document.getElementById('cart-size').value = size;
+        document.getElementById('addToCartBtn').disabled = false;
     });
+});
 </script>
-
 {% endblock %}

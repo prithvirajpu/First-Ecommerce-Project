@@ -211,8 +211,15 @@
           </p>
 
           <div class="flex items-center justify-between mb-3">
-            <span class="text-lg font-bold text-blue-600">${{ product.price }}</span>
-          </div>
+  {% if product.discount_percentage > 0 %}
+    <div class="flex items-center space-x-2">
+      <span class="text-lg font-bold text-green-600">₹{{ product.discounted_price|floatformat:2 }}</span>
+      <span class="text-sm text-gray-500 line-through">₹{{ product.price|floatformat:2 }}</span>
+    </div>
+  {% else %}
+    <span class="text-lg font-bold text-gray-800">₹{{ product.price|floatformat:2 }}</span>
+  {% endif %}
+</div>
 
           <div class="flex justify-between items-center space-x-2">
             <form action="{% url 'product_detail' product.id %}" method="POST" class="w-full">

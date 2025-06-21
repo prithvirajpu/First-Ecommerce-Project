@@ -129,63 +129,96 @@
 {% endblock %}
 
 {% block extra_js %}
-
 <script>
-  lucide.createIcons();
+  document.addEventListener("DOMContentLoaded", function () {
+    lucide.createIcons();
 
-  const newAddressOption = document.getElementById('new_address_option');
-  const addressRadios = document.querySelectorAll('input[name="selected_address"]');
-  const newAddressForm = document.getElementById('newAddressForm');
+    const newAddressOption = document.getElementById('new_address_option');
+    const addressRadios = document.querySelectorAll('input[name="selected_address"]');
+    const newAddressForm = document.getElementById('newAddressForm');
+    const placeOrderBtn = document.querySelector('button[type="submit"]');
 
-  addressRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      newAddressForm.style.display = radio.value === 'new' ? 'block' : 'none';
+    // Toggle new address form visibility
+    addressRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        newAddressForm.style.display = radio.value === 'new' ? 'block' : 'none';
+      });
     });
-  });
 
-  // ✅ Place Order Button Phone Number Check
-  const placeOrderBtn = document.querySelector('button[type="submit"]');
+    // Toast utility
+    function showToast(message, type = "error") {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
 
-  placeOrderBtn.addEventListener('click', function (e) {
-    const selected = document.querySelector('input[name="selected_address"]:checked');
-
-    if (selected && selected.value !== 'new') {
-      const label = document.querySelector(`label[for="${selected.id}"]`);
-      const labelText = label ? label.innerText : '';
-      const mobileMatch = labelText.match(/Mobile:\s*(\d{10})/);
-
-      if (!mobileMatch) {
-        e.preventDefault();  // Prevent form submission
-        showToast("Phone number is required for the selected address", "error");
+      // Background color
+      if (type === "error") {
+        toast.classList.add("bg-red-600");
+        toast.classList.remove("bg-yellow-500");
+      } else if (type === "warning") {
+        toast.classList.add("bg-yellow-500");
+        toast.classList.remove("bg-red-600");
       }
+
+      toast.classList.remove("hidden");
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0");
+        setTimeout(() => {
+          toast.classList.remove("opacity-0");
+          toast.classList.add("hidden");
+        }, 500);
+      }, 3000);
     }
 
-    // Optionally, you can also validate the phone number in the new address form here
-  });
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+    // Place Order validations
+    placeOrderBtn.addEventListener('click', function (e) {
+      const selected = document.querySelector('input[name="selected_address"]:checked');
+
+      // ❌ No address selected
+      if (!selected) {
+        e.preventDefault();
+        showToast("Address is required", "error");
+        return;
+      }
+
+      // ✅ If using saved address, check for mobile
+      if (selected.value !== 'new') {
+        const label = document.querySelector(`label[for="${selected.id}"]`);
+        const labelText = label ? label.innerText : '';
+        const mobileMatch = labelText.match(/Mobile:\s*(\d{10})/);
+
+        if (!mobileMatch) {
+          e.preventDefault();
+          showToast("Phone number is required for the selected address", "error");
+          return;
+        }
+      }
+
+      // Optionally add more JS validations here for new address form
+    });
+
+    // Toasts from URL params (stock error, invalid mobile, etc.)
     const urlParams = new URLSearchParams(window.location.search);
 
     if (urlParams.get('stock_error') === 'true') {
-        showToast("Some items in your cart are out of stock.", "error");
+      showToast("Some items in your cart are out of stock.", "error");
     }
     if (urlParams.get('error') === 'invalid_mobile') {
-        showToast("Please enter a valid 10-digit phone number.", "warning");
+      showToast("Please enter a valid 10-digit phone number.", "warning");
     }
     if (urlParams.get('error') === 'invalid_address') {
-        showToast("Invalid address selected.", "error");
+      showToast("Invalid address selected.", "error");
     }
     if (urlParams.get('error') === 'empty_cart') {
-        showToast("Cart is empty!", "warning");
+      showToast("Cart is empty!", "warning");
     }
 
     // Optional: clean URL after showing toast
     if (urlParams.get('stock_error') || urlParams.get('error')) {
-        const newUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
     }
-});
+  });
 </script>
 
 

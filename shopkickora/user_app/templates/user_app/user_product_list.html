@@ -228,11 +228,14 @@
                         </div>
                         <div class="flex items-center justify-between">
                             <div>
-                                <span class="text-lg font-bold text-gray-800">₹{{ product.price }}</span>
-                                {% if product.old_price %}
-                                    <span class="text-sm text-gray-500 line-through ml-2">₹{{ product.old_price }}</span>
-                                {% endif %}
-                            </div>
+    {% if product.discount_percentage > 0 %}
+        <span class="text-lg font-bold text-green-600">₹{{ product.discounted_price|floatformat:2 }}</span>
+        <span class="text-sm text-gray-500 line-through ml-2">₹{{ product.price|floatformat:2 }}</span>
+    {% else %}
+        <span class="text-lg font-bold text-gray-800">₹{{ product.price|floatformat:2 }}</span>
+    {% endif %}
+</div>
+
                             <span class="text-green-600 text-sm font-medium">
                                 {% if product.stock > 0 %}In Stock{% else %}Out of Stock{% endif %}
                             </span>

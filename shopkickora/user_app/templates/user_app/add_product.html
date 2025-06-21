@@ -101,28 +101,243 @@
             </div>
           </div>
         </div>
+        <label for="discount_percentage">Discount (%)</label>
+<input type="number" name="discount_percentage" id="discount_percentage" min="0" max="100"
+       value="{{ form_data.discount_percentage|default:0 }}"
+       class="form-input" placeholder="0-100">
+{% if errors.discount_percentage %}
+    <p class="text-red-500 text-sm mt-1">{{ errors.discount_percentage }}</p>
+{% endif %}
+
         {% if errors.stock_sizes %}
           <p class="error-text">{{ errors.stock_sizes }}</p>
         {% endif %}
       </div>
 
       <div class="mb-3">
-        <label for="images" class="form-label">Product Images (minimum 3)</label>
-        <input type="file" name="images" id="images" class="form-control" accept="image/*" multiple required>
-        {# Consider showing a specific error here if less than 3 images are selected or if file types are wrong #}
-        {% if errors.format %}
-          <p style="color:red">{{ errors.format }}</p>
-        {% endif %}
-      </div>
+  <label for="images" class="form-label">Product Images (minimum 3)</label>
+<input type="file" id="original-images" name="images" accept="image/*" multiple class="form-control" required>
+<div id="image-preview-area" class="d-flex flex-wrap gap-3 mt-3"></div>
+
+  {% if errors.format %}
+    <p style="color:red">{{ errors.format }}</p>
+  {% endif %}
+</div>
 
       <button type="submit" class="btn btn-primary">Add Product</button>
       <a href="{% url 'product_list' %}" class="btn btn-secondary ms-2">Cancel</a>
     </form>
   </div>
 </div>
+
+<!-- Cropper Modal (smaller size) -->
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 700px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Crop Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="cropperImage" style="max-width: 100%; max-height: 400px;" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" id="skipCrop">Skip</button>
+        <button class="btn btn-primary" type="button" id="cropConfirm">Crop</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const fileInput = document.getElementById("original-images");
+  const previewArea = document.getElementById("image-preview-area");
+  const cropperImage = document.getElementById("cropperImage");
+  const cropModalEl = document.getElementById("cropperModal");
+  const cropModal = new bootstrap.Modal(cropModalEl);
+  const cropConfirmBtn = document.getElementById("cropConfirm");
+  const skipBtn = document.getElementById("skipCrop");
+
+  let cropper;
+  let croppedImages = [];
+  let imageQueue = [];
+  let currentIndex = 0;
+
+  fileInput.addEventListener("change", function () {
+    previewArea.innerHTML = '';
+    croppedImages = [];
+    imageQueue = Array.from(this.files);
+    currentIndex = 0;
+
+    if (imageQueue.length > 0) {
+      loadImageForCropping(imageQueue[currentIndex]);
+    }
+  });
+
+  function loadImageForCropping(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      cropperImage.src = e.target.result;
+
+      cropperImage.onload = function () {
+        cropModal.show();
+        setTimeout(() => {
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(cropperImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+          });
+        }, 100);
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  cropConfirmBtn.addEventListener("click", () => {
+    if (!cropper) return;
+
+    const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+
+    canvas.toBlob(blob => {
+      const originalFile = imageQueue[currentIndex];
+      const croppedFile = new File([blob], originalFile.name, {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+
+      croppedImages.push(croppedFile);
+
+      const imgPreview = document.createElement('img');
+      imgPreview.src = URL.createObjectURL(blob);
+      imgPreview.classList.add('me-2', 'mb-2', 'rounded');
+      imgPreview.style.maxWidth = '200px';
+      previewArea.appendChild(imgPreview);
+
+      cropper.destroy();
+      cropper = null;
+
+      currentIndex++;
+      if (currentIndex < imageQueue.length) {
+        loadImageForCropping(imageQueue[currentIndex]);
+      } else {
+        cropModal.hide();
+      }
+    }, 'image/jpeg');
+  });
+
+  skipBtn.addEventListener("click", () => {
+    const originalFile = imageQueue[currentIndex];
+    croppedImages.push(originalFile);
+
+    const imgPreview = document.createElement('img');
+    imgPreview.src = URL.createObjectURL(originalFile);
+    imgPreview.classList.add('me-2', 'mb-2', 'rounded');
+    imgPreview.style.maxWidth = '200px';
+    previewArea.appendChild(imgPreview);
+
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+
+    currentIndex++;
+    if (currentIndex < imageQueue.length) {
+      loadImageForCropping(imageQueue[currentIndex]);
+    } else {
+      cropModal.hide();
+    }
+  });
+
+  // ✅ Submit form with cropped images using native POST
+  document.querySelector("form").addEventListener("submit", function (e) {
+    if (croppedImages.length < 3) {
+      alert("Please crop or skip at least 3 images.");
+      e.preventDefault();
+      return;
+    }
+
+    e.preventDefault(); // prevent default for now
+
+    const originalForm = this;
+    const formData = new FormData(originalForm);
+
+    // Remove default file input
+    formData.delete("images");
+
+    // Append cropped images
+    croppedImages.forEach(file => {
+      formData.append("images", file);
+    });
+
+    // Create temporary form to submit
+    const tempForm = document.createElement("form");
+    tempForm.method = "POST";
+    tempForm.action = originalForm.action;
+    tempForm.enctype = "multipart/form-data";
+
+    // CSRF token
+    const csrfToken = document.querySelector("input[name=csrfmiddlewaretoken]").value;
+    const csrfInput = document.createElement("input");
+    csrfInput.type = "hidden";
+    csrfInput.name = "csrfmiddlewaretoken";
+    csrfInput.value = csrfToken;
+    tempForm.appendChild(csrfInput);
+
+    // Append other inputs
+    for (const [name, value] of formData.entries()) {
+      if (name === "images") continue;
+
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      tempForm.appendChild(input);
+    }
+
+    // Append cropped images
+    croppedImages.forEach(file => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.name = "images";
+      // Cannot append File directly to DOM input, so skip this. Instead:
+      formData.append("images", file); // use fetch fallback below if needed
+    });
+
+    // Because browser can't insert File into hidden input directly, fallback:
+    // 🛠️ Just send via fetch if you want to avoid page building
+    const uploadForm = new FormData(tempForm);
+    croppedImages.forEach(file => uploadForm.append("images", file));
+
+    fetch(originalForm.action, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken
+      },
+      body: uploadForm
+    }).then(res => {
+      if (res.redirected) {
+        window.location.href = res.url;
+      } else {
+        return res.text().then(html => {
+          document.open();
+          document.write(html);
+          document.close();
+        });
+      }
+    }).catch(err => {
+      console.error("Upload failed:", err);
+      alert("Failed to upload product. Try again.");
+    });
+  });
+});
 </script>
+
 {% endblock %}

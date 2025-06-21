@@ -1,5 +1,6 @@
 {% extends "user_app/base_user.html" %}
 {% load static %}
+{% load cart_extras %}
 {% block extra_css %}
     <style>
         .quantity-btn {
@@ -56,51 +57,65 @@
 
                     <div class="space-y-6">
                         {% if cart_items %}
-                            {% for item in cart_items %}
-                            <div class="cart-item bg-gray-50 rounded-xl p-6 flex items-center justify-between" id="cart-item-{{ item.id }}">
-                                <div class="flex items-center space-x-6"> {# Left section: image, name, color, size #}
-                                    <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                        {% if item.product.images.first %}
-                                            <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
-                                        {% else %}
-                                            <img src="{% static 'user_app/default.png' %}" alt="No image" class="w-full h-full object-cover">
-                                        {% endif %}
-                                    </div>
+                           {% for item in cart_items %}
+<div class="cart-item bg-gray-50 rounded-xl p-6 flex items-center justify-between relative {% if stock_info|get_item:item.id < item.quantity %} border-2 border-red-500 {% endif %}" id="cart-item-{{ item.id }}">
 
-                                    <div class="flex flex-col"> {# Stack name, color, size vertically #}
-                                        <h3 class="text-lg font-semibold text-gray-800">{{ item.product.name }}</h3>
-                                        <div class="flex items-center space-x-2 mt-1 text-sm text-gray-600"> {# Reduced space-x for compactness #}
-                                            
-                                            {# Add a separator if both color and size exist to make it clearer #}
-                                            {% if item.product.color and item.size %}
-                                                <span class="text-gray-400">|</span>
-                                            {% endif %}
-                                            <span>Size: {{ item.get_size_display }}</span>
-                                        </div>
-                                    </div>
-                                </div>
+    {% if stock_info|get_item:item.id < item.quantity %}
+  <div id="outofstock-{{ item.id }}" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-bl-lg">
+    Out of Stock
+  </div>
+{% endif %}
 
-                                <div class="flex items-center space-x-4"> {# Right section: price, quantity, remove button #}
-                                    <span class="text-xl font-bold text-gray-800 w-20 text-right flex-shrink-0">₹{{ item.product.price|floatformat:2 }}</span>
 
-                                    <div class="quantity-control-group"> {# Wrapper for quantity controls #}
-                                        {# Use <a> tag for decrement #}
-                                        <button class="quantity-btn update-cart" data-url="{% url 'decrement_quantity' item.id %}" data-action="decrement" data-id="{{ item.id }}">
-                                        <i data-lucide="minus" class="w-4 h-4"></i>
-                                    </button>
-                                        <span id="quantity-{{ item.id }}">{{ item.quantity }}</span>
-<button class="quantity-btn update-cart" data-url="{% url 'increment_quantity' item.id %}" data-action="increment" data-id="{{ item.id }}">
-    <i data-lucide="plus" class="w-4 h-4"></i>
-</button>
-                                    </div>
+    <div class="flex items-center space-x-6">
+        <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+            {% if item.product.images.first %}
+                <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
+            {% else %}
+                <img src="{% static 'user_app/default.png' %}" alt="No image" class="w-full h-full object-cover">
+            {% endif %}
+        </div>
 
-                                    {# Use <a> tag for removal #}
-                                    <a href="{% url 'remove_from_cart' item.id %}" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-gray-100 flex-shrink-0">
-                                        <i data-lucide="x" class="w-5 h-5"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            {% endfor %}
+        <div class="flex flex-col">
+            <h3 class="text-lg font-semibold text-gray-800">{{ item.product.name }}</h3>
+            <div class="flex items-center space-x-2 mt-1 text-sm text-gray-600">
+                {% if item.product.color and item.size %}
+                    <span class="text-gray-400">|</span>
+                {% endif %}
+                <span>Size: {{ item.get_size_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+<div class="text-right w-20 flex-shrink-0">
+    {% if item.product.discount_percentage > 0 %}
+        <span class="text-sm text-gray-500 line-through block">₹{{ item.product.price|floatformat:2 }}</span>
+        <span class="text-xl font-bold text-green-600">₹{{ item.discounted_price|floatformat:2 }}</span>
+    {% else %}
+        <span class="text-xl font-bold text-gray-800">₹{{ item.discounted_price|floatformat:2 }}</span>
+    {% endif %}
+</div>
+
+        <div class="quantity-control-group">
+            <button class="quantity-btn update-cart" data-url="{% url 'decrement_quantity' item.id %}" data-action="decrement" data-id="{{ item.id }}">
+                <i data-lucide="minus" class="w-4 h-4"></i>
+            </button>
+            <span id="quantity-{{ item.id }}">{{ item.quantity }}</span>
+            <button class="quantity-btn update-cart" data-url="{% url 'increment_quantity' item.id %}" data-action="increment" data-id="{{ item.id }}">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <a href="{% url 'remove_from_cart' item.id %}" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-gray-100 flex-shrink-0">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </a>
+    </div>
+
+</div>
+{% endfor %}
+
+
                         {% else %}
                             <p class="text-gray-600 text-center py-10">Your cart is empty.</p>
                         {% endif %}
@@ -112,26 +127,30 @@
                 <div class="bg-white rounded-2xl shadow-xl p-8 sticky top-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
 
-                    <div class="space-y-4 mb-6">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Subtotal</span>
-                            <span id="subtotal" class="font-semibold text-gray-800">₹{{ grand_total|floatformat:2 }}</span>
-                        </div>
+                    <div class="flex justify-between items-center">
+    <span class="text-gray-600">Subtotal</span>
+    <span id="subtotal" class="font-semibold text-gray-800">₹{{ original_total|floatformat:2 }}</span>
+</div>
+{% if total_discount > 0 %}
+<div class="flex justify-between items-center">
+    <span class="text-gray-600">Discount</span>
+    <span class="font-semibold text-red-600">– ₹{{ total_discount|floatformat:2 }}</span>
+</div>
+{% endif %}
 
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Shipping:</span>
                             <span class="font-semibold text-green-600">Free</span>
                         </div>
-
+                        
                         
 
                         <hr class="border-gray-200">
 
                         <div class="flex justify-between items-center text-lg">
-                            <span class="font-bold text-gray-800">Total</span>
-                            <span id="total" class="font-bold text-gray-800">₹{{ grand_total|floatformat:2 }}</span>
-                        </div>
-                    </div>
+    <span class="font-bold text-gray-800">Total</span>
+    <span id="total" class="font-bold text-gray-800">₹{{ grand_total|floatformat:2 }}</span>
+</div>
 
                     <button id="checkout-btn"
                         class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 shadow-lg mb-4 block text-center">
@@ -149,16 +168,16 @@
 </body>
 {% endblock %}
 {% block extra_js %}
+<script src="https://unpkg.com/lucide@latest"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   lucide.createIcons();
-
   const csrfToken = '{{ csrf_token }}';
 
+  // ✅ Quantity Increment/Decrement AJAX
   document.querySelectorAll('.update-cart').forEach(btn => {
     btn.addEventListener('click', function () {
       const url = this.dataset.url;
-      const action = this.dataset.action;
       const itemId = this.dataset.id;
 
       fetch(url, {
@@ -170,45 +189,76 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .then(response => response.json())
       .then(data => {
-  if (data.status === 'success') {
-    if (data.deleted) {
-      const item = document.getElementById(`cart-item-${data.item_id}`);
-      if (item) item.remove();
-    } else {
-      document.getElementById(`quantity-${data.item_id}`).textContent = data.new_quantity;
+        const itemCard = document.getElementById(`cart-item-${data.item_id}`);
+        const quantityElement = document.getElementById(`quantity-${data.item_id}`);
+        const badgeId = `outofstock-${data.item_id}`;
+        const existingBadge = document.getElementById(badgeId);
+
+        if (data.status === 'success') {
+          if (data.deleted) {
+            if (itemCard) itemCard.remove();
+          } else {
+            quantityElement.textContent = data.new_quantity;
+          }
+
+          document.getElementById('subtotal').textContent = `₹${data.subtotal}`;
+          document.getElementById('total').textContent = `₹${data.subtotal}`;
+
+          // ✅ Out of stock logic
+          if (data.new_quantity > data.available_stock) {
+            if (!existingBadge) {
+              const badge = document.createElement('div');
+              badge.id = badgeId;
+              badge.className = "absolute top-0 right-0 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-bl-lg";
+              badge.textContent = "Out of Stock";
+              itemCard.appendChild(badge);
+              itemCard.classList.add('border-2', 'border-red-500');
+            }
+          } else {
+            if (existingBadge) {
+              existingBadge.remove();
+              itemCard.classList.remove('border-2', 'border-red-500');
+            }
+          }
+        } else {
+          showToast(data.message || 'Error updating cart', 'warning');
+        }
+      })
+      .catch(() => showToast('Something went wrong', 'error'));
+    });
+  });
+
+  // ✅ Checkout Button - Validate Stock Before Redirect
+  const checkoutBtn = document.getElementById("checkout-btn");
+  checkoutBtn.addEventListener("click", function () {
+    const cartIsEmpty = Number("{{ cart_items|length }}") === 0;
+
+    if (cartIsEmpty) {
+      showToast("Your cart is empty. Please add items before proceeding.", "warning");
+      return;
     }
 
-    document.getElementById('subtotal').textContent = `₹${data.subtotal}`;
-    document.getElementById('total').textContent = `₹${data.subtotal}`;
-  } else {
-    showToast(data.message || 'Error updating cart', 'warning');
-  }
-})
-
-      .catch(() => showToast('Something went wrong', 'error'));
+    fetch("{% url 'validate_cart_stock' %}", {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        window.location.href = "{% url 'checkout' %}";
+      } else {
+        let msg = "The following items have insufficient stock:\n";
+        data.items.forEach(item => {
+          msg += `${item.product} (Size: ${item.size}) - Available: ${item.available}\n`;
+        });
+        showToast(msg, "error");
+      }
+    })
+    .catch(() => {
+      showToast("Error while checking stock.", "error");
     });
   });
 });
 </script>
-
-
-<script src="https://unpkg.com/lucide@latest"></script>
-<script>
-  // Initialize Lucide icons
-  lucide.createIcons();
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const checkoutBtn = document.getElementById("checkout-btn");
-    const cartIsEmpty = Number("{{ cart_items|length }}") === 0;
-
-    checkoutBtn.addEventListener("click", function () {
-      if (cartIsEmpty) {
-        showToast("Your cart is empty. Please add items before proceeding.", "warning");
-      } else {
-        window.location.href = "{% url 'checkout' %}";
-      }
-    });
-  });
-</script>
 {% endblock %}
-

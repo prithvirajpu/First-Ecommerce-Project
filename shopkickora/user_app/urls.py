@@ -26,7 +26,7 @@ urlpatterns = [
     path('profile/',views.user_profile,name='user_profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     # urls.py
-    path('verify-email-change/<str:token>/', views.verify_email_change, name='verify_email_change'),
+    # path('verify-email-change/<str:token>/', views.verify_email_change, name='verify_email_change'),
     path('change-password/', views.change_password, name='change_password'),
     path('remove-profile-image/', views.remove_profile_image, name='remove_profile_image'),
     path('address/', views.address_view, name='address_view'),
@@ -46,6 +46,11 @@ urlpatterns = [
     path('orders/<int:order_id>/', views.user_order_detail, name='user_order_detail'),
     path('order-success/<int:order_id>/', views.order_success, name='order_success'),
     path('my-orders/', views.user_order_list, name='user_order_list'),
+    path('validate-cart-stock/', views.validate_cart_stock, name='validate_cart_stock'),
+    path('order/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+    path('order/item/<int:item_id>/return/', views.request_return, name='request_return'),
+    path('order/<int:order_id>/invoice/', views.download_invoice, name='download_invoice'),
+
 
 
 

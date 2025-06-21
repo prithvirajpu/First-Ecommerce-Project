@@ -164,19 +164,27 @@
                             </div>
                         </div>
 
-                        <!-- Address -->
-                        <div class="info-item p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center space-x-4">
-                                <div class="bg-orange-100 p-3 rounded-full">
-                                    <i data-lucide="map-pin" class="w-5 h-5 text-orange-600"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <label class="text-sm text-gray-500 font-medium">Address</label>
-                                    <p class="text-lg text-gray-500 italic">No default address set.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                       <!-- Address -->
+<div class="info-item p-4 rounded-lg border border-gray-200">
+    <div class="flex items-center space-x-4">
+        <div class="bg-orange-100 p-3 rounded-full">
+            <i data-lucide="map-pin" class="w-5 h-5 text-orange-600"></i>
+        </div>
+        <div class="flex-1">
+            <label class="text-sm text-gray-500 font-medium">Address</label>
+            
+            {% if address %}
+                <p class="text-lg font-semibold text-gray-800">
+                    {{ address.street_address }}, {{ address.district }}, {{ address.state }} - {{ address.pincode }}, {{ address.country }}
+                </p>
+            {% else %}
+                <p class="text-lg text-gray-500 italic">No default address set.</p>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
 
                     <!-- Edit Profile Button -->
                     <div class="mt-8 flex justify-end">

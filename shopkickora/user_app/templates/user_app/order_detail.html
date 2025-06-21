@@ -7,13 +7,30 @@
 <div class="max-w-4xl mx-auto px-4 py-10">
   <h2 class="text-2xl font-bold mb-6">Order Details</h2>
 
+  <!-- Top Section -->
   <div class="bg-white rounded-lg shadow p-6 mb-6">
     <p><strong>Order ID:</strong> {{ order.order_id }}</p>
     <p><strong>Status:</strong> {{ order.get_status_display }}</p>
     <p><strong>Placed On:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
     <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+
+    <!-- Actions -->
+    <div class="mt-4 flex flex-wrap gap-3">
+      {% if order.status != 'CANCELLED' and order.status != 'DELIVERED' %}
+        <form action="{% url 'cancel_order' order.id %}" method="get">
+          <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+            Cancel Order
+          </button>
+        </form>
+      {% endif %}
+
+      <a href="{% url 'download_invoice' order.id %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Download Invoice
+      </a>
+    </div>
   </div>
 
+  <!-- Shipping Address -->
   <div class="bg-white rounded-lg shadow p-6 mb-6">
     <h4 class="text-lg font-semibold mb-2">Shipping Address</h4>
     {% if order.address %}
@@ -24,9 +41,10 @@
     {% endif %}
   </div>
 
+  <!-- Order Items -->
   <div class="bg-white rounded-lg shadow p-6">
     <h4 class="text-lg font-semibold mb-4">Ordered Items</h4>
-    <table class="min-w-full text-left border">
+    <table class="min-w-full text-left border mb-4">
       <thead class="bg-gray-100">
         <tr>
           <th class="p-2 border">#</th>
@@ -35,6 +53,7 @@
           <th class="p-2 border">Qty</th>
           <th class="p-2 border">Price</th>
           <th class="p-2 border">Total</th>
+          <th class="p-2 border">Return</th>
         </tr>
       </thead>
       <tbody>
@@ -46,6 +65,19 @@
           <td class="p-2 border">{{ item.quantity }}</td>
           <td class="p-2 border">₹{{ item.price }}</td>
           <td class="p-2 border">₹{{ item.price|multiply:item.quantity }}</td>
+          <td class="p-2 border">
+            {% if order.status == 'DELIVERED' and not item.is_return_requested %}
+              <form action="{% url 'request_return' item.id %}" method="get">
+                <button class="bg-yellow-500 text-white text-xs px-3 py-1 rounded hover:bg-yellow-600">
+                  Return
+                </button>
+              </form>
+            {% elif item.is_return_requested %}
+              <span class="text-yellow-600 text-xs">Requested</span>
+            {% else %}
+              <span class="text-gray-500 text-xs">Not Available</span>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

@@ -1,0 +1,13 @@
+{% extends "user_app/base_user.html" %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-6 rounded shadow mt-10">
+  <h2 class="text-xl font-bold mb-4">Return {{ item.product.name }}</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <label class="block mb-2 font-semibold text-sm text-gray-700">Reason for Return (required):</label>
+    <textarea name="reason" rows="4" class="w-full p-2 border rounded mb-4" placeholder="Please explain why you're returning this item" required></textarea>
+    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Submit Return Request</button>
+    <a href="{% url 'user_order_detail' item.order.id %}" class="ml-4 text-gray-600 underline">Back</a>
+  </form>
+</div>
+{% endblock %}
