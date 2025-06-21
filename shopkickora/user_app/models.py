@@ -1,10 +1,8 @@
 from django.conf import settings
-from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -29,9 +27,9 @@ class Address(models.Model):
     full_name=models.CharField(max_length=255)
     district=models.CharField(max_length=100)
     state=models.CharField(max_length=100)
-    country=models.CharField(max_length=100)
+    country=models.CharField(max_length=100,default='India')
     is_default=models.BooleanField(default=False)
-    pincode=models.IntegerField()
+    pincode=models.CharField(max_length=6)
     street_address=models.TextField()
     email=models.EmailField()
     mobile=models.CharField(max_length=15)
@@ -45,6 +43,7 @@ class Category(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)  
+
     def __str__(self):
         return self.name
     
@@ -179,6 +178,14 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     cancel_reason = models.TextField(blank=True, null=True)
+    
+    full_name = models.CharField(max_length=255)
+    mobile = models.CharField(max_length=15)
+    street_address = models.TextField()
+    district = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=6)
+    country = models.CharField(max_length=100,default='India')
 
 
     def __str__(self):

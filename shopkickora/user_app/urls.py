@@ -51,8 +51,5 @@ urlpatterns = [
     path('order/item/<int:item_id>/return/', views.request_return, name='request_return'),
     path('order/<int:order_id>/invoice/', views.download_invoice, name='download_invoice'),
 
-
-
-
-
+    
 ]

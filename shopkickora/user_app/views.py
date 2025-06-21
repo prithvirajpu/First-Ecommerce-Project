@@ -694,22 +694,6 @@ def remove_profile_image(request):
     return redirect('user_profile')
 
 
-# @login_required
-# def verify_email_change(request, token):
-#     try:
-#         email_token = EmailChangeToken.objects.get(token=token, user=request.user)
-#     except EmailChangeToken.DoesNotExist:
-#         messages.error(request, "Invalid or expired verification link.")
-#         return redirect('user_profile')
-
-#     request.user.email = email_token.new_email
-#     request.user.save()
-#     email_token.delete()
-
-#     messages.success(request, "Your email address has been updated.")
-#     return redirect('user_profile')
-
-
 
 @login_required
 def edit_profile(request):
@@ -816,34 +800,6 @@ def change_password(request):
 def address_view(request):
     user = request.user
     addresses = Address.objects.filter(user=user)
-
-    if request.method == "POST":
-        full_name = request.POST.get("full_name")
-        mobile = request.POST.get("mobile")
-        street = request.POST.get("street")
-        district = request.POST.get("district")
-        state = request.POST.get("state")
-        pincode = request.POST.get("pincode")
-        country = request.POST.get("country")
-
-        # Make all existing addresses non-default
-        Address.objects.filter(user=user).update(is_default=False)
-
-        # Save the new address
-        Address.objects.create(
-            user=user,
-            full_name=full_name,
-            mobile=mobile,
-            street_address=street,
-            district=district,
-            state=state,
-            pincode=pincode,
-            country=country,
-            is_default=True,
-        )
-        messages.success(request, "Address added successfully!")
-        return redirect('address_view')
-
     return render(request, 'user_app/address.html', {'addresses': addresses})
 
 
@@ -893,6 +849,7 @@ def add_address(request):
         
 
         
+        is_first = not Address.objects.filter(user=request.user).exists()
 
         Address.objects.create(
             user=request.user,
@@ -902,7 +859,8 @@ def add_address(request):
             district=district,
             state=state,
             pincode=pincode,
-            country=country
+            country=country,
+            is_default=is_first  # ✅ make default if it's the first one
         )
 
         messages.success(request, 'Address added successfully.')
@@ -951,15 +909,6 @@ def edit_address(request, address_id):
         if errors:
             return render(request, 'user_app/edit_address.html', {
                 'errors': errors,
-                'form_data': {
-                    'full_name': full_name,
-                    'mobile': mobile,
-                    'street': street,
-                    'district': district,
-                    'state': state,
-                    'pincode': pincode,
-                    'country': country
-                },
                 'address': address
             })
 
@@ -1104,7 +1053,15 @@ def place_order(request):
             address=address,
             order_id=get_random_string(10).upper(),
             status='PENDING',
-            total_amount=sum(item.product.discounted_price * item.quantity for item in cart_items)
+            total_amount=sum(item.product.discounted_price * item.quantity for item in cart_items),
+
+            full_name=address.full_name,
+            mobile=address.mobile,
+            street_address=address.street_address,
+            district=address.district,
+            state=address.state,
+            pincode=address.pincode,
+            country=address.country
         )
 
         # ✅ Order Items & Stock Update

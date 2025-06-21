@@ -29,7 +29,7 @@
                         <i data-lucide="user" class="w-5 h-5"></i>
                         <span class="font-medium">Profile</span>
                     </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <a href="{% url 'user_order_list' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
                         <i data-lucide="shopping-bag" class="w-5 h-5"></i>
                         <span class="font-medium">Orders</span>
                     </a>
@@ -100,12 +100,6 @@
     lucide.createIcons();
 
     // Sidebar active state management
-    const sidebarItems = document.querySelectorAll('.sidebar-item');
-    sidebarItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            sidebarItems.forEach(i => i.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-        });
-    });
+    
 </script>
 {% endblock %}
