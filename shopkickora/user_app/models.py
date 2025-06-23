@@ -141,7 +141,7 @@ class Cart(models.Model):
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'product', 'size')  # one cart item per product per size
+        unique_together = ('user', 'product', 'size')   
 
     @property
     def get_size_display(self):
@@ -156,7 +156,7 @@ class Wishlist(models.Model):
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'product')  # Prevent duplicates
+        unique_together = ('user', 'product') 
         ordering = ['-added_at']
 
     def __str__(self):

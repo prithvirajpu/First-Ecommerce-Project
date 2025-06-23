@@ -45,262 +45,6 @@ from django.utils.crypto import get_random_string
 
 
 
-@login_required
-@csrf_exempt  # Optional: Use only if you're not sending the CSRF token in headers
-def add_to_cart_from_wishlist(request, product_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            size = data.get('size')
-            quantity = int(data.get('quantity', 1))
-
-            product = Product.objects.get(id=product_id, is_deleted=False)
-
-            cart_item, created = Cart.objects.get_or_create(
-                user=request.user,
-                product=product,
-                size=size,
-                defaults={'quantity': quantity}
-            )
-
-            if not created:
-                cart_item.quantity += quantity
-                cart_item.save()
-
-            # ✅ Remove item from wishlist after adding to cart
-            Wishlist.objects.filter(user=request.user, product=product).delete()
-
-            return JsonResponse({'success': True})
-        
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found'})
-        
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)})
-
-    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
-
-@login_required
-def wishlist_view(request):
-    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
-    return render(request, 'user_app/wishlist.html', {'wishlist_items': wishlist_items})
-
-
-@require_POST
-@login_required
-def toggle_wishlist(request,product_id):
-    if not product_id:
-        return JsonResponse({'status': 'error', 'message': 'Product ID required'}, status=400)
-
-    try:
-        product = Product.objects.get(id=product_id, is_deleted=False)
-        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
-
-        if not created:
-            wishlist_item.delete()
-            return JsonResponse({'status': 'removed'})
-        else:
-            return JsonResponse({'status': 'added'})
-    except Product.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
-
-
-
-
-MAX_QUANTITY_PER_ITEM = getattr(settings, 'MAX_CART_ITEM_QUANTITY', 5)
-
-
-@login_required
-def add_to_cart(request, product_id):
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request"}, status=400)
-
-    product = get_object_or_404(Product, id=product_id, is_deleted=False)
-    size = request.POST.get("size")
-    quantity = int(request.POST.get("quantity", 1))
-
-    if product.category and product.category.is_deleted:
-        return JsonResponse({"status": "error", "message": "This product's category is not available."})
-
-    try:
-        size_stock = ProductSizeStock.objects.get(product=product, size=size)
-    except ProductSizeStock.DoesNotExist:
-        return JsonResponse({"status": "error", "message": "Selected size is not available."})
-
-    if size_stock.quantity <= 0:
-        return JsonResponse({"status": "error", "message": "Out of stock."})
-
-    quantity = min(quantity, size_stock.quantity, MAX_QUANTITY_PER_ITEM)
-
-    cart_item, created = Cart.objects.get_or_create(
-        user=request.user, product=product, size=size,
-        defaults={'quantity': quantity}
-    )
-
-    if not created:
-        new_quantity = cart_item.quantity + quantity
-        max_allowed = min(size_stock.quantity, MAX_QUANTITY_PER_ITEM)
-        if new_quantity <= max_allowed:
-            cart_item.quantity = new_quantity
-            cart_item.save()
-            message = "Product quantity updated in cart."
-        else:
-            cart_item.quantity = max_allowed
-            cart_item.save()
-            message = "Maximum quantity reached for this item."
-    else:
-        message = "Product added to cart."
-
-    # Remove from wishlist
-    Wishlist.objects.filter(user=request.user, product=product).delete()
-
-    return JsonResponse({"status": "success", "message": message})
-
-@login_required
-def validate_cart_stock(request):
-    cart_items = Cart.objects.filter(user=request.user)
-    out_of_stock = []
-
-    for item in cart_items:
-        try:
-            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
-            if item.quantity > stock.quantity:
-                out_of_stock.append({
-                    'product': item.product.name,
-                    'size': item.get_size_display(),
-                    'available': stock.quantity
-                })
-        except ProductSizeStock.DoesNotExist:
-            out_of_stock.append({
-                'product': item.product.name,
-                'size': item.get_size_display(),
-                'available': 0
-            })
-
-    if out_of_stock:
-        return JsonResponse({'status': 'error', 'items': out_of_stock})
-    
-    return JsonResponse({'status': 'ok'})
-
-@login_required
-def cart_view(request):
-    cart_items = Cart.objects.filter(user=request.user).select_related('product')
-    grand_total = Decimal('0.00')
-    stock_info = {}
-    original_total = Decimal('0.00')
-    total_discount = Decimal('0.00')
-
-    for item in cart_items:
-        try:
-            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
-            item.max_quantity = stock.quantity
-            stock_info[item.id] = stock.quantity
-        except ProductSizeStock.DoesNotExist:
-            item.max_quantity = 0
-            stock_info[item.id] = 0
-
-        discounted_price = item.product.discounted_price
-        item.discounted_price = discounted_price
-        item.total_price = discounted_price * item.quantity
-
-        grand_total += item.total_price
-        original_total += item.product.price * item.quantity
-        total_discount += (item.product.price - discounted_price) * item.quantity
-
-    return render(request, 'user_app/cart.html', {
-        'cart_items': cart_items,
-        'grand_total': grand_total,           # Final total after discount
-        'original_total': original_total,     # Original price before discount
-        'total_discount': total_discount,     # Total discount amount
-        'stock_info': stock_info
-    })
-
-@login_required
-def increment_quantity(request, item_id):
-    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
-
-    try:
-        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
-    except ProductSizeStock.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
-
-    if cart_item.quantity >= stock.quantity:
-        return JsonResponse({
-            'status': 'error',
-            'message': f"Only {stock.quantity} items left in stock",
-            'item_id': cart_item.id,
-            'new_quantity': cart_item.quantity,
-            'available_stock': stock.quantity,
-            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
-        })
-
-    if cart_item.quantity >= MAX_QUANTITY_PER_ITEM:
-        return JsonResponse({
-            'status': 'error',
-            'message': f"Maximum limit per item is {MAX_QUANTITY_PER_ITEM}",
-            'item_id': cart_item.id,
-            'new_quantity': cart_item.quantity,
-            'available_stock': stock.quantity,
-            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
-        })
-
-    cart_item.quantity += 1
-    cart_item.save()
-
-    subtotal = sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user))
-
-    return JsonResponse({
-        'status': 'success',
-        'item_id': cart_item.id,
-        'new_quantity': cart_item.quantity,
-        'available_stock': stock.quantity,
-        'subtotal': f"{subtotal:.2f}",
-    })
-
-
-@login_required
-def decrement_quantity(request, item_id):
-    if request.method != 'POST' or request.headers.get('x-requested-with') != 'XMLHttpRequest':
-        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
-
-    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
-
-    try:
-        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
-    except ProductSizeStock.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
-
-    if cart_item.quantity > 1:
-        cart_item.quantity -= 1
-        cart_item.save()
-        new_quantity = cart_item.quantity
-        deleted = False
-    else:
-        return JsonResponse({
-            'status': 'warning',
-            'message': 'Minimum quantity is 1',
-            'item_id': item_id,
-            'new_quantity': 1,
-            'available_stock': stock.quantity,
-            'deleted': False,
-            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
-        })
-
-    subtotal = sum(item.product.price * item.quantity for item in Cart.objects.filter(user=request.user))
-
-    return JsonResponse({
-        'status': 'success',
-        'item_id': item_id,
-        'new_quantity': new_quantity,
-        'available_stock': stock.quantity,
-        'deleted': deleted,
-        'subtotal': f"{subtotal:.2f}",
-    })
-
-@login_required
-def remove_from_cart(request, item_id):
-    Cart.objects.filter(id=item_id, user=request.user).delete()
-    return redirect('/cart/?removed=true')
 
 OTP_EXPIRY_SECONDS = 600
 
@@ -539,7 +283,6 @@ def user_dashboard(request):
     remaining_products = [p for p in all_products if p not in best_selling_products]
     featured_products = random.sample(list(remaining_products), min(4, len(remaining_products))) if remaining_products else []
 
-    # ✅ Get all wishlist product IDs for current user
     wishlist_products = []
     if request.user.is_authenticated:
         wishlist_products = Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
@@ -547,7 +290,7 @@ def user_dashboard(request):
     context = {
         'best_selling_products': best_selling_products,
         'featured_products': featured_products,
-        'wishlist_products': list(wishlist_products),  # important!
+        'wishlist_products': list(wishlist_products),  
     }
     return render(request, 'user_app/dashboard.html', context)
 
@@ -559,7 +302,7 @@ def user_product_list(request):
     category = request.GET.get('category', 'all')
     sort = request.GET.get('sort', 'newest')
 
-    brand_ids = request.GET.getlist('brand')  
+    brand_ids = request.GET.getlist('brand')
 
 
     min_price_str = request.GET.get('min_price')
@@ -655,10 +398,263 @@ def product_detail(request, slug):
 
 
 @login_required
+@csrf_exempt 
+def add_to_cart_from_wishlist(request, product_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            size = data.get('size')
+            quantity = int(data.get('quantity', 1))
+
+            product = Product.objects.get(id=product_id, is_deleted=False)
+
+            cart_item, created = Cart.objects.get_or_create(
+                user=request.user,
+                product=product,
+                size=size,
+                defaults={'quantity': quantity}
+            )
+
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
+
+            Wishlist.objects.filter(user=request.user, product=product).delete()
+
+            return JsonResponse({'success': True})
+        
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Product not found'})
+        
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
+
+@login_required
+def wishlist_view(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+    return render(request, 'user_app/wishlist.html', {'wishlist_items': wishlist_items})
+
+
+@require_POST
+@login_required
+def toggle_wishlist(request,product_id):
+    if not product_id:
+        return JsonResponse({'status': 'error', 'message': 'Product ID required'}, status=400)
+
+    try:
+        product = Product.objects.get(id=product_id, is_deleted=False)
+        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+
+        if not created:
+            wishlist_item.delete()
+            return JsonResponse({'status': 'removed'})
+        else:
+            return JsonResponse({'status': 'added'})
+    except Product.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+
+@login_required
+def cart_view(request):
+    cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    grand_total = Decimal('0.00')
+    stock_info = {}
+    original_total = Decimal('0.00')
+    total_discount = Decimal('0.00')
+
+    for item in cart_items:
+        try:
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            item.max_quantity = stock.quantity
+            stock_info[item.id] = stock.quantity
+        except ProductSizeStock.DoesNotExist:
+            item.max_quantity = 0
+            stock_info[item.id] = 0
+
+        discounted_price = item.product.discounted_price
+        item.discounted_price = discounted_price
+        item.total_price = discounted_price * item.quantity
+
+        grand_total += item.total_price
+        original_total += item.product.price * item.quantity
+        total_discount = (item.product.price - discounted_price) * item.quantity
+
+    return render(request, 'user_app/cart.html', {
+        'cart_items': cart_items,
+        'grand_total': grand_total,          
+        'original_total': original_total,     
+        'total_discount': total_discount,     
+        'stock_info': stock_info
+    })
+
+
+MAX_QUANTITY_PER_ITEM = getattr(settings, 'MAX_CART_ITEM_QUANTITY', 5)
+
+
+@login_required
+def add_to_cart(request, product_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    product = get_object_or_404(Product, id=product_id, is_deleted=False)
+    size = request.POST.get("size")
+    quantity = int(request.POST.get("quantity", 1))
+
+    if product.category and product.category.is_deleted:
+        return JsonResponse({"status": "error", "message": "This product's category is not available."})
+
+    try:
+        size_stock = ProductSizeStock.objects.get(product=product, size=size)
+    except ProductSizeStock.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Selected size is not available."})
+
+    if size_stock.quantity <= 0:
+        return JsonResponse({"status": "error", "message": "Out of stock."})
+
+    quantity = min(quantity, size_stock.quantity, MAX_QUANTITY_PER_ITEM)
+
+    cart_item, created = Cart.objects.get_or_create(
+        user=request.user, product=product, size=size,
+        defaults={'quantity': quantity}
+    )
+
+    if not created:
+        new_quantity = cart_item.quantity + quantity
+        max_allowed = min(size_stock.quantity, MAX_QUANTITY_PER_ITEM)
+        if new_quantity <= max_allowed:
+            cart_item.quantity = new_quantity
+            cart_item.save()
+            message = "Product quantity updated in cart."
+        else:
+            cart_item.quantity = max_allowed
+            cart_item.save()
+            message = "Maximum quantity reached for this item."
+    else:
+        message = "Product added to cart."
+
+    Wishlist.objects.filter(user=request.user, product=product).delete()
+
+    return JsonResponse({"status": "success", "message": message})
+
+@login_required
+def validate_cart_stock(request):
+    cart_items = Cart.objects.filter(user=request.user)
+    out_of_stock = []
+
+    for item in cart_items:
+        try:
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            if item.quantity > stock.quantity:
+                out_of_stock.append({
+                    'product': item.product.name,
+                    'size': item.get_size_display(),
+                    'available': stock.quantity
+                })
+        except ProductSizeStock.DoesNotExist:
+            out_of_stock.append({
+                'product': item.product.name,
+                'size': item.get_size_display(),
+                'available': 0
+            })
+
+    if out_of_stock:
+        return JsonResponse({'status': 'error', 'items': out_of_stock})
+    
+    return JsonResponse({'status': 'ok'})
+
+@login_required
+def increment_quantity(request, item_id):
+    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+
+    try:
+        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
+    except ProductSizeStock.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
+
+    if cart_item.quantity >= stock.quantity:
+        return JsonResponse({
+            'status': 'error',
+            'message': f"Only {stock.quantity} items left in stock",
+            'item_id': cart_item.id,
+            'new_quantity': cart_item.quantity,
+            'available_stock': stock.quantity,
+            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
+        })
+
+    if cart_item.quantity >= MAX_QUANTITY_PER_ITEM:
+        return JsonResponse({
+            'status': 'error',
+            'message': f"Maximum limit per item is {MAX_QUANTITY_PER_ITEM}",
+            'item_id': cart_item.id,
+            'new_quantity': cart_item.quantity,
+            'available_stock': stock.quantity,
+            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
+        })
+
+    cart_item.quantity += 1
+    cart_item.save()
+
+    subtotal = sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user))
+
+    return JsonResponse({
+        'status': 'success',
+        'item_id': cart_item.id,
+        'new_quantity': cart_item.quantity,
+        'available_stock': stock.quantity,
+        'subtotal': f"{subtotal:.2f}",
+    })
+
+
+@login_required
+def decrement_quantity(request, item_id):
+    if request.method != 'POST' or request.headers.get('x-requested-with') != 'XMLHttpRequest':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+    cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
+
+    try:
+        stock = ProductSizeStock.objects.get(product=cart_item.product, size=cart_item.size)
+    except ProductSizeStock.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
+
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
+        cart_item.save()
+        new_quantity = cart_item.quantity
+        deleted = False
+    else:
+        return JsonResponse({
+            'status': 'warning',
+            'message': 'Minimum quantity is 1',
+            'item_id': item_id,
+            'new_quantity': 1,
+            'available_stock': stock.quantity,
+            'deleted': False,
+            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
+        })
+
+    subtotal = sum(item.product.price * item.quantity for item in Cart.objects.filter(user=request.user))
+
+    return JsonResponse({
+        'status': 'success',
+        'item_id': item_id,
+        'new_quantity': new_quantity,
+        'available_stock': stock.quantity,
+        'deleted': deleted,
+        'subtotal': f"{subtotal:.2f}",
+    })
+
+@login_required
+def remove_from_cart(request, item_id):
+    Cart.objects.filter(id=item_id, user=request.user).delete()
+    return redirect('/cart/?removed=true')
+
+@login_required
 def user_profile(request):
     user = request.user
     address = Address.objects.filter(user=user, is_default=True).first()
-    orders = Order.objects.filter(user=user).order_by('-created_at')  # latest first
 
     if request.method == 'POST':
         form = ProfileImageForm(request.POST, request.FILES, instance=user)
@@ -667,7 +663,6 @@ def user_profile(request):
             messages.success(request, "Profile image updated successfully.")
             return redirect('user_profile')
         else:
-            # Show detailed form errors for debugging
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -676,9 +671,8 @@ def user_profile(request):
 
     context = {
         'user': user,
-        'orders': orders,
         'address': address,
-        'form': form  # ✅ important to pass form in context
+        'form': form  
     }
     return render(request, 'user_app/profile.html', context)
 
@@ -686,9 +680,9 @@ def user_profile(request):
 def remove_profile_image(request):
     user = request.user
     if request.method == 'POST':
-        if user.profile_image and user.profile_image.name != 'profiles/default_user.png':
-            user.profile_image.delete(save=False)  # Delete image from disk
-        user.profile_image = 'profiles/default.png'  # Reset to default image
+        if user.profile_image and user.profile_image.name != 'profiles/default.png':
+            user.profile_image.delete(save=False)  
+        user.profile_image = 'profiles/default.png'
         user.save()
         messages.success(request, "Profile image removed.")
     return redirect('user_profile')
@@ -706,7 +700,6 @@ def edit_profile(request):
         phone = request.POST.get('phone').strip()
         street_address = request.POST.get('street_address').strip()
 
-        # --- Validation ---
         if not full_name:
             errors['full_name'] = "Full name is required."
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', full_name):
@@ -735,7 +728,6 @@ def edit_profile(request):
                 }
             })
 
-        # --- Update user name ---
         if " " in full_name:
             first_name, last_name = full_name.split(" ", 1)
         else:
@@ -746,7 +738,6 @@ def edit_profile(request):
         user.last_name = last_name
         user.save()
 
-        # --- Save or create default address ---
         if address:
             address.full_name = full_name
             address.mobile = phone
@@ -769,7 +760,6 @@ def edit_profile(request):
         messages.success(request, "Profile updated successfully.")
         return redirect('user_profile')
 
-    # --- GET request ---
     return render(request, 'user_app/edit_profile.html', {
         'address': address,
         'user': user
@@ -780,20 +770,19 @@ def edit_profile(request):
 def change_password(request):
     if not request.user.has_usable_password():
         messages.error(request, "Your account was created using Google login. Please use Google to sign in.", extra_tags='change_password')
-        return redirect('user_profile')  # Or show a different page
+        return redirect('user_profile')
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
-            update_session_auth_hash(request, user)  # Important: Keep user logged in
+            update_session_auth_hash(request, user)
             messages.success(request, 'Your password was successfully updated!', extra_tags='change_password')
-            return redirect('user_profile')  # Redirect to profile or any success page
+            return redirect('user_profile')  
         else:
             messages.error(request, 'Please correct the errors below.', extra_tags='change_password')
     else:
         form = PasswordChangeForm(request.user)
     return render(request, 'user_app/change_password.html', {'form': form})
-
 
 
 @login_required
@@ -860,7 +849,7 @@ def add_address(request):
             state=state,
             pincode=pincode,
             country=country,
-            is_default=is_first  # ✅ make default if it's the first one
+            is_default=is_first  
         )
 
         messages.success(request, 'Address added successfully.')
@@ -882,7 +871,6 @@ def edit_address(request, address_id):
         pincode = request.POST.get("pincode", "").strip()
         country = request.POST.get("country", "").strip()
 
-        # Validation
         if not full_name:
             errors['full_name'] = 'Name is required'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', full_name):
@@ -912,7 +900,6 @@ def edit_address(request, address_id):
                 'address': address
             })
 
-        # Save to model
         address.full_name = full_name
         address.mobile = mobile
         address.street_address = street
@@ -957,7 +944,7 @@ def checkout(request):
     total_discount = Decimal('0.00')
 
     for item in cart_items:
-        discounted_price = item.product.discounted_price  # Should be a property/method in Product model
+        discounted_price = item.product.discounted_price  
         item.discounted_price = discounted_price
         item.total_price = discounted_price * item.quantity
 
@@ -966,8 +953,7 @@ def checkout(request):
         total_discount += (item.product.price - discounted_price) * item.quantity
 
     shipping_charge = Decimal('0.00')
-    tax = Decimal('0.00')
-    total = grand_total + shipping_charge + tax
+    total = grand_total + shipping_charge
 
     context = {
         'cart_items': cart_items,
@@ -977,7 +963,6 @@ def checkout(request):
         'original_total': original_total,
         'total_discount': total_discount,
         'shipping': shipping_charge,
-        'tax': tax,
         'total': total,
     }
 
@@ -987,104 +972,92 @@ def checkout(request):
 @login_required
 @transaction.atomic
 def place_order(request):
-    if request.method == 'POST':
-        selected_address = request.POST.get('selected_address')
+    if request.method != 'POST':
+        return redirect('checkout')
 
-        # ✅ Handle missing selected_address
-        if not selected_address:
-            return redirect('/checkout/?error=invalid_address')
+    selected_address = request.POST.get('selected_address')
 
-        # ✅ Get Cart Items
-        cart_items = Cart.objects.filter(user=request.user)
-        if not cart_items.exists():
-            return redirect('/checkout/?error=empty_cart')
+    if not selected_address:
+        return redirect('/checkout/?error=invalid_address')
 
-        # ✅ STOCK VALIDATION
-        out_of_stock_items = []
-        for item in cart_items:
-            try:
-                stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
-                if item.quantity > stock.quantity:
-                    out_of_stock_items.append(item.product.name)
-            except ProductSizeStock.DoesNotExist:
+    cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    if not cart_items.exists():
+        return redirect('/checkout/?error=empty_cart')
+
+    out_of_stock_items = []
+    for item in cart_items:
+        try:
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            if item.quantity > stock.quantity:
                 out_of_stock_items.append(item.product.name)
+        except ProductSizeStock.DoesNotExist:
+            out_of_stock_items.append(item.product.name)
 
-        if out_of_stock_items:
-            return redirect('/checkout/?stock_error=true')
+    if out_of_stock_items:
+        return redirect('/checkout/?stock_error=true')
 
-        # ✅ Address Handling
-        if selected_address != 'new':
-            try:
-                address_id = int(selected_address)
-                address = Address.objects.get(id=address_id, user=request.user)
-            except (ValueError, Address.DoesNotExist):
-                return redirect('/checkout/?error=invalid_address')
-        else:
-            # New address form data
-            full_name = request.POST.get('full_name', '').strip()
-            mobile = request.POST.get('mobile', '').strip()
-            street = request.POST.get('street', '').strip()
-            district = request.POST.get('district', '').strip()
-            state = request.POST.get('state', '').strip()
-            pincode = request.POST.get('pincode', '').strip()
-            country = request.POST.get('country', '').strip()
+    if selected_address != 'new':
+        try:
+            address_id = int(selected_address)
+            address = Address.objects.get(id=address_id, user=request.user)
+        except (ValueError, Address.DoesNotExist):
+            return redirect('/checkout/?error=invalid_address')
+    else:
+        full_name = request.POST.get('full_name', '').strip()
+        mobile = request.POST.get('mobile', '').strip()
+        street = request.POST.get('street', '').strip()
+        district = request.POST.get('district', '').strip()
+        state = request.POST.get('state', '').strip()
+        pincode = request.POST.get('pincode', '').strip()
+        country = request.POST.get('country', '').strip()
 
-            # Minimal phone validation
-            if not mobile or not mobile.isdigit() or len(mobile) != 10:
-                return redirect('/checkout/?error=invalid_mobile')
+        if not mobile or not mobile.isdigit() or len(mobile) != 10:
+            return redirect('/checkout/?error=invalid_mobile')
 
-            # You can add more validation if needed
-
-            address = Address.objects.create(
-                user=request.user,
-                full_name=full_name,
-                mobile=mobile,
-                street_address=street,
-                district=district,
-                state=state,
-                pincode=pincode,
-                country=country,
-                is_default=False
-            )
-
-        # ✅ Order Creation
-        order = Order.objects.create(
+        address = Address.objects.create(
             user=request.user,
-            address=address,
-            order_id=get_random_string(10).upper(),
-            status='PENDING',
-            total_amount=sum(item.product.discounted_price * item.quantity for item in cart_items),
-
-            full_name=address.full_name,
-            mobile=address.mobile,
-            street_address=address.street_address,
-            district=address.district,
-            state=address.state,
-            pincode=address.pincode,
-            country=address.country
+            full_name=full_name,
+            mobile=mobile,
+            street_address=street,
+            district=district,
+            state=state,
+            pincode=pincode,
+            country=country,
+            is_default=False
         )
 
-        # ✅ Order Items & Stock Update
-        for item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                size=item.size,
-                price=item.product.discounted_price
-            )
+    total_amount = sum(item.product.discounted_price * item.quantity for item in cart_items)
 
-            # Update stock
-            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
-            stock.quantity -= item.quantity
-            stock.save()
+    order = Order.objects.create(
+        user=request.user,
+        order_id=get_random_string(10).upper(),
+        status='PENDING',
+        total_amount=total_amount,
+        full_name=address.full_name,
+        mobile=address.mobile,
+        street_address=address.street_address,
+        district=address.district,
+        state=address.state,
+        pincode=address.pincode,
+        country=address.country,
+    )
 
-        # ✅ Clear Cart
-        cart_items.delete()
+    for item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            product=item.product,
+            quantity=item.quantity,
+            size=item.size,
+            price=item.product.discounted_price
+        )
 
-        return redirect('order_success', order_id=order.id)
+        stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+        stock.quantity -= item.quantity
+        stock.save()
 
-    return redirect('checkout')
+    cart_items.delete()
+
+    return redirect('order_success', order_id=order.id)
 
 @login_required
 def order_success(request, order_id):
@@ -1123,7 +1096,6 @@ def cancel_order(request, order_id):
         order.cancel_reason = reason
         order.save()
 
-        # restore stock
         for item in order.order_items.all():
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
             stock.quantity += item.quantity

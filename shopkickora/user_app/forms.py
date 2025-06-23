@@ -22,19 +22,16 @@ class ProfileImageForm(forms.ModelForm):
 
         image = self.cleaned_data.get('profile_image')
         if image:
-            # Validate MIME type
             if hasattr(image, 'content_type'):
                 if image.content_type not in ALLOWED_CONTENT_TYPES:
                     raise forms.ValidationError("Unsupported image type. Please upload JPG, PNG, GIF, SVG, or WEBP files.")
             else:
                 raise forms.ValidationError("Cannot determine the file type.")
             
-            # Validate file extension
             ext = image.name.split('.')[-1].lower()
             if ext not in ALLOWED_EXTENSIONS:
                 raise forms.ValidationError("Unsupported file extension.")
             
-            # Validate file size (optional)
             if image.size > 2 * 1024 * 1024:
                 raise forms.ValidationError("Image file too large ( > 2MB ).")
         return image

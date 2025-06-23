@@ -97,8 +97,8 @@
                 </td>
                 <td class="py-2">{{ item.size }}</td>
                 <td class="py-2">{{ item.quantity }}</td>
-                <td class="py-2">₹{{ item.product.price }}</td>
-                <td class="py-2 font-semibold text-gray-800">₹{{ item.product.price|multiply:item.quantity }}</td>
+                <td class="py-2">₹{{item.discounted_price }}</td>
+                <td class="py-2 font-semibold text-gray-800">₹{{ item.discounted_price|multiply:item.quantity }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -109,9 +109,7 @@
     <!-- Total Price -->
     <div class="bg-white rounded-xl shadow border mt-6 p-6">
       <div class="text-right space-y-2 text-sm sm:text-base">
-        <p><strong>Subtotal:</strong> ₹{{ subtotal }}</p>
-        <p><strong>Tax:</strong> ₹{{ tax }}</p>
-        <p><strong>Shipping:</strong> ₹{{ shipping }}</p>
+
         <p class="text-lg font-bold text-gray-800"><strong>Total:</strong> ₹{{ total }}</p>
       </div>
     </div>
@@ -122,13 +120,12 @@
     </button>
   </form>
 </div>
-<div id="toast" class="fixed top-5 right-5 bg-red-600 text-white px-4 py-3 rounded shadow-lg hidden z-50">
-  Phone number is required.
-</div>
+
 
 {% endblock %}
 
 {% block extra_js %}
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     lucide.createIcons();
@@ -136,7 +133,7 @@
     const newAddressOption = document.getElementById('new_address_option');
     const addressRadios = document.querySelectorAll('input[name="selected_address"]');
     const newAddressForm = document.getElementById('newAddressForm');
-    const placeOrderBtn = document.querySelector('button[type="submit"]');
+    const checkoutForm = document.querySelector('form');
 
     // Toggle new address form visibility
     addressRadios.forEach(radio => {
@@ -145,59 +142,45 @@
       });
     });
 
-    // Toast utility
-    function showToast(message, type = "error") {
-      const toast = document.getElementById("toast");
-      toast.textContent = message;
-
-      // Background color
-      if (type === "error") {
-        toast.classList.add("bg-red-600");
-        toast.classList.remove("bg-yellow-500");
-      } else if (type === "warning") {
-        toast.classList.add("bg-yellow-500");
-        toast.classList.remove("bg-red-600");
-      }
-
-      toast.classList.remove("hidden");
-
-      setTimeout(() => {
-        toast.classList.add("opacity-0");
-        setTimeout(() => {
-          toast.classList.remove("opacity-0");
-          toast.classList.add("hidden");
-        }, 500);
-      }, 3000);
-    }
-
-    // Place Order validations
-    placeOrderBtn.addEventListener('click', function (e) {
+    // ✅ Validation on form submit
+    checkoutForm.addEventListener('submit', function (e) {
       const selected = document.querySelector('input[name="selected_address"]:checked');
 
       // ❌ No address selected
       if (!selected) {
         e.preventDefault();
-        showToast("Address is required", "error");
+        showToast("Please add or select an address with phone number", "error");
         return;
       }
 
-      // ✅ If using saved address, check for mobile
+      // ✅ If using saved address
       if (selected.value !== 'new') {
         const label = document.querySelector(`label[for="${selected.id}"]`);
         const labelText = label ? label.innerText : '';
         const mobileMatch = labelText.match(/Mobile:\s*(\d{10})/);
 
-        if (!mobileMatch) {
+        if (!mobileMatch || mobileMatch[1].trim() === "") {
           e.preventDefault();
-          showToast("Phone number is required for the selected address", "error");
+          showToast("Please add a valid phone number for the selected address", "error");
           return;
         }
       }
 
-      // Optionally add more JS validations here for new address form
+      // ✅ If using new address
+      if (selected.value === 'new') {
+        const fullName = document.querySelector('input[name="full_name"]').value.trim();
+        const mobile = document.querySelector('input[name="mobile"]').value.trim();
+        const street = document.querySelector('input[name="street"]').value.trim();
+
+        if (!fullName || !mobile || !street || !/^\d{10}$/.test(mobile)) {
+          e.preventDefault();
+          showToast("Please fill in the new address form correctly", "error");
+          return;
+        }
+      }
     });
 
-    // Toasts from URL params (stock error, invalid mobile, etc.)
+    // ✅ Show toast from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
 
     if (urlParams.get('stock_error') === 'true') {
@@ -213,14 +196,15 @@
       showToast("Cart is empty!", "warning");
     }
 
-    // Optional: clean URL after showing toast
+    // Clean URL after showing toast
     if (urlParams.get('stock_error') || urlParams.get('error')) {
       const newUrl = window.location.origin + window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
   });
 </script>
-
-
-
 {% endblock %}
+
+
+
+

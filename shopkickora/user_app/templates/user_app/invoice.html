@@ -1,3 +1,4 @@
+{% load cart_extras %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,11 +55,11 @@
         {{ order.user.email }}<br>
         <br>
         <strong>Shipping Address:</strong><br>
-        {{ order.address.full_name }}<br>
-        {{ order.address.street_address }}<br>
-        {{ order.address.district }}, {{ order.address.state }}<br>
-        {{ order.address.country }} - {{ order.address.pincode }}<br>
-        Phone: {{ order.address.mobile }}
+        {{ order.full_name }}<br>
+        {{ order.street_address }}<br>
+        {{ order.district }}, {{ order.state }}<br>
+        {{ order.country }} - {{ order.pincode }}<br>
+        Phone: {{ order.mobile }}
     </div>
 
     <div class="section">
@@ -78,20 +79,21 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in order.order_items.all %}
-                <tr>
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.size }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td class="right">{{ item.price }}</td>
-                    <td class="right">{{ item.price|floatformat:2|add:"0"|floatformat:2|floatformat:2|stringformat:"s"|add:item.quantity|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-                <tr>
-                    <td colspan="4" class="right bold">Total Amount (₹)</td>
-                    <td class="right bold">{{ order.total_amount }}</td>
-                </tr>
-            </tbody>
+    {% for item in order.order_items.all %}
+    <tr>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.size }}</td>
+        <td>{{ item.quantity }}</td>
+        <td class="right">{{ item.price }}</td>
+        <td class="right">{{ item.price|multiply:item.quantity }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="4" class="right bold">Total Amount (₹)</td>
+        <td class="right bold">{{ order.total_amount }}</td>
+    </tr>
+</tbody>
+
         </table>
     </div>
 

@@ -228,7 +228,6 @@ def add_product(request):
             'discount_percentage': discount_percentage,
         }
 
-        # Validate discount
         try:
             discount_val = int(discount_percentage or 0)
             if not (0 <= discount_val <= 100):
@@ -236,7 +235,6 @@ def add_product(request):
         except (ValueError, TypeError):
             errors['discount_percentage'] = "Invalid discount value"
 
-        # Validate name
         if not name:
             errors['name'] = 'Must enter the name'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
@@ -246,7 +244,6 @@ def add_product(request):
         elif Product.objects.filter(name__iexact=name).exists():
             errors['name'] = "The product name already exists"
 
-        # Validate price
         try:
             price_val = float(price)
             if price_val <= 0:
@@ -254,7 +251,6 @@ def add_product(request):
         except (ValueError, TypeError):
             errors['price'] = "Enter a valid number for price."
 
-        # Validate stock
         try:
             s = int(stock_s)
             m = int(stock_m)
@@ -264,7 +260,6 @@ def add_product(request):
         except:
             errors['stock_sizes'] = "All sizes (S, M, L) must have valid stock."
 
-        # Validate category and brand
         try:
             category = Category.objects.get(id=category_id)
         except Category.DoesNotExist:
@@ -276,7 +271,6 @@ def add_product(request):
             errors['brand'] = "Invalid brand selected"
             brand = None
 
-        # Validate images
         if len(images) < 3:
             errors['format'] = "Please upload at least 3 images."
         else:
@@ -287,7 +281,6 @@ def add_product(request):
                     errors['format'] = "Invalid image file format"
                     break
 
-        # Return form with errors
         if errors:
             print("FORM ERRORS:", errors)
             return render(request, 'user_app/add_product.html', {
@@ -297,7 +290,6 @@ def add_product(request):
                 'form_data': form_data
             })
 
-        # ✅ All validations passed
         total_stock = s + m + l
 
         product = Product.objects.create(
@@ -322,7 +314,6 @@ def add_product(request):
         messages.success(request, "Product added successfully.")
         return redirect('product_list')
 
-    # GET method: render empty form
     return render(request, 'user_app/add_product.html', {
         'categories': categories,
         'brands': brands,
@@ -365,7 +356,6 @@ def edit_product(request, product_id):
             'brand_id': brand_id,
         }
 
-        # Validate fields
         if not name:
             errors['name'] = 'Product name is required.'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
@@ -400,7 +390,6 @@ def edit_product(request, product_id):
             errors['brand'] = "Invalid brand selected"
             brand = None
 
-        # Stock Validation
         if not stock_s or not stock_m or not stock_l:
             errors['stock_sizes'] = "All sizes (S, M, L) must have stock."
         else:
@@ -413,7 +402,6 @@ def edit_product(request, product_id):
             except ValueError:
                 errors['stock_sizes'] = "Stock quantities must be integers."
 
-        # Image validations
         allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
         if new_images:
             if len(new_images) != 3:
@@ -428,7 +416,6 @@ def edit_product(request, product_id):
             if existing_images.count() != 3:
                 errors['format'] = "Exactly 3 images are required. Please upload 3 images."
 
-        # On error
         if errors:
             return render(request, 'user_app/edit_product.html', {
                 'product': product,
@@ -444,7 +431,6 @@ def edit_product(request, product_id):
                 }
             })
 
-        # Save product
         product.name = name
         product.description = description
         product.price = price_val
@@ -454,7 +440,6 @@ def edit_product(request, product_id):
         product.stock = s + m + l
         product.save()
 
-        # Update stock per size
         for size, quantity in [('S', s), ('M', m), ('L', l)]:
             ProductSizeStock.objects.update_or_create(
                 product=product,
@@ -462,7 +447,6 @@ def edit_product(request, product_id):
                 defaults={'quantity': quantity}
             )
 
-        # Replace images
         if new_images and len(new_images) == 3:
             for img in existing_images:
                 if img.image:
@@ -474,7 +458,6 @@ def edit_product(request, product_id):
         messages.success(request, "Product updated successfully.")
         return redirect('product_list')
 
-    # GET request
     form_data = {
         'name': product.name,
         'description': product.description,
@@ -696,11 +679,9 @@ def approve_return(request, order_item_id):
         messages.warning(request, "Invalid or already approved return request.")
         return redirect('admin_order_detail', order_id=item.order.id)
 
-    # Mark approved
     item.is_return_approved = True
     item.save()
 
-    # Refund to wallet
     wallet, created = Wallet.objects.get_or_create(user=item.order.user)
     refund_amount = item.price * item.quantity
     wallet.balance += refund_amount

@@ -30,16 +30,16 @@
     </div>
   </div>
 
+ 
   <!-- Shipping Address -->
-  <div class="bg-white rounded-lg shadow p-6 mb-6">
-    <h4 class="text-lg font-semibold mb-2">Shipping Address</h4>
-    {% if order.address %}
-      <p>{{ order.address.street_address }}, {{ order.address.city }}, {{ order.address.state }} - {{ order.address.pincode }}</p>
-      <p><strong>Phone:</strong> {{ order.address.mobile }}</p>
-    {% else %}
-      <p class="text-gray-600">No address found.</p>
-    {% endif %}
-  </div>
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+  <h4 class="text-lg font-semibold mb-2">Shipping Address</h4>
+  <p class="font-semibold">{{ order.full_name }}</p>
+  <p>{{ order.street_address }}, {{ order.district }}, {{ order.state }} - {{ order.pincode }}</p>
+  <p>{{ order.country }}</p>
+  <p><strong>Phone:</strong> {{ order.mobile }}</p>
+</div>
+
 
   <!-- Order Items -->
   <div class="bg-white rounded-lg shadow p-6">
