@@ -454,7 +454,7 @@ def toggle_wishlist(request,product_id):
             return JsonResponse({'status': 'added'})
     except Product.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
-
+ 
 
 @login_required
 def cart_view(request):
@@ -509,7 +509,7 @@ def add_to_cart(request, product_id):
         size_stock = ProductSizeStock.objects.get(product=product, size=size)
     except ProductSizeStock.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Selected size is not available."})
-
+ 
     if size_stock.quantity <= 0:
         return JsonResponse({"status": "error", "message": "Out of stock."})
 
@@ -519,7 +519,7 @@ def add_to_cart(request, product_id):
         user=request.user, product=product, size=size,
         defaults={'quantity': quantity}
     )
-
+ 
     if not created:
         new_quantity = cart_item.quantity + quantity
         max_allowed = min(size_stock.quantity, MAX_QUANTITY_PER_ITEM)
@@ -537,6 +537,7 @@ def add_to_cart(request, product_id):
     Wishlist.objects.filter(user=request.user, product=product).delete()
 
     return JsonResponse({"status": "success", "message": message})
+
 
 @login_required
 def validate_cart_stock(request):
@@ -563,6 +564,7 @@ def validate_cart_stock(request):
         return JsonResponse({'status': 'error', 'items': out_of_stock})
     
     return JsonResponse({'status': 'ok'})
+
 
 @login_required
 def increment_quantity(request, item_id):

@@ -111,7 +111,6 @@ class ProductImage(models.Model):
         return f"Image for {self.product.name}"
 
 
-
 class ProductSizeStock(models.Model):
     SIZE_CHOICES = [
         ('S', 'Small'),
@@ -128,24 +127,26 @@ class ProductSizeStock(models.Model):
 
 
 class Cart(models.Model):
-    SIZE_CHOICES = [
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),
-    ]
-
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    size = models.CharField(max_length=1, choices=SIZE_CHOICES)
+    size = models.CharField(max_length=1)  
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'product', 'size')   
+        unique_together = ('user', 'product', 'size')
 
-    @property
     def get_size_display(self):
-        return dict(ProductSizeStock.SIZE_CHOICES).get(self.size, self.size)
+        size_map = {
+            'S': 'Small',
+            'M': 'Medium',
+            'L': 'Large',
+        }
+        return size_map.get(self.size.upper(), self.size)
+
+    def save(self, *args, **kwargs):
+        self.size = self.size.upper()  
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} - {self.product.name} ({self.get_size_display()})"

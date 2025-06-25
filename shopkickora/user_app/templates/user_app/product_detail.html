@@ -22,6 +22,7 @@
         height: 480px;
         width: 550px;
         overflow: hidden;
+       
     }
     .img-zoom-lens {
         position: absolute;
@@ -36,13 +37,13 @@
     }
     .img-zoom-result {
         position: absolute;
-        top: 0;
-        left: 105%;
-        border: 1px solid #d4d4d4;
+        top: 14%;
+        left: 46%;
+        border: 1px solid #ffffff;
         width: 700px;
         height: 550px;
         background-repeat: no-repeat;
-        background-color: #fff;
+        background-color: #ffffff;
         z-index: 100;
         display: none;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -103,7 +104,7 @@
             <div class="img-zoom-container">
                 <img id="mainImage" src="{% if product.images.all %}{{ product.images.all.0.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% static 'user_app/default-shoe.jpg' %}{% endif %}" alt="{{ product.name|default:'Product' }}">
                 <div class="img-zoom-lens"></div>
-                <div id="myresult" class="img-zoom-result"></div>
+               
             </div>
             {% if product.images.all %}
                 <div class="flex justify-center space-x-2 mt-2 w-[550px] mx-auto">
@@ -113,6 +114,7 @@
                 </div>
             {% endif %}
         </div>
+         <div id="myresult" class="img-zoom-result"></div>
 
         <div>
             <div class="flex justify-between items-center mb-4">
