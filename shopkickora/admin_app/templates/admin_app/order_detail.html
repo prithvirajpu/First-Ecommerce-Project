@@ -1,5 +1,5 @@
 {% extends "user_app/base_admin.html" %}
-
+{% load cart_extras %}
 {% block title %}Order #{{ order.order_id }}{% endblock %}
 
 {% block content %}
@@ -48,16 +48,16 @@
       <h5 class="mb-3">User Details</h5>
       <p><strong>Name:</strong> {{ order.user.full_name }}</p>
       <p><strong>Email:</strong> {{ order.user.email }}</p>
-      <p><strong>Phone:</strong> {{ order.user.phone }}</p>
+      <p><strong>Phone:</strong> {{ order.mobile }}</p>
     </div>
   </div>
   <div class="col-md-6">
     <div class="border bg-white rounded p-3 shadow-sm">
       <h5 class="mb-3">Shipping Address</h5>
-      {% if order.address %}
-        <p>{{ order.address.street_address }}, {{ order.address.city }}</p>
-        <p>{{ order.address.state }} - {{ order.address.pincode }}</p>
-        <p><strong>Phone:</strong> {{ order.address.phone }}</p>
+      {% if order %}
+        <p>{{ order.street_address }}, {{ order.city }}</p>
+        <p>{{ order.state }} - {{ order.pincode }}</p>
+        <p><strong>Phone:</strong> {{ order.mobile }}</p>
       {% else %}
         <p class="text-muted">No address available.</p>
       {% endif %}
@@ -77,8 +77,8 @@
           <th>Size</th>
           <th>Quantity</th>
           <th>Unit Price</th>
-          <th>Subtotal</th>
-          <th>Return Status</th>  <!-- NEW -->
+          <th>Total</th>
+          <th>Return Status</th>  
         </tr>
       </thead>
       <tbody>
@@ -88,8 +88,8 @@
             <td>{{ item.product.name }}</td>
             <td>{{ item.size }}</td>
             <td>{{ item.quantity }}</td>
-            <td>₹{{ item.price }}</td>
-            <td>₹{{ item.price|floatformat:2|add:""|add:item.quantity|floatformat:2 }}</td>
+           <td>₹{{ item.price|floatformat:2 }}</td>
+<td>₹{{ item.price|multiply:item.quantity|floatformat:2 }}</td>
           <td>
         {% if item.is_return_requested and not item.is_return_approved %}
           <a href="{% url 'admin_approve_return' item.id %}" class="btn btn-sm btn-warning">Approve Return</a>

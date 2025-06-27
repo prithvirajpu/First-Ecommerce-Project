@@ -2,7 +2,7 @@ import random
 import re
 import time
 import json
-
+import razorpay
 
 from django.template.loader import get_template
 from xhtml2pdf import pisa
@@ -34,7 +34,7 @@ from decimal import Decimal
 from .models import (
     Brand, Category, CustomUser, Product,
     ProductSizeStock, Address,Wishlist,Cart,
-    Order,OrderItem,Cart
+    Order,OrderItem,Cart,Wallet,
 )
 
 from user_app.forms import LoginForm, ProfileImageForm 
@@ -398,40 +398,6 @@ def product_detail(request, slug):
 
 
 @login_required
-@csrf_exempt 
-def add_to_cart_from_wishlist(request, product_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            size = data.get('size')
-            quantity = int(data.get('quantity', 1))
-
-            product = Product.objects.get(id=product_id, is_deleted=False)
-
-            cart_item, created = Cart.objects.get_or_create(
-                user=request.user,
-                product=product,
-                size=size,
-                defaults={'quantity': quantity}
-            )
-
-            if not created:
-                cart_item.quantity += quantity
-                cart_item.save()
-
-            Wishlist.objects.filter(user=request.user, product=product).delete()
-
-            return JsonResponse({'success': True})
-        
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found'})
-        
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)})
-
-    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
-
-@login_required
 def wishlist_view(request):
     wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
     return render(request, 'user_app/wishlist.html', {'wishlist_items': wishlist_items})
@@ -454,7 +420,7 @@ def toggle_wishlist(request,product_id):
             return JsonResponse({'status': 'added'})
     except Product.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
- 
+
 
 @login_required
 def cart_view(request):
@@ -683,7 +649,7 @@ def remove_profile_image(request):
     user = request.user
     if request.method == 'POST':
         if user.profile_image and user.profile_image.name != 'profiles/default.png':
-            user.profile_image.delete(save=False)  
+            user.profile_image.delete(save=False)
         user.profile_image = 'profiles/default.png'
         user.save()
         messages.success(request, "Profile image removed.")
@@ -956,7 +922,7 @@ def checkout(request):
 
     shipping_charge = Decimal('0.00')
     total = grand_total + shipping_charge
-
+    has_addresses=addresses.exists()
     context = {
         'cart_items': cart_items,
         'addresses': addresses,
@@ -966,6 +932,7 @@ def checkout(request):
         'total_discount': total_discount,
         'shipping': shipping_charge,
         'total': total,
+        'has_addresses': has_addresses,
     }
 
     return render(request, 'user_app/checkout.html', context)
@@ -978,6 +945,7 @@ def place_order(request):
         return redirect('checkout')
 
     selected_address = request.POST.get('selected_address')
+    payment_method = request.POST.get('payment_method')
 
     if not selected_address:
         return redirect('/checkout/?error=invalid_address')
@@ -986,22 +954,19 @@ def place_order(request):
     if not cart_items.exists():
         return redirect('/checkout/?error=empty_cart')
 
-    out_of_stock_items = []
+    # Check stock
     for item in cart_items:
         try:
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
             if item.quantity > stock.quantity:
-                out_of_stock_items.append(item.product.name)
+                return redirect('/checkout/?stock_error=true')
         except ProductSizeStock.DoesNotExist:
-            out_of_stock_items.append(item.product.name)
+            return redirect('/checkout/?stock_error=true')
 
-    if out_of_stock_items:
-        return redirect('/checkout/?stock_error=true')
-
+    # Get or create address
     if selected_address != 'new':
         try:
-            address_id = int(selected_address)
-            address = Address.objects.get(id=address_id, user=request.user)
+            address = Address.objects.get(id=int(selected_address), user=request.user)
         except (ValueError, Address.DoesNotExist):
             return redirect('/checkout/?error=invalid_address')
     else:
@@ -1028,8 +993,25 @@ def place_order(request):
             is_default=False
         )
 
+    # Calculate total
     total_amount = sum(item.product.discounted_price * item.quantity for item in cart_items)
 
+    # COD Limit Check
+    if payment_method == "cod" and total_amount > 10000:
+        return redirect('/checkout/?error=cod_limit_exceeded')
+
+    # Handle Wallet Payment
+    if payment_method == "wallet":
+        wallet = request.user.wallet
+        if wallet.balance < total_amount:
+            return redirect('/checkout/?error=wallet_insufficient')
+        wallet.balance -= total_amount
+        wallet.save()
+        payment_status = 'paid'
+    else:
+        payment_status = 'pending'
+
+    # Create Order
     order = Order.objects.create(
         user=request.user,
         order_id=get_random_string(10).upper(),
@@ -1042,8 +1024,12 @@ def place_order(request):
         state=address.state,
         pincode=address.pincode,
         country=address.country,
+        address=address,
+        payment_method=payment_method,
+        payment_status=payment_status
     )
 
+    # Create Order Items
     for item in cart_items:
         OrderItem.objects.create(
             order=order,
@@ -1053,13 +1039,31 @@ def place_order(request):
             price=item.product.discounted_price
         )
 
-        stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
-        stock.quantity -= item.quantity
-        stock.save()
+    # Reduce stock and clear cart for Wallet or COD
+    if payment_method in ['wallet', 'cod']:
+        for item in cart_items:
+            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+            stock.quantity -= item.quantity
+            stock.save()
+        cart_items.delete()
+        return redirect('order_success', order_id=order.id)
 
-    cart_items.delete()
+    # Razorpay integration
+    if payment_method == "razorpay":
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        razorpay_order = client.order.create({
+            'amount': int(total_amount * 100),  # amount in paisa
+            'currency': 'INR',
+            'payment_capture': 1
+        })
+        order.razorpay_order_id = razorpay_order['id']
+        order.save()
 
-    return redirect('order_success', order_id=order.id)
+        return render(request, 'user_app/razorpay_checkout.html', {
+            'order': order,
+            'razorpay_order': razorpay_order,
+            'razorpay_key': settings.RAZORPAY_KEY_ID,
+        })
 
 @login_required
 def order_success(request, order_id):
@@ -1131,7 +1135,63 @@ def request_return(request, item_id):
 
     return render(request, 'user_app/return_item.html', {'item': item})
 
+@login_required
+def wallet_page(request):
+    wallet=request.user.wallet
+    if request.method=="POST":
+        try:
+            amount=Decimal(request.POST.get('amount'))
+            if amount>0:
+                wallet.balance+=amount
+                wallet.save()
+                messages.success(request,f"₹{amount} added to you wallet")
+                return redirect('wallet_page')
+            else:
+                messages.error(request,'Amount must be greater than 0.')
+        except Exception as e:
+            messages.error(request,'Invalid amount')
+    return render(request,'user_app/wallet.html',{'wallet':wallet})
 
+
+@csrf_exempt
+def payment_success(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        razorpay_order_id = data.get("razorpay_order_id")
+        razorpay_payment_id = data.get("razorpay_payment_id")
+        razorpay_signature = data.get("razorpay_signature")
+        order_id = data.get("order_id")
+
+        # Verify the Razorpay signature
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        params_dict = {
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature
+        }
+
+        try:
+            # Will raise an error if verification fails
+            client.utility.verify_payment_signature(params_dict)
+
+            # Payment is verified - update order
+            order = Order.objects.get(id=order_id, razorpay_order_id=razorpay_order_id)
+            order.payment_status = "paid"
+            order.razorpay_payment_id = razorpay_payment_id
+            order.razorpay_signature = razorpay_signature
+            order.status = "PENDING"  # or 'CONFIRMED' if you prefer
+            order.save()
+
+            return JsonResponse({"status": "success", "order_id": order.id})
+        except Exception as e:
+            print("Signature verification failed:", e)
+            return JsonResponse({"status": "failed"})
+
+    return JsonResponse({"status": "invalid"}, status=400)
+
+def payment_failed(request):
+    return render(request,'user_app/payment_failed.html')
 
 @login_required
 def download_invoice(request, order_id):
@@ -1143,6 +1203,11 @@ def download_invoice(request, order_id):
     pisa.CreatePDF(html, dest=response)
     return response
 
+
+def custom_404(request, exception):
+    return render(request, '404.html', {
+        'request_path': request.path,
+    }, status=404)
 
 @never_cache
 def logout_view(request):

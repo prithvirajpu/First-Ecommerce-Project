@@ -25,10 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.2']
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] 
 
 # Application definition
 
@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'admin_app',
-    'user_app',
+    'user_app.apps.UserappConfig',
+
     'widget_tweaks',
     'django.contrib.sites',
     'allauth',
@@ -145,7 +146,8 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

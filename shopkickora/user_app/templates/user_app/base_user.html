@@ -170,6 +170,48 @@
 <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
 
 <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('error') === 'cod_limit_exceeded') {
+        showToast("Cash on Delivery is not available for orders above ₹10,000", "error");
+    }
+
+    if (urlParams.get('error') === 'wallet_insufficient') {
+        showToast("Insufficient Wallet balance. ", "error");
+    }
+    if (urlParams.get('stock_error') === 'true') {
+      showToast("Some items in your cart are out of stock.", "error");
+    }
+    if (urlParams.get('error') === 'invalid_mobile') {
+      showToast("Please enter a valid 10-digit phone number.", "warning");
+    }
+    if (urlParams.get('error') === 'invalid_address') {
+      showToast("Invalid address selected.", "error");
+    }
+    if (urlParams.get('error') === 'empty_cart') {
+      showToast("Cart is empty!", "warning");
+    }
+     if (urlParams.get('removed') === 'true') {
+        showToast("Item removed from cart", "error");
+    }
+
+    if (urlParams.get('added') === 'true') {
+        showToast("Item added to cart", "success");
+    }
+    
+
+    // Delayed cleanup
+    if (urlParams.get('stock_error') || urlParams.get('error')) {
+      setTimeout(() => {
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }, 500);
+    }
+  });
+</script>
+
+<script>
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container') || createToastContainer();
 
@@ -202,22 +244,7 @@ function createToastContainer() {
     return container;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    if (urlParams.get('removed') === 'true') {
-        showToast("Item removed from cart", "error");
-    }
-
-    if (urlParams.get('added') === 'true') {
-        showToast("Item added to cart", "success");
-    }
-
-    // Clean up URL after toast shown
-    const newUrl = window.location.origin + window.location.pathname;
-    window.history.replaceState({}, document.title, newUrl);
-});
-
+   
 // Optional: slide-in animation
 const style = document.createElement('style');
 style.textContent = `
@@ -298,6 +325,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const deleteBtns = document.querySelectorAll('.remove-btn');
+  const deleteModal = document.getElementById('deleteConfirmModal');
+  const cancelDelete = document.getElementById('cancelDelete');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+  deleteBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.dataset.url;
+      confirmDeleteBtn.setAttribute('href', url);
+      deleteModal.classList.remove('hidden');
+    });
+  });
+
+  cancelDelete.addEventListener('click', () => {
+    deleteModal.classList.add('hidden');
+    confirmDeleteBtn.setAttribute('href', '#');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      deleteModal.classList.add('hidden');
+      confirmDeleteBtn.setAttribute('href', '#');
+    }
+  });
+});
+</script>
+
 
     {% block extra_js %}{% endblock %}
 </body>

@@ -107,53 +107,70 @@
     </div>
 
     <!-- Total Price -->
-    <div class="bg-white rounded-xl shadow border mt-6 p-6">
-      <div class="text-right space-y-2 text-sm sm:text-base">
+    <!-- Total Price and Payment -->
+<div class="bg-white rounded-xl shadow border mt-6 p-6">
+  <div class="text-right space-y-2 text-sm sm:text-base mb-6">
+    <p class="text-lg font-bold text-gray-800"><strong>Total:</strong> ₹{{ total }}</p>
+  </div>
 
-        <p class="text-lg font-bold text-gray-800"><strong>Total:</strong> ₹{{ total }}</p>
-      </div>
+  <!-- Payment Method -->
+  <div class="space-y-3 text-sm sm:text-base">
+    <h3 class="font-semibold text-gray-700 mb-2">Select Payment Method</h3>
+    <div class="space-y-2">
+      <label class="flex items-center gap-3">
+        <input type="radio" name="payment_method" value="wallet" required class="form-radio text-blue-600">
+        <span>Pay with Wallet </span>
+      </label>
+      <label class="flex items-center gap-3">
+        <input type="radio" name="payment_method" value="cod" class="form-radio text-blue-600">
+        <span>Cash on Delivery</span>
+      </label>
+      <label class="flex items-center gap-3">
+      <input type="radio" name="payment_method" value="razorpay" required class="form-radio text-blue-600">
+        <span>Pay Online</span>
+      </label>
+
     </div>
+  </div>
+</div>
 
-    <button type="submit"
-      class="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-md">
-      Place Order (Cash on Delivery)
-    </button>
+<!-- Submit Button -->
+<button type="submit"
+  class="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-md">
+  Place Order
+</button>
+
   </form>
 </div>
 
 
 {% endblock %}
-
 {% block extra_js %}
-
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    lucide.createIcons();
+    const urlParams = new URLSearchParams(window.location.search);
 
+    // other existing logic...
     const newAddressOption = document.getElementById('new_address_option');
     const addressRadios = document.querySelectorAll('input[name="selected_address"]');
     const newAddressForm = document.getElementById('newAddressForm');
     const checkoutForm = document.querySelector('form');
 
-    // Toggle new address form visibility
     addressRadios.forEach(radio => {
       radio.addEventListener('change', () => {
         newAddressForm.style.display = radio.value === 'new' ? 'block' : 'none';
       });
     });
 
-    // ✅ Validation on form submit
     checkoutForm.addEventListener('submit', function (e) {
       const selected = document.querySelector('input[name="selected_address"]:checked');
 
-      // ❌ No address selected
       if (!selected) {
         e.preventDefault();
         showToast("Please add or select an address with phone number", "error");
         return;
       }
 
-      // ✅ If using saved address
       if (selected.value !== 'new') {
         const label = document.querySelector(`label[for="${selected.id}"]`);
         const labelText = label ? label.innerText : '';
@@ -166,7 +183,6 @@
         }
       }
 
-      // ✅ If using new address
       if (selected.value === 'new') {
         const fullName = document.querySelector('input[name="full_name"]').value.trim();
         const mobile = document.querySelector('input[name="mobile"]').value.trim();
@@ -179,32 +195,7 @@
         }
       }
     });
-
-    // ✅ Show toast from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-
-    if (urlParams.get('stock_error') === 'true') {
-      showToast("Some items in your cart are out of stock.", "error");
-    }
-    if (urlParams.get('error') === 'invalid_mobile') {
-      showToast("Please enter a valid 10-digit phone number.", "warning");
-    }
-    if (urlParams.get('error') === 'invalid_address') {
-      showToast("Invalid address selected.", "error");
-    }
-    if (urlParams.get('error') === 'empty_cart') {
-      showToast("Cart is empty!", "warning");
-    }
-
-    // Clean URL after showing toast
-    if (urlParams.get('stock_error') || urlParams.get('error')) {
-      const newUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-    }
   });
 </script>
 {% endblock %}
-
-
-
 

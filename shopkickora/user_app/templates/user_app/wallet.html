@@ -1,0 +1,60 @@
+{% extends 'user_app/base_user.html' %}
+{% load static %}
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- Sidebar -->
+    <div class="lg:w-1/4">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <nav class="space-y-2">
+                <a href="{% url 'user_profile' %}" class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="font-medium">Profile</span>
+                </a>
+                <a href="{% url 'user_order_list' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span class="font-medium">Orders</span>
+                </a>
+                <a href="{% url 'wallet_page' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="font-medium">Wallet</span>
+                </a>
+                <a href="{% url 'address_view' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    <span class="font-medium">Address</span>
+                </a>
+                <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <i data-lucide="lock" class="w-5 h-5"></i>
+                    <span class="font-medium">Password</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                    <i data-lucide="gift" class="w-5 h-5"></i>
+                    <span class="font-medium">Refer & Earn</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Wallet Section -->
+    <div class="lg:w-3/4">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">My Wallet</h2>
+            <p class="text-lg font-semibold mb-6">Current Balance: <span class="text-green-600">₹{{ wallet.balance }}</span></p>
+
+            <form method="POST" class="space-y-4 max-w-sm">
+                {% csrf_token %}
+                <div>
+                    <label for="amount" class="block mb-1 text-gray-700">Enter Amount (₹):</label>
+                    <input type="number" step="0.01" name="amount" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Add to Wallet
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

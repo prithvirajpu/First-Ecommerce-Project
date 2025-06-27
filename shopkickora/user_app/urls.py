@@ -25,8 +25,6 @@ urlpatterns = [
 
     path('profile/',views.user_profile,name='user_profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
-    # urls.py
-    # path('verify-email-change/<str:token>/', views.verify_email_change, name='verify_email_change'),
     path('change-password/', views.change_password, name='change_password'),
     path('remove-profile-image/', views.remove_profile_image, name='remove_profile_image'),
     path('address/', views.address_view, name='address_view'),
@@ -40,7 +38,6 @@ urlpatterns = [
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('wishlist/', views.wishlist_view, name='wishlist_view'),
     path('wishlist/toggle/<int:product_id>/', views.toggle_wishlist, name='toggle_wishlist'),
-    path('add-to-cart-from-wishlist/<int:product_id>/', views.add_to_cart_from_wishlist, name='wishlist_add_to_cart'),
     path('checkout/', views.checkout, name='checkout'),
     path('place-order/', views.place_order, name='place_order'),
     path('orders/<int:order_id>/', views.user_order_detail, name='user_order_detail'),
@@ -50,6 +47,8 @@ urlpatterns = [
     path('order/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
     path('order/item/<int:item_id>/return/', views.request_return, name='request_return'),
     path('order/<int:order_id>/invoice/', views.download_invoice, name='download_invoice'),
+    path('wallet_page/',views.wallet_page,name='wallet_page'),
+    path('payment-success/', views.payment_success, name='payment_success'),
+    path('payment-failed/', views.payment_failed, name='payment_failed'),
 
-    
 ]

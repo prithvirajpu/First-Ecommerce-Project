@@ -690,6 +690,8 @@ def approve_return(request, order_item_id):
     messages.success(request, f"Return approved and ₹{refund_amount} refunded to user's wallet.")
     return redirect('admin_order_detail', order_id=item.order.id)
 
+
+
 def admin_logout(request):
     logout(request)
     request.session.flush()  
