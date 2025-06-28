@@ -24,6 +24,10 @@ urlpatterns = [
     path('orders/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
     path('orders/update-status/<int:order_id>/', views.admin_update_order_status, name='admin_update_order_status'),
     path('orders/return/approve/<int:order_item_id>/', views.approve_return, name='admin_approve_return'),
+    path('myadmin/orders/reject-return/<int:order_item_id>/', views.reject_return, name='admin_reject_return'),
+    path('offers/',views.list_offers,name='list_offers'),
+    path('offers/add-product/',views.add_product_offer,name='add_product_offer'),
+    path('offers/add-category/',views.add_category_offer,name='add_category_offer'),
 
 ]
 

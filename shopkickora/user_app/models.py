@@ -1,9 +1,11 @@
+from datetime import date
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from requests import delete
 
 
 
@@ -77,6 +79,9 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
+    def __str__(self):
+        return self.name
+    
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
@@ -102,6 +107,31 @@ class Product(models.Model):
         except ValueError:
             return None
     
+    @property
+    def final_price(self):
+        base_price = self.price
+        discounts = []
+
+        # From default discount
+        if self.discount_percentage:
+            discounts.append(self.discount_percentage)
+
+        # From active product offers
+        for offer in self.product_offers.all():
+            if offer.is_valid():
+                discounts.append(offer.discount_percentage)
+
+        # From category offer
+        category_offer = getattr(self.category, 'category_offer', None)
+        if category_offer and category_offer.is_valid():
+            discounts.append(category_offer.discount_percentage)
+
+        if discounts:
+            best_discount = max(discounts)
+            return base_price - (base_price * best_discount / 100)
+
+        return base_price
+
 class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')
     image=models.ImageField(upload_to='product_images/')
@@ -170,6 +200,7 @@ class Order(models.Model):
         ('OUT_FOR_DELIVERY', 'Out for Delivery'),
         ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
+        
     ]
 
     PAYMENT_METHOD_CHOICES = [
@@ -215,19 +246,27 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    STATUS_CHOICES = [
+        ('ORDERED', 'Ordered'),
+        ('CANCELLED', 'Cancelled'),
+        ('RETURN_REQUESTED', 'Return Requested'),
+        ('RETURN_ACCEPTED', 'Return Accepted'),
+        ]
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     size = models.CharField(max_length=10)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ORDERED')  # ✅ added
 
     is_return_requested = models.BooleanField(default=False)
     is_return_approved = models.BooleanField(default=False)
     return_reason = models.TextField(blank=True, null=True)
     is_cancelled = models.BooleanField(default=False)
     cancel_reason = models.TextField(blank=True, null=True)
-
-
+    return_requested_at = models.DateTimeField(blank=True, null=True)
+    is_return_rejected = models.BooleanField(default=False)
+    return_rejected_reason = models.TextField(blank=True, null=True)
     def __str__(self):
         return f"{self.product.name} (x{self.quantity})"
 
@@ -237,3 +276,33 @@ class Wallet(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - ₹{self.balance}"
+
+
+class ProductOffer(models.Model):
+    name = models.CharField(max_length=100, unique=True, default='default-offer')
+    products = models.ManyToManyField(Product, related_name='product_offers')
+    discount_percentage = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.discount_percentage}%)"
+
+    def is_valid(self):
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date
+    
+class CategoryOffer(models.Model):
+    category=models.OneToOneField(Category,on_delete=models.CASCADE,related_name='category_offer')
+    discount_percentage=models.PositiveIntegerField(validators=[MinValueValidator(1),MaxValueValidator(100)])
+    start_date=models.DateTimeField()
+    end_date=models.DateTimeField()
+    is_active=models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.category.name}-{self.discount_percentage}%"
+    
+    def is_valid(self):
+        now=timezone.now()
+        return self.is_active and self.start_date<=now<=self.end_date

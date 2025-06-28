@@ -19,6 +19,7 @@ from django.core.validators import validate_email
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils import timezone
 
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -1078,14 +1079,53 @@ def user_order_detail(request, order_id):
 @login_required
 def user_order_list(request):
     search_query = request.GET.get('q', '')
-    orders = Order.objects.filter(user=request.user).select_related('address')
+    
+    # Fetch orders with related address and items
+    orders = Order.objects.filter(user=request.user)\
+        .select_related('address')\
+        .prefetch_related('order_items')\
+        .order_by('-created_at')
 
     if search_query:
         orders = orders.filter(order_id__icontains=search_query)
 
-    orders = orders.order_by('-created_at')
-    return render(request, 'user_app/order_list.html', {'orders': orders, 'search_query': search_query})
+    enriched_orders = []
+    for order in orders:
+        items = order.order_items.all()
+        total_items = items.count()
 
+        approved_items = items.filter(is_return_approved=True).count()
+        rejected_items = items.filter(is_return_rejected=True).count()
+        requested_items = items.filter(is_return_requested=True).exists()
+
+        # Default values
+        order.status_display = order.get_status_display()
+        order.status_class = "bg-yellow-100 text-yellow-700"
+
+        if order.status == 'DELIVERED':
+            if total_items == approved_items:
+                order.status_display = "Return Accepted"
+                order.status_class = "bg-green-100 text-green-700"
+            elif rejected_items > 0:
+                order.status_display = "Return Rejected"
+                order.status_class = "bg-red-100 text-red-700"
+            elif requested_items:
+                order.status_display = "Return Requested"
+                order.status_class = "bg-yellow-100 text-yellow-700"
+            else:
+                order.status_display = order.get_status_display()
+                order.status_class = "bg-green-100 text-green-700"
+
+        elif order.status == 'CANCELLED':
+            order.status_display = order.get_status_display()
+            order.status_class = "bg-red-100 text-red-700"
+
+        enriched_orders.append(order)
+
+    return render(request, 'user_app/order_list.html', {
+        'orders': enriched_orders,
+        'search_query': search_query
+    })
 
 @login_required
 @transaction.atomic
@@ -1126,14 +1166,15 @@ def request_return(request, item_id):
             messages.error(request, "Reason is required.")
             return redirect('user_order_detail', order_id=item.order.id)
 
-        item.is_return_requested = True
+        item.is_return_requested = True  # ✅ fix here
         item.return_reason = reason
-        item.return_requested_at = time.timezone.now()
+        item.return_requested_at = timezone.now()
         item.save()
         messages.success(request, "Return request submitted.")
         return redirect('user_order_detail', order_id=item.order.id)
 
     return render(request, 'user_app/return_item.html', {'item': item})
+
 
 @login_required
 def wallet_page(request):
@@ -1162,6 +1203,9 @@ def payment_success(request):
         razorpay_payment_id = data.get("razorpay_payment_id")
         razorpay_signature = data.get("razorpay_signature")
         order_id = data.get("order_id")
+        print("Incoming data:", data)
+        print("Looking for Order ID:", order_id)
+        print("Razorpay Order ID:", razorpay_order_id)
 
         # Verify the Razorpay signature
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -1183,6 +1227,14 @@ def payment_success(request):
             order.status = "PENDING"  # or 'CONFIRMED' if you prefer
             order.save()
 
+            # Reduce stock and delete cart
+            for item in order.order_items.all():
+                stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+                stock.quantity -= item.quantity
+                stock.save()
+
+            # Clear user's cart
+            Cart.objects.filter(user=order.user).delete()
             return JsonResponse({"status": "success", "order_id": order.id})
         except Exception as e:
             print("Signature verification failed:", e)
@@ -1205,7 +1257,7 @@ def download_invoice(request, order_id):
 
 
 def custom_404(request, exception):
-    return render(request, '404.html', {
+    return render(request, 'user_app/404.html', {
         'request_path': request.path,
     }, status=404)
 

@@ -66,18 +66,28 @@
           <td class="p-2 border">₹{{ item.price }}</td>
           <td class="p-2 border">₹{{ item.price|multiply:item.quantity }}</td>
           <td class="p-2 border">
-            {% if order.status == 'DELIVERED' and not item.is_return_requested %}
-              <form action="{% url 'request_return' item.id %}" method="get">
-                <button class="bg-yellow-500 text-white text-xs px-3 py-1 rounded hover:bg-yellow-600">
-                  Return
-                </button>
-              </form>
-            {% elif item.is_return_requested %}
-              <span class="text-yellow-600 text-xs">Requested</span>
-            {% else %}
-              <span class="text-gray-500 text-xs">Not Available</span>
-            {% endif %}
-          </td>
+  {% if order.status == 'DELIVERED' %}
+    {% if item.is_return_approved %}
+      <span class="text-green-600 text-xs font-semibold">Return Accepted</span>
+    {% elif item.is_return_rejected %}
+      <span class="text-red-600 text-xs font-semibold" title="{{ item.return_rejected_reason|default:'Rejected by admin' }}">
+        Return Rejected
+      </span>
+    {% elif item.is_return_requested %}
+      <span class="text-yellow-600 text-xs font-semibold">Return Requested</span>
+    {% else %}
+      <form action="{% url 'request_return' item.id %}" method="get">
+        <button class="bg-yellow-500 text-white text-xs px-3 py-1 rounded hover:bg-yellow-600">
+          Return
+        </button>
+      </form>
+    {% endif %}
+  {% else %}
+    <span class="text-gray-500 text-xs">Not Available</span>
+  {% endif %}
+</td>
+
+
         </tr>
         {% endfor %}
       </tbody>

@@ -2,11 +2,11 @@ from django.db import IntegrityError
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import AdminLoginForm
+from .forms import AdminLoginForm, ProductOfferForm,CategoryOfferForm
 from django.core.paginator import Paginator
 from django.db.models import Q
 from user_app.models import (CustomUser,Product, ProductImage, Category,
-        Brand, ProductSizeStock,Order,OrderItem,Wallet)
+        Brand, ProductSizeStock,Order,OrderItem,Wallet,ProductOffer, CategoryOffer, Product, Category)
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
@@ -690,7 +690,57 @@ def approve_return(request, order_item_id):
     messages.success(request, f"Return approved and ₹{refund_amount} refunded to user's wallet.")
     return redirect('admin_order_detail', order_id=item.order.id)
 
+@user_passes_test(lambda x: x.is_superuser)
+def reject_return(request, order_item_id):
+    item = get_object_or_404(OrderItem, id=order_item_id)
 
+    if item.is_return_requested and not item.is_return_approved:
+        item.is_return_rejected = True
+        item.return_rejected_reason = "Rejected by admin"
+        item.save()
+        messages.success(request, "Return request rejected.")
+    else:
+        messages.warning(request, "Return request not pending or already handled.")
+
+    return redirect('admin_order_detail', order_id=item.order.id)
+
+@user_passes_test(lambda x: x.is_superuser)
+def list_offers(request):
+    product_offers=ProductOffer.objects.prefetch_related('products').all()
+    category_offers=CategoryOffer.objects.select_related('category').all()
+    return render(request,'admin_app/list_offers.html',{
+        'product_offers':product_offers,
+        'category_offers':category_offers,
+    })
+
+@user_passes_test(lambda x: x.is_superuser)
+def add_product_offer(request):
+    if request.method == "POST":
+        form = ProductOfferForm(request.POST)
+        if form.is_valid():
+            offer = form.save(commit=False)
+            offer.save()
+            form.save_m2m()  # This is necessary for ManyToManyField
+            messages.success(request, 'Product offer added successfully.')
+            return redirect('list_offers')
+    else:
+        form = ProductOfferForm()
+        
+    return render(request, 'admin_app/add_product_offer.html', {
+        'form': form
+    })
+
+@user_passes_test(lambda x:x.is_superuser)
+def add_category_offer(request):
+    if request.method=="POST":
+        form=CategoryOfferForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request,'Category offer added successfully.')
+            return redirect('list_offers')
+    else:
+        form=CategoryOfferForm()
+    return render(request,'admin_app/add_category_offer.html',{'form':form})
 
 def admin_logout(request):
     logout(request)

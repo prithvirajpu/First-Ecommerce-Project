@@ -91,6 +91,12 @@
           >Products</a
         >
         <a
+          href="{% url 'list_offers' %}"
+          class="{% if request.path == '/myadmin/offers/' %}active{% endif %}"
+        >
+          Offers
+        </a>
+        <a
           href="{% url 'admin_order_list' %}"
           class="{% if request.path == '/myadmin/products/' %}active{% endif %}"
           >Orders</a

@@ -1,0 +1,87 @@
+{% extends "user_app/base_admin.html" %}
+
+{% block content %}
+<h2 class="mb-4">Offers</h2>
+
+<!-- Flash Messages -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Offer Action Buttons -->
+<div class="mb-4">
+  <a href="{% url 'add_product_offer' %}" class="btn btn-success me-2">Add Product Offer</a>
+  <a href="{% url 'add_category_offer' %}" class="btn btn-primary">Add Category Offer</a>
+</div>
+
+<!-- Product Offers -->
+<h4>Product Offers</h4>
+<table class="table table-bordered table-hover mt-2 mb-5">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Discount (%)</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for offer in product_offers %}
+    <tr>
+      <td>{{ offer.product.name }}</td>
+      <td>{{ offer.discount_percentage }}</td>
+      <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
+      <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
+      <td>
+        {% if offer.is_valid %}
+          <span class="badge bg-success">Active</span>
+        {% else %}
+          <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-center">No product offers available.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Category Offers -->
+<h4>Category Offers</h4>
+<table class="table table-bordered table-hover mt-2">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Discount (%)</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for offer in category_offers %}
+    <tr>
+      <td>{{ offer.category.name }}</td>
+      <td>{{ offer.discount_percentage }}</td>
+      <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
+      <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
+      <td>
+        {% if offer.is_valid %}
+          <span class="badge bg-success">Active</span>
+        {% else %}
+          <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-center">No category offers available.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

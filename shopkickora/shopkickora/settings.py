@@ -198,7 +198,7 @@ SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = True
 
 
 
-
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 

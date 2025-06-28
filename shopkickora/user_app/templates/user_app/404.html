@@ -1,33 +1,80 @@
-<!-- templates/404.html -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>404. That’s an error.</title>
+    <title>404 | Page Not Found - ShopKickora</title>
+    <link rel="icon" href="{% static 'images/shopkickora-icon.png' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            color: #333;
             text-align: center;
-            padding-top: 100px;
-            color: #5f6368;
+            padding: 60px 20px;
         }
+
+        .logo {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
         h1 {
-            font-size: 48px;
-            color: #202124;
+            font-size: 72px;
+            color: #1e3a8a;
+            margin-bottom: 10px;
         }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
         p {
-            font-size: 20px;
+            font-size: 18px;
+            color: #6b7280;
         }
-        small {
-            display: block;
-            margin-top: 40px;
-            color: #a0a0a0;
+
+        .btn-home {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-home:hover {
+            background-color: #2563eb;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 48px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>404. That’s an error.</h1>
+    <img src="{% static 'user_app/shopkickora-logo.png' %}" alt="ShopKickora Logo" class="logo">
+    <h1>404</h1>
+    <h2>Oops! Page not found.</h2>
     <p>The requested URL <strong>{{ request_path }}</strong> was not found on this server.</p>
-    <small>That’s all we know.</small>
+    <a href="{% url 'user_home' %}" class="btn-home">Go to Homepage</a>
 </body>
 </html>
