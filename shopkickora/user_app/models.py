@@ -101,6 +101,38 @@ class Product(models.Model):
         return self.name
 
     @property
+    def discount_percentage_effective(self):
+        """Returns discount % from offers only (product or category)."""
+        if self.final_price_with_offer < self.price:
+            discount = ((self.price - self.final_price_with_offer) / self.price) * 100
+            return round(discount)
+        return 0
+
+    @property
+    def final_price_with_offer(self):
+        """Price after product/category offer only (excluding direct product discount)."""
+        base_price = self.price
+        offer_discounts = []
+
+        # Active Product Offers
+        for offer in self.product_offers.all():
+            if offer.is_valid():
+                offer_discounts.append(offer.discount_percentage)
+
+        # Active Category Offers
+        if self.category:
+            for offer in self.category.category_offers.all():
+                if offer.is_valid():
+                    offer_discounts.append(offer.discount_percentage)
+
+        if offer_discounts:
+            best_discount = max(offer_discounts)
+            return round(base_price - (base_price * best_discount / 100), 2)
+
+        return base_price
+
+
+    @property
     def image_url(self):
         try:
             return self.image.url if self.image else None
@@ -109,28 +141,30 @@ class Product(models.Model):
     
     @property
     def final_price(self):
+        """Final price considering all discounts: product field + offers."""
         base_price = self.price
         discounts = []
 
-        # From default discount
         if self.discount_percentage:
             discounts.append(self.discount_percentage)
 
-        # From active product offers
         for offer in self.product_offers.all():
             if offer.is_valid():
                 discounts.append(offer.discount_percentage)
 
-        # From category offer
-        category_offer = getattr(self.category, 'category_offer', None)
-        if category_offer and category_offer.is_valid():
-            discounts.append(category_offer.discount_percentage)
+        if self.category:
+            for offer in self.category.category_offers.all():
+                if offer.is_valid():
+                    discounts.append(offer.discount_percentage)
 
         if discounts:
             best_discount = max(discounts)
-            return base_price - (base_price * best_discount / 100)
+            return round(base_price - (base_price * best_discount / 100), 2)
 
         return base_price
+
+
+
 
 class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')
@@ -294,15 +328,15 @@ class ProductOffer(models.Model):
         return self.is_active and self.start_date <= now <= self.end_date
     
 class CategoryOffer(models.Model):
-    category=models.OneToOneField(Category,on_delete=models.CASCADE,related_name='category_offer')
-    discount_percentage=models.PositiveIntegerField(validators=[MinValueValidator(1),MaxValueValidator(100)])
-    start_date=models.DateTimeField()
-    end_date=models.DateTimeField()
-    is_active=models.BooleanField(default=True)
+    categories = models.ManyToManyField(Category, related_name='category_offers')
+    discount_percentage = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.category.name}-{self.discount_percentage}%"
-    
+        return f"{self.discount_percentage}% for {', '.join(c.name for c in self.categories.all())}"
+
     def is_valid(self):
-        now=timezone.now()
-        return self.is_active and self.start_date<=now<=self.end_date
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date

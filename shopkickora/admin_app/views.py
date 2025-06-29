@@ -707,7 +707,7 @@ def reject_return(request, order_item_id):
 @user_passes_test(lambda x: x.is_superuser)
 def list_offers(request):
     product_offers=ProductOffer.objects.prefetch_related('products').all()
-    category_offers=CategoryOffer.objects.select_related('category').all()
+    category_offers=CategoryOffer.objects.prefetch_related('categories').all()
     return render(request,'admin_app/list_offers.html',{
         'product_offers':product_offers,
         'category_offers':category_offers,
@@ -730,17 +730,67 @@ def add_product_offer(request):
         'form': form
     })
 
-@user_passes_test(lambda x:x.is_superuser)
-def add_category_offer(request):
-    if request.method=="POST":
-        form=CategoryOfferForm(request.POST)
+@user_passes_test(lambda x: x.is_superuser)
+def edit_product_offer(request, offer_id):
+    offer = get_object_or_404(ProductOffer, id=offer_id)
+    
+    if request.method == 'POST':
+        form = ProductOfferForm(request.POST, instance=offer)
         if form.is_valid():
-            form.save()
-            messages.success(request,'Category offer added successfully.')
+            form.save()  # or form.save(commit=False) + form.save_m2m() if needed
+            messages.success(request, 'Product offer updated successfully.')
             return redirect('list_offers')
     else:
-        form=CategoryOfferForm()
-    return render(request,'admin_app/add_category_offer.html',{'form':form})
+        # ✅ Important: include the instance when showing the form initially
+        form = ProductOfferForm(instance=offer)
+    
+    return render(request, 'admin_app/edit_offer.html', {
+        'form': form,
+        'offer_type': 'Product',
+        'offer': offer,  # if you're using offer.name or ID in template
+    })
+
+
+@user_passes_test(lambda x: x.is_superuser)
+def add_category_offer(request):
+    if request.method == "POST":
+        form = CategoryOfferForm(request.POST)
+        if form.is_valid():
+            offer = form.save(commit=False)  # First save the main object
+            offer.save()
+            form.save_m2m()  # Then save the many-to-many relationship
+            messages.success(request, 'Category offer added successfully.')
+            return redirect('list_offers')
+    else:
+        form = CategoryOfferForm()
+    return render(request, 'admin_app/add_category_offer.html', {'form': form})
+
+@user_passes_test(lambda x: x.is_superuser)
+def edit_category_offer(request, offer_id):
+    offer = get_object_or_404(CategoryOffer, id=offer_id)
+
+    if request.method == 'POST':
+        form = CategoryOfferForm(request.POST, instance=offer)
+        if form.is_valid():
+            offer = form.save(commit=False)
+            offer.save()
+            form.save_m2m()
+            messages.success(request, 'Category offer updated successfully.')
+            return redirect('list_offers')
+    else:
+        form = CategoryOfferForm(instance=offer)
+
+    # Like product offer: manually pass selected/unselected categories
+    form.selected_categories = offer.categories.all()
+    from user_app.models import Category  # adjust if your Category model is elsewhere
+    form.unselected_categories = Category.objects.exclude(id__in=offer.categories.values_list('id', flat=True))
+
+    return render(request, 'admin_app/edit_offer.html', {
+        'form': form,
+        'offer_type': 'Category',
+        'offer': offer,
+    })
+
 
 def admin_logout(request):
     logout(request)

@@ -187,17 +187,25 @@
       {% for product in best_selling_products %}
       <div class="bg-white rounded-2xl shadow-md hover:shadow-lg transition duration-300 overflow-hidden">
         <a href="{% url 'product_detail' slug=product.slug %}" class="block">
-          <div class="h-52 sm:h-60 bg-gray-100 flex items-center justify-center">
-            {% if product.image_url %}
-              <img src="{{ product.image_url }}" alt="{{ product.name }}" class="object-contain h-full w-full" />
-            {% elif product.images.exists %}
-              <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="object-contain h-full w-full" />
-            {% elif product.images.first %}
-              <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="object-contain h-full w-full" />
-            {% else %}
-              <img src="{% static 'user_app/default-shoe.jpg' %}" alt="{{ product.name }}" class="object-contain h-full w-full" />
-            {% endif %}
-          </div>
+          <div class="h-52 sm:h-60 bg-gray-100 relative flex items-center justify-center overflow-hidden rounded-t-2xl">
+  
+  {% if product.discount_percentage_effective %}
+    <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded z-10 shadow">
+      {{ product.discount_percentage_effective }}% OFF
+    </div>
+  {% endif %}
+
+  {% if product.image_url %}
+    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="object-contain h-full w-full" />
+  {% elif product.images.exists %}
+    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="object-contain h-full w-full" />
+  {% elif product.images.first %}
+    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="object-contain h-full w-full" />
+  {% else %}
+    <img src="{% static 'user_app/default-shoe.jpg' %}" alt="{{ product.name }}" class="object-contain h-full w-full" />
+  {% endif %}
+</div>
+
         </a>
 
         <div class="p-4 sm:p-5">
@@ -210,7 +218,7 @@
             {{ product.description|truncatewords:10 }}
           </p>
 
-          <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-1">
   {% if product.discount_percentage > 0 %}
     <div class="flex items-center space-x-2">
       <span class="text-lg font-bold text-green-600">₹{{ product.discounted_price|floatformat:2 }}</span>
@@ -220,6 +228,9 @@
     <span class="text-lg font-bold text-gray-800">₹{{ product.price|floatformat:2 }}</span>
   {% endif %}
 </div>
+
+
+
 
           <div class="flex justify-between items-center space-x-2">
             <form action="{% url 'product_detail' product.id %}" method="POST" class="w-full">

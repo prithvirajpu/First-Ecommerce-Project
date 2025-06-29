@@ -1,0 +1,154 @@
+{% extends 'user_app/base_admin.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-warning text-white">
+          <h4 class="mb-0">Edit {{ offer_type }} Offer</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+              {% if field.name == 'is_active' %}
+                <div class="form-check mb-3">
+                  {{ field }}
+                  <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                  {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+              {% elif field.name == 'products' %}
+                <div class="mb-3">
+                  <label class="form-label">{{ field.label }}</label>
+
+                  <div class="mb-2"><strong>Currently Selected:</strong></div>
+                  <div class="form-check mb-3"
+                       style="max-height: 200px; overflow-y: auto; border: 1px solid #28a745; padding: 10px; border-radius: 5px;">
+                    {% for product in form.selected_products %}
+                      <div class="form-check">
+                        <input type="checkbox"
+                               name="{{ field.html_name }}"
+                               value="{{ product.pk }}"
+                               id="selected-{{ product.pk }}"
+                               class="form-check-input"
+                               checked>
+                        <label class="form-check-label" for="selected-{{ product.pk }}">
+                          {{ product.name }}
+                        </label>
+                      </div>
+                    {% empty %}
+                      <div class="text-muted">No products currently selected.</div>
+                    {% endfor %}
+                  </div>
+
+                  {% if form.unselected_products %}
+                    <div class="mb-2 mt-3"><strong>Other Products:</strong></div>
+                    <div class="form-check"
+                         style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+                      {% for product in form.unselected_products %}
+                        <div class="form-check">
+                          <input type="checkbox"
+                                 name="{{ field.html_name }}"
+                                 value="{{ product.pk }}"
+                                 id="unselected-{{ product.pk }}"
+                                 class="form-check-input">
+                          <label class="form-check-label" for="unselected-{{ product.pk }}">
+                            {{ product.name }}
+                          </label>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+
+                  {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+              {% elif field.name == 'categories' %}
+                <div class="mb-3">
+                  <label class="form-label">{{ field.label }}</label>
+
+                  <div class="mb-2"><strong>Currently Selected:</strong></div>
+                  <div class="form-check mb-3"
+                       style="max-height: 200px; overflow-y: auto; border: 1px solid #28a745; padding: 10px; border-radius: 5px;">
+                    {% for category in form.selected_categories %}
+                      <div class="form-check">
+                        <input type="checkbox"
+                               name="{{ field.html_name }}"
+                               value="{{ category.pk }}"
+                               id="selected-cat-{{ category.pk }}"
+                               class="form-check-input"
+                               checked>
+                        <label class="form-check-label" for="selected-cat-{{ category.pk }}">
+                          {{ category.name }}
+                        </label>
+                      </div>
+                    {% empty %}
+                      <div class="text-muted">No categories currently selected.</div>
+                    {% endfor %}
+                  </div>
+
+                  {% if form.unselected_categories %}
+                    <div class="mb-2 mt-3"><strong>Other Categories:</strong></div>
+                    <div class="form-check"
+                         style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+                      {% for category in form.unselected_categories %}
+                        <div class="form-check">
+                          <input type="checkbox"
+                                 name="{{ field.html_name }}"
+                                 value="{{ category.pk }}"
+                                 id="unselected-cat-{{ category.pk }}"
+                                 class="form-check-input">
+                          <label class="form-check-label" for="unselected-cat-{{ category.pk }}">
+                            {{ category.name }}
+                          </label>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+
+                  {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+              {% else %}
+                <div class="mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field|add_class:"form-control" }}
+                  {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                  {% endif %}
+                  {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endfor %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between">
+              <button type="submit" class="btn btn-warning">Update</button>
+              <a href="{% url 'list_offers' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -16,37 +16,65 @@ class ProductOfferForm(forms.ModelForm):
         model = ProductOffer
         fields = ['name', 'products', 'discount_percentage', 'start_date', 'end_date', 'is_active']
         widgets = {
-            'products': forms.SelectMultiple(attrs={'class': 'form-select', 'size': '6'}),
+            'products': forms.CheckboxSelectMultiple(),
             'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'end_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # ✅ Filter only non-deleted products
-        self.fields['products'].queryset = Product.objects.filter(is_deleted=False)
+        all_products = Product.objects.filter(is_deleted=False)
 
+        # instance is available during update
+        selected_products = self.instance.products.all() if self.instance.pk else Product.objects.none()
+        unselected_products = all_products.exclude(pk__in=selected_products)
+
+        # Store for template use
+        self.selected_products = selected_products
+        self.unselected_products = unselected_products
+
+        self.fields['products'].queryset = all_products
+        self.fields['products'].required = False
 
     def clean(self):
         cleaned_data = super().clean()
         start = cleaned_data.get('start_date')
         end = cleaned_data.get('end_date')
+        products = cleaned_data.get('products')
+
         if start and end and start >= end:
-            raise forms.ValidationError('Start date must be before end date.')
+            self.add_error('start_date', "Start date must be before end date.")
+        if not products or len(products) == 0:
+            self.add_error('products', "Please select at least one product.")
+
         return cleaned_data
+
+
+
     
 class CategoryOfferForm(forms.ModelForm):
     class Meta:
-        model=CategoryOffer
-        fields=['category','discount_percentage','start_date','end_date','is_active']
+        model = CategoryOffer
+        fields = ['categories', 'discount_percentage', 'start_date', 'end_date', 'is_active']
         widgets = {
+            'categories': forms.CheckboxSelectMultiple(),
             'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'end_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['categories'].required = False
 
     def clean(self):
-        cleaned_data=super().clean()
-        start=cleaned_data.get('start_date')
-        end=cleaned_data.get('end_date')
-        if start and end and start>=end:
-            raise forms.ValidationError('Start date must be before end date.')
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_date')
+        end = cleaned_data.get('end_date')
+        categories = cleaned_data.get('categories')
+
+        if start and end and start >= end:
+            self.add_error('start_date', "Start date must be before end date.")
+
+        if not categories or categories.count() == 0:
+            self.add_error('categories', "Please select at least one category.")
+
         return cleaned_data

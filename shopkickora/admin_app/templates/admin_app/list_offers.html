@@ -24,17 +24,24 @@
 <table class="table table-bordered table-hover mt-2 mb-5">
   <thead>
     <tr>
-      <th>Product</th>
+      <th>Offer Name</th>
+      <th>Products</th>
       <th>Discount (%)</th>
       <th>Start</th>
       <th>End</th>
       <th>Status</th>
+      <th>Edit</th>
     </tr>
   </thead>
   <tbody>
     {% for offer in product_offers %}
     <tr>
-      <td>{{ offer.product.name }}</td>
+      <td>{{ offer.name }}</td>
+      <td>
+        {% for product in offer.products.all %}
+          {{ product.name }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </td>
       <td>{{ offer.discount_percentage }}</td>
       <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
       <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
@@ -45,9 +52,12 @@
           <span class="badge bg-secondary">Inactive</span>
         {% endif %}
       </td>
+      <td>
+        <a href="{% url 'edit_product_offer' offer.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+      </td>
     </tr>
     {% empty %}
-    <tr><td colspan="5" class="text-center">No product offers available.</td></tr>
+    <tr><td colspan="7" class="text-center">No product offers available.</td></tr>
     {% endfor %}
   </tbody>
 </table>
@@ -57,17 +67,22 @@
 <table class="table table-bordered table-hover mt-2">
   <thead>
     <tr>
-      <th>Category</th>
+      <th>Categories</th>
       <th>Discount (%)</th>
       <th>Start</th>
       <th>End</th>
       <th>Status</th>
+      <th>Edit</th>
     </tr>
   </thead>
   <tbody>
     {% for offer in category_offers %}
     <tr>
-      <td>{{ offer.category.name }}</td>
+      <td>
+        {% for category in offer.categories.all %}
+          {{ category.name }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </td>
       <td>{{ offer.discount_percentage }}</td>
       <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
       <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
@@ -78,9 +93,12 @@
           <span class="badge bg-secondary">Inactive</span>
         {% endif %}
       </td>
+      <td>
+        <a href="{% url 'edit_category_offer' offer.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+      </td>
     </tr>
     {% empty %}
-    <tr><td colspan="5" class="text-center">No category offers available.</td></tr>
+    <tr><td colspan="7" class="text-center">No category offers available.</td></tr>
     {% endfor %}
   </tbody>
 </table>

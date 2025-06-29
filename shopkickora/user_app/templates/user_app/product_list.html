@@ -53,7 +53,7 @@
         <td>{{ product.name }}</td>
         <td>{{ product.category.name|default:"-" }}</td>
         <td>{{ product.brand.name|default:"-" }}</td>
-        <td>${{ product.price|floatformat:2 }}</td>
+        <td>₹{{ product.price|floatformat:2 }}</td>
         <td>
           {% if product.size_stocks.all %}
           <ul class="list-unstyled mb-0">

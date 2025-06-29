@@ -28,6 +28,8 @@ urlpatterns = [
     path('offers/',views.list_offers,name='list_offers'),
     path('offers/add-product/',views.add_product_offer,name='add_product_offer'),
     path('offers/add-category/',views.add_category_offer,name='add_category_offer'),
+    path('offers/edit-product/<int:offer_id>/', views.edit_product_offer, name='edit_product_offer'),
+    path('offers/edit-category/<int:offer_id>/', views.edit_category_offer, name='edit_category_offer'),
 
 ]
 
