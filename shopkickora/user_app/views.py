@@ -377,25 +377,31 @@ def user_product_list(request):
 
     return render(request, 'user_app/user_product_list.html', context)
 
-
 @never_cache
 @login_required(login_url='login')
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
 
-    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    # Get related products from the same category
+    related_products = Product.objects.filter(
+        category=product.category
+    ).exclude(id=product.id)[:4]
 
-    sizes = ProductSizeStock.objects.filter(product=product, quantity__gt=0).values_list('size', flat=True)
+    # Get available sizes (with stock > 0)
+    sizes = ProductSizeStock.objects.filter(
+        product=product, quantity__gt=0
+    ).values_list('size', flat=True).distinct()
 
-    size_choices = dict(ProductSizeStock.SIZE_CHOICES)  
-    sizes = [size for size in sizes]
+    # Optional: If you still want a label (though '6' is already display-friendly)
+    size_choices = dict(ProductSizeStock.SIZE_CHOICES)
 
     return render(request, 'user_app/product_detail.html', {
         'product': product,
         'related_products': related_products,
         'sizes': sizes,
-        'size_choices': size_choices,  
+        'size_choices': size_choices,
     })
+
 
 
 @login_required
@@ -427,9 +433,10 @@ def toggle_wishlist(request,product_id):
 def cart_view(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
     grand_total = Decimal('0.00')
-    stock_info = {}
     original_total = Decimal('0.00')
-    total_discount = Decimal('0.00')
+    total_discount = Decimal('0.00')  # manual discount via product.discount_percentage
+    total_offer = Decimal('0.00')     # offer-based discount
+    stock_info = {}
 
     for item in cart_items:
         try:
@@ -440,22 +447,34 @@ def cart_view(request):
             item.max_quantity = 0
             stock_info[item.id] = 0
 
-        discounted_price = item.product.discounted_price
-        item.discounted_price = discounted_price
-        item.total_price = discounted_price * item.quantity
+        # Pricing setup
+        original_price = item.product.price
+        discounted_price = item.product.discounted_price  # manual discount price
+        final_price = item.product.final_price            # best price considering offer or discount
 
-        grand_total += item.total_price
-        original_total += item.product.price * item.quantity
-        total_discount = (item.product.price - discounted_price) * item.quantity
+        item.discounted_price = final_price
+        item.total_price = final_price * item.quantity
+
+        # Totals
+        original_total += original_price * item.quantity
+        grand_total += final_price * item.quantity
+
+        # Calculate manual discount only if it's applied
+        if item.product.discount_percentage:
+            total_discount += (original_price - discounted_price) * item.quantity
+
+        # If offer applied (final price < manual discount price), it's an offer
+        if final_price < discounted_price:
+            total_offer += (discounted_price - final_price) * item.quantity
 
     return render(request, 'user_app/cart.html', {
         'cart_items': cart_items,
-        'grand_total': grand_total,          
-        'original_total': original_total,     
-        'total_discount': total_discount,     
-        'stock_info': stock_info
+        'grand_total': grand_total,
+        'original_total': original_total,
+        'total_discount': total_discount,
+        'total_offer': total_offer,
+        'stock_info': stock_info,
     })
-
 
 MAX_QUANTITY_PER_ITEM = getattr(settings, 'MAX_CART_ITEM_QUANTITY', 5)
 
@@ -532,9 +551,13 @@ def validate_cart_stock(request):
     
     return JsonResponse({'status': 'ok'})
 
+MAX_QUANTITY_PER_ITEM = 5
 
 @login_required
 def increment_quantity(request, item_id):
+    if request.method != 'POST' or request.headers.get('x-requested-with') != 'XMLHttpRequest':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
     cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
 
     try:
@@ -542,38 +565,39 @@ def increment_quantity(request, item_id):
     except ProductSizeStock.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
 
-    if cart_item.quantity >= stock.quantity:
-        return JsonResponse({
-            'status': 'error',
-            'message': f"Only {stock.quantity} items left in stock",
-            'item_id': cart_item.id,
-            'new_quantity': cart_item.quantity,
-            'available_stock': stock.quantity,
-            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
-        })
-
+    # 🛑 Enforce max quantity limit
     if cart_item.quantity >= MAX_QUANTITY_PER_ITEM:
         return JsonResponse({
-            'status': 'error',
-            'message': f"Maximum limit per item is {MAX_QUANTITY_PER_ITEM}",
-            'item_id': cart_item.id,
-            'new_quantity': cart_item.quantity,
-            'available_stock': stock.quantity,
-            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
+            'status': 'warning',
+            'message': f"Maximum 5 items allowed per product.",
+        })
+
+    # 🛑 Enforce available stock
+    if cart_item.quantity >= stock.quantity:
+        return JsonResponse({
+            'status': 'warning',
+            'message': f"Only {stock.quantity} items left in stock.",
         })
 
     cart_item.quantity += 1
     cart_item.save()
 
-    subtotal = sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user))
+    cart_items = Cart.objects.filter(user=request.user)
+    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+    total = sum(item.product.final_price * item.quantity for item in cart_items)
+    discount = subtotal - total
 
     return JsonResponse({
         'status': 'success',
         'item_id': cart_item.id,
         'new_quantity': cart_item.quantity,
+        'item_total': float(cart_item.product.final_price * cart_item.quantity),
+        'subtotal': float(subtotal),
+        'discount': float(discount),
+        'grand_total': float(total),
         'available_stock': stock.quantity,
-        'subtotal': f"{subtotal:.2f}",
     })
+
 
 
 @login_required
@@ -591,29 +615,24 @@ def decrement_quantity(request, item_id):
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
-        new_quantity = cart_item.quantity
-        deleted = False
     else:
-        return JsonResponse({
-            'status': 'warning',
-            'message': 'Minimum quantity is 1',
-            'item_id': item_id,
-            'new_quantity': 1,
-            'available_stock': stock.quantity,
-            'deleted': False,
-            'subtotal': f"{sum(c.product.price * c.quantity for c in Cart.objects.filter(user=request.user)):.2f}",
-        })
+        return JsonResponse({'status': 'warning', 'message': 'Minimum quantity is 1'})
 
-    subtotal = sum(item.product.price * item.quantity for item in Cart.objects.filter(user=request.user))
+    cart_items = Cart.objects.filter(user=request.user)
+    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+    total = sum(item.product.final_price * item.quantity for item in cart_items)
+    discount = subtotal - total
 
     return JsonResponse({
         'status': 'success',
-        'item_id': item_id,
-        'new_quantity': new_quantity,
-        'available_stock': stock.quantity,
-        'deleted': deleted,
-        'subtotal': f"{subtotal:.2f}",
+        'item_id': cart_item.id,
+        'new_quantity': cart_item.quantity,
+        'item_total': float(cart_item.product.final_price * cart_item.quantity),
+        'subtotal': float(subtotal),
+        'discount': float(discount),
+        'grand_total': float(total),
     })
+
 
 @login_required
 def remove_from_cart(request, item_id):
@@ -901,10 +920,10 @@ def delete_address(request, address_id):
 @login_required
 def checkout(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
-    
+
     if not cart_items.exists():
         return redirect('cart_view')
-    
+
     addresses = Address.objects.filter(user=request.user)
     default_address = addresses.filter(is_default=True).first()
 
@@ -913,17 +932,21 @@ def checkout(request):
     total_discount = Decimal('0.00')
 
     for item in cart_items:
-        discounted_price = item.product.discounted_price  
+        # Use the correct final price from Product model (manual discount + offer logic)
+        discounted_price = item.product.final_price
+
         item.discounted_price = discounted_price
         item.total_price = discounted_price * item.quantity
 
+        # Totals
         grand_total += item.total_price
         original_total += item.product.price * item.quantity
         total_discount += (item.product.price - discounted_price) * item.quantity
 
     shipping_charge = Decimal('0.00')
     total = grand_total + shipping_charge
-    has_addresses=addresses.exists()
+    has_addresses = addresses.exists()
+
     context = {
         'cart_items': cart_items,
         'addresses': addresses,
@@ -937,7 +960,6 @@ def checkout(request):
     }
 
     return render(request, 'user_app/checkout.html', context)
-
 
 @login_required
 @transaction.atomic

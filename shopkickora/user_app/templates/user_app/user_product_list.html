@@ -207,13 +207,15 @@
                 {% for product in page_obj %}
                     <div class="product-card p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
                         <a href="{% url 'product_detail' product.slug %}" class="block">
-                            <div class="relative aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
-    {% if product.discount_percentage_effective %}
-        <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded z-10">
-            {{ product.discount_percentage_effective }}% OFF
-        </div>
-    {% endif %}
-    
+      <div class="relative aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden flex items-center justify-center">
+    {% with product.effective_discount_info as info %}
+        {% if info.percentage and info.label %}
+            <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded z-10">
+                {{ info.percentage }}% {{ info.label }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     {% if product.images.all %}
         <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
     {% elif product.image %}
@@ -222,6 +224,8 @@
         <img src="{% static 'user_app/default-shoe.jpg' %}" alt="Default shoe image" class="w-full h-full object-cover">
     {% endif %}
 </div>
+
+
 
                             <h3 class="font-semibold text-gray-800 mb-1">{{ product.name }}</h3>
                         </a>

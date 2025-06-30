@@ -63,13 +63,28 @@
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </button>
                     </form>
-                     <a href="{% url 'wishlist_view' %}" class="relative">
-                    <i class="fas fa-hand-holding-heart text-gray-700 hover:text-rose-600 text-xl"></i>
-                    </a>
-                    <a href="{% url 'cart_view' %}"><button class="relative">
-                        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
-                        <!-- <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span> -->
-                    </button></a>
+                    <!-- Wishlist Icon with Badge -->
+<a href="{% url 'wishlist_view' %}" class="relative">
+    <i class="fas fa-hand-holding-heart text-gray-700 hover:text-rose-600 text-xl"></i>
+    {% if wishlist_count > 0 %}
+        <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+            {{ wishlist_count }}
+        </span>
+    {% endif %}
+</a>
+
+<!-- Cart Icon with Badge -->
+<a href="{% url 'cart_view' %}" class="relative">
+    <button>
+        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+        {% if cart_count > 0 %}
+            <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                {{ cart_count }}
+            </span>
+        {% endif %}
+    </button>
+</a>
+
                     <a href="{% url 'user_profile' %}" class="text-gray-700 hover:text-blue-600 transition-colors">
                         <i data-lucide="user" class="w-6 h-6"></i>
                     </a>

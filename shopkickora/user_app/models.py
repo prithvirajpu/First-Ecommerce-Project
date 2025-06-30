@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
@@ -97,8 +98,6 @@ class Product(models.Model):
         if self.discount_percentage:
             return self.price - (self.price * self.discount_percentage / 100)
         return self.price
-    def __str__(self):
-        return self.name
 
     @property
     def discount_percentage_effective(self):
@@ -107,6 +106,35 @@ class Product(models.Model):
             discount = ((self.price - self.final_price_with_offer) / self.price) * 100
             return round(discount)
         return 0
+    @property
+    def effective_discount_info(self):
+        """
+        Determines whether to show a badge based on best discount source.
+        Returns:
+            - percentage: discount % to show
+            - label: 'OFF' if from offer, else None
+        """
+        base_price = Decimal(self.price)
+        product_discount = self.discount_percentage or 0
+
+        offer_discounts = []
+
+        for offer in self.product_offers.all():
+            if offer.is_valid():
+                offer_discounts.append(offer.discount_percentage)
+
+        if self.category:
+            for offer in self.category.category_offers.all():
+                if offer.is_valid():
+                    offer_discounts.append(offer.discount_percentage)
+
+        best_offer = max(offer_discounts) if offer_discounts else 0
+
+        if best_offer > product_discount:
+            return {'percentage': best_offer, 'label': 'OFF'}
+        
+        return {'percentage': None, 'label': None}
+
 
     @property
     def final_price_with_offer(self):
@@ -141,26 +169,34 @@ class Product(models.Model):
     
     @property
     def final_price(self):
-        """Final price considering all discounts: product field + offers."""
-        base_price = self.price
+        """
+        ✅ FINAL PRICE to be used everywhere (template/view/cart/etc).
+        Chooses best among: manual discount, product offer, category offer.
+        """
+        base_price = Decimal(self.price)
         discounts = []
 
+        # Add manual discount (from Product model)
         if self.discount_percentage:
             discounts.append(self.discount_percentage)
 
+        # Add active product offers
         for offer in self.product_offers.all():
             if offer.is_valid():
                 discounts.append(offer.discount_percentage)
 
+        # Add active category offers
         if self.category:
             for offer in self.category.category_offers.all():
                 if offer.is_valid():
                     discounts.append(offer.discount_percentage)
 
+        # Apply the best (maximum) discount
         if discounts:
             best_discount = max(discounts)
-            return round(base_price - (base_price * best_discount / 100), 2)
+            return round(base_price - (base_price * Decimal(best_discount) / 100), 2)
 
+        # If no discounts, return original price
         return base_price
 
 
@@ -177,9 +213,9 @@ class ProductImage(models.Model):
 
 class ProductSizeStock(models.Model):
     SIZE_CHOICES = [
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),
+        ('6', '6'),
+        ('7', '7'),
+        ('8', '8'),
     ]
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='size_stocks')
@@ -193,23 +229,16 @@ class ProductSizeStock(models.Model):
 class Cart(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    size = models.CharField(max_length=1)  
+    size = models.CharField(max_length=2)  
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'product', 'size')
 
-    def get_size_display(self):
-        size_map = {
-            'S': 'Small',
-            'M': 'Medium',
-            'L': 'Large',
-        }
-        return size_map.get(self.size.upper(), self.size)
-
+   
     def save(self, *args, **kwargs):
-        self.size = self.size.upper()  
+        self.size = self.size.strip()  
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -289,7 +318,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    size = models.CharField(max_length=10)
+    size = models.CharField(max_length=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ORDERED')  # ✅ added
 

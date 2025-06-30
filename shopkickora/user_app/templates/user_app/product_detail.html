@@ -161,14 +161,20 @@
             </div>
 
             <div class="mb-6">
-                <h3 class="text-sm font-medium mb-2">SELECT SIZE</h3>
-                <div class="grid grid-cols-5 gap-2">
-                    {% for size in sizes %}
-                        <button class="size-box border border-gray-300 rounded text-center py-2 hover:border-gray-900 {% if selected_size == size %}selected{% endif %}" data-size="{{ size }}">{{ size }}</button>
-                    {% endfor %}
-                </div>
-                <input type="hidden" id="selected-size" value="{{ selected_size|default_if_none:'' }}">
-            </div>
+    <h3 class="text-sm font-medium mb-2">SELECT SIZE</h3>
+    <div class="grid grid-cols-5 gap-2">
+        {% for size in sizes %}
+            <button type="button" 
+                    class="size-box border border-gray-300 rounded text-center py-2 hover:border-gray-900 
+                           {% if selected_size == size %}selected{% endif %}" 
+                    data-size="{{ size }}">
+                {{ size }}
+            </button>
+        {% endfor %}
+    </div>
+    <input type="hidden" name="size" id="selected-size" value="{{ selected_size|default_if_none:'' }}">
+</div>
+
 
             <div class="mb-6">
                 <h3 class="text-sm font-medium mb-2">QUANTITY</h3>
