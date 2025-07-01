@@ -91,14 +91,31 @@
                 </form>
             </div>
 
-            <div class="filter-section p-6 mb-6">
-                <h3 class="text-lg font-semibold mb-4">Size</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">S</button>
-                    <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">M</button>
-                    <button class="size-button border border-gray-300 rounded px-3 py-2 text-sm hover:border-blue-500 hover:text-blue-600">L</button>
-                </div>
-            </div>
+         <div class="filter-section p-6 mb-6">
+    <h3 class="text-lg font-semibold mb-4">Sizes</h3>
+    <form method="get" id="size-form" class="space-y-2">
+        <div class="grid grid-cols-3 gap-2">
+            {% for size in sizes_list  %}
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" name="size" value="{{ size }}" class="hidden peer" onchange="this.form.submit()" {% if selected_size == size %}checked{% endif %}>
+                    <span class="size-button border border-gray-300 rounded px-3 py-2 text-sm peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50">
+                        {{ size }}
+                    </span>
+                </label>
+            {% endfor %}
+        </div>
+
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="category" value="{{ category }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+        {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+        {% for brand_id in selected_brands %}
+            <input type="hidden" name="brand" value="{{ brand_id }}">
+        {% endfor %}
+    </form>
+</div>
+
 
             <div class="filter-section p-6">
                 <form action="{% url 'user_product_list' %}" method="GET" class="space-y-6">

@@ -34,7 +34,7 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 from .models import (
     Brand, Category, CustomUser, Product,
-    ProductSizeStock, Address,Wishlist,Cart,
+    ProductSizeStock, Address, WalletTransaction,Wishlist,Cart,
     Order,OrderItem,Cart,Wallet,
 )
 
@@ -302,9 +302,8 @@ def user_product_list(request):
     query = request.GET.get('q', '').strip()
     category = request.GET.get('category', 'all')
     sort = request.GET.get('sort', 'newest')
-
     brand_ids = request.GET.getlist('brand')
-
+    selected_size = request.GET.get('size')
 
     min_price_str = request.GET.get('min_price')
     max_price_str = request.GET.get('max_price')
@@ -337,13 +336,19 @@ def user_product_list(request):
         products = products.filter(brand__id__in=brand_ids) 
 
     if query:
-        products = products.filter(name__icontains =query )
+        products = products.filter(name__icontains=query)
 
     if min_price is not None:
         products = products.filter(price__gte=min_price)
 
     if max_price is not None:
         products = products.filter(price__lte=max_price)
+
+    if selected_size:
+        products = products.filter(
+        size_stocks__size=selected_size,
+        size_stocks__quantity__gt=0
+    )
 
     if sort == 'price_low':
         products = products.order_by('price')
@@ -355,7 +360,7 @@ def user_product_list(request):
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True, is_deleted=False)
 
-    paginator = Paginator(products, 9)
+    paginator = Paginator(products.distinct(), 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -367,15 +372,17 @@ def user_product_list(request):
         'category': category,
         'sort': sort,
         'product_count': product_count,
-        'sizes_list': ['S', 'M', 'L'], 
+        'sizes_list': ['6', '7', '8'],  # ✅ This replaces the need for 'split'
+        'selected_size': selected_size,  # ✅ Keep track of current selection
         'categories': categories,
         'brands': brands,
         'selected_brands': brand_ids,
         'min_price': min_price,
-        'max_price': max_price, 
+        'max_price': max_price,
     }
 
     return render(request, 'user_app/user_product_list.html', context)
+
 
 @never_cache
 @login_required(login_url='login')
@@ -932,20 +939,28 @@ def checkout(request):
     total_discount = Decimal('0.00')
 
     for item in cart_items:
-        # Use the correct final price from Product model (manual discount + offer logic)
+        # Apply the best discount (manual + offer logic)
         discounted_price = item.product.final_price
 
+        # Attach for use in template
         item.discounted_price = discounted_price
         item.total_price = discounted_price * item.quantity
 
-        # Totals
         grand_total += item.total_price
         original_total += item.product.price * item.quantity
         total_discount += (item.product.price - discounted_price) * item.quantity
 
+    # You can change this if you want shipping cost
     shipping_charge = Decimal('0.00')
-    total = grand_total + shipping_charge
-    has_addresses = addresses.exists()
+    final_total = grand_total + shipping_charge
+
+    # Create Razorpay order
+    razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    razorpay_order = razorpay_client.order.create({
+        'amount': int(final_total * 100),  # Razorpay uses paise
+        'currency': 'INR',
+        'payment_capture': 1
+    })
 
     context = {
         'cart_items': cart_items,
@@ -955,11 +970,16 @@ def checkout(request):
         'original_total': original_total,
         'total_discount': total_discount,
         'shipping': shipping_charge,
-        'total': total,
-        'has_addresses': has_addresses,
+        'total': final_total,
+        'has_addresses': addresses.exists(),
+
+        # Razorpay
+        'razorpay_key': settings.RAZORPAY_KEY_ID,
+        'razorpay_order': razorpay_order,
     }
 
     return render(request, 'user_app/checkout.html', context)
+
 
 @login_required
 @transaction.atomic
@@ -1017,24 +1037,16 @@ def place_order(request):
         )
 
     # Calculate total
-    total_amount = sum(item.product.discounted_price * item.quantity for item in cart_items)
+    total_amount = sum(item.product.final_price * item.quantity for item in cart_items)
 
     # COD Limit Check
     if payment_method == "cod" and total_amount > 10000:
         return redirect('/checkout/?error=cod_limit_exceeded')
 
-    # Handle Wallet Payment
-    if payment_method == "wallet":
-        wallet = request.user.wallet
-        if wallet.balance < total_amount:
-            return redirect('/checkout/?error=wallet_insufficient')
-        wallet.balance -= total_amount
-        wallet.save()
-        payment_status = 'paid'
-    else:
-        payment_status = 'pending'
+    # Set default payment status
+    payment_status = 'pending'
 
-    # Create Order
+    # Create Order first (must happen before WalletTransaction)
     order = Order.objects.create(
         user=request.user,
         order_id=get_random_string(10).upper(),
@@ -1049,8 +1061,24 @@ def place_order(request):
         country=address.country,
         address=address,
         payment_method=payment_method,
-        payment_status=payment_status
+        payment_status='paid' if payment_method == 'wallet' else 'pending'
     )
+
+    # Handle Wallet Payment after order is created
+    if payment_method == "wallet":
+        wallet = request.user.wallet
+        if wallet.balance < total_amount:
+            return redirect('/checkout/?error=wallet_insufficient')
+
+        wallet.balance -= total_amount
+        wallet.save()
+
+        WalletTransaction.objects.create(
+            wallet=wallet,
+            amount=total_amount,
+            transaction_type='DEBIT',
+            description=f"Order #{order.order_id} payment"
+        )
 
     # Create Order Items
     for item in cart_items:
@@ -1059,7 +1087,7 @@ def place_order(request):
             product=item.product,
             quantity=item.quantity,
             size=item.size,
-            price=item.product.discounted_price
+            price=item.product.final_price
         )
 
     # Reduce stock and clear cart for Wallet or COD
@@ -1200,21 +1228,34 @@ def request_return(request, item_id):
 
 @login_required
 def wallet_page(request):
-    wallet=request.user.wallet
-    if request.method=="POST":
+    wallet = request.user.wallet
+    transactions = wallet.transactions.all().order_by('-created_at')  # Fetch user's wallet transactions
+
+    if request.method == "POST":
         try:
-            amount=Decimal(request.POST.get('amount'))
-            if amount>0:
-                wallet.balance+=amount
+            amount = Decimal(request.POST.get('amount'))
+            if amount > 0:
+                wallet.balance += amount
                 wallet.save()
-                messages.success(request,f"₹{amount} added to you wallet")
+
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    amount=amount,
+                    transaction_type='CREDIT',
+                    description="Added to wallet"
+                )
+
+                messages.success(request, f"₹{amount} added to your wallet")
                 return redirect('wallet_page')
             else:
-                messages.error(request,'Amount must be greater than 0.')
+                messages.error(request, 'Amount must be greater than 0.')
         except Exception as e:
-            messages.error(request,'Invalid amount')
-    return render(request,'user_app/wallet.html',{'wallet':wallet})
+            messages.error(request, 'Invalid amount')
 
+    return render(request, 'user_app/wallet.html', {
+        'wallet': wallet,
+        'transactions': transactions  # Pass this to template
+    })
 
 @csrf_exempt
 def payment_success(request):

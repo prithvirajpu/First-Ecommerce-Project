@@ -78,11 +78,17 @@
                                     {% endwith %}
                                 </div>
                                 <div class="flex flex-col">
-                                    <h3 class="text-base font-semibold text-gray-800">
-                                        <a href="{% url 'user_order_detail' order.id %}" class="hover:underline">
-                                            Order #{{ order.order_id }}
-                                        </a>
-                                    </h3>
+                                   <h3 class="text-base font-semibold text-gray-800">
+    <a href="{% url 'user_order_detail' order.id %}" class="hover:underline">
+        {{ order.order_items.first.product.name }}
+        {% with order.order_items.count as total_items %}
+            {% if total_items > 1 %}
+                + {{ total_items|add:"-1" }} more
+            {% endif %}
+        {% endwith %}
+    </a>
+</h3>
+
                                     <p class="text-gray-500 text-xs mt-0.5">Placed on: {{ order.created_at|date:"M d, Y H:i" }}</p>
                                     <p class="text-gray-500 text-xs">Total: ₹{{ order.total_amount }}</p>
                                   <span class="text-xs px-2 py-0.5 rounded-full mt-1 {{ order.status_class }}">

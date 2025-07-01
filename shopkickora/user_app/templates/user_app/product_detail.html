@@ -133,21 +133,27 @@
 
             <h1 class="text-2xl font-bold mb-2">{{ product.name|default:"Product" }}</h1>
             <div class="mb-6 flex items-center space-x-3">
-              {% if product.discount_percentage > 0 %}
+              {% with info=product.effective_discount_info %}
+  {% if product.final_price < product.price %}
     <div class="flex flex-col space-y-1">
-        <div class="flex items-center space-x-3">
-            <span class="text-2xl font-bold text-green-600">₹{{ product.discounted_price|floatformat:2 }}</span>
-            <span class="text-lg text-gray-500 line-through">₹{{ product.price|floatformat:2 }}</span>
-        </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl font-bold text-green-600">₹{{ product.final_price|floatformat:2 }}</span>
+        <span class="text-lg text-gray-500 line-through">₹{{ product.price|floatformat:2 }}</span>
+      </div>
+
+      {% if info.label %}
         <div>
-            <span class="inline-block mt-1 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded shadow-sm">
-                {{ product.discount_percentage|floatformat:0 }}% OFF
-            </span>
+          <span class="inline-block mt-1 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded shadow-sm">
+            {{ info.percentage|floatformat:0 }}% {{ info.label }}
+          </span>
         </div>
+      {% endif %}
     </div>
-{% else %}
+  {% else %}
     <span class="text-2xl font-bold text-gray-800">₹{{ product.price|floatformat:2 }}</span>
-{% endif %}
+  {% endif %}
+{% endwith %}
+
 
 
 

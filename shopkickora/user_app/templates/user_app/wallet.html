@@ -55,6 +55,43 @@
             </form>
         </div>
     </div>
+</div>
 
+ <!-- Transaction History Section -->
+<div class="bg-white rounded-xl shadow-md p-6 mt-8">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Transactions</h3>
+
+    {% if transactions %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-center border border-gray-200">
+                <thead class="bg-gray-100 text-gray-700">
+                    <tr>
+                        <th class="px-4 py-2">Date</th>
+                        <th class="px-4 py-2">Type</th>
+                        <th class="px-4 py-2">Amount</th>
+                        <th class="px-4 py-2">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    {% for tx in transactions %}
+                    <tr>
+                        <td class="py-2">{{ tx.created_at|date:"d M Y, h:i A" }}</td>
+                        <td class="py-2">
+                            {% if tx.transaction_type == 'CREDIT' %}
+                                <span class="text-green-600 font-semibold">Credit</span>
+                            {% else %}
+                                <span class="text-red-600 font-semibold">Debit</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-2">₹{{ tx.amount }}</td>
+                        <td class="py-2 text-gray-600">{{ tx.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-500">No transactions yet.</p>
+    {% endif %}
 </div>
 {% endblock %}

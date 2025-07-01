@@ -10,6 +10,7 @@
   <!-- Top Section -->
   <div class="bg-white rounded-lg shadow p-6 mb-6">
     <p><strong>Order ID:</strong> {{ order.order_id }}</p>
+    <p><strong>Order ID:</strong> {{ order.order_id }}</p>
     <p><strong>Status:</strong> {{ order.get_status_display }}</p>
     <p><strong>Placed On:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
     <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
@@ -24,9 +25,12 @@
         </form>
       {% endif %}
 
-      <a href="{% url 'download_invoice' order.id %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        Download Invoice
-      </a>
+      {% if order.status == 'DELIVERED' %}
+  <a href="{% url 'download_invoice' order.id %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+    Download Invoice
+  </a>
+{% endif %}
+ 
     </div>
   </div>
 

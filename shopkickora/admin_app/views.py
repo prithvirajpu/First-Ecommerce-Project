@@ -211,9 +211,10 @@ def add_product(request):
         brand_id = request.POST.get('brand')
         images = request.FILES.getlist('images')
 
-        stock_s = request.POST.get('stock_S')
-        stock_m = request.POST.get('stock_M')
-        stock_l = request.POST.get('stock_L')
+        stock_6 = request.POST.get('stock_6','0')
+        stock_7 = request.POST.get('stock_7','0')
+        stock_8 = request.POST.get('stock_8','0')
+
         discount_percentage = request.POST.get('discount_percentage')
 
         form_data = {
@@ -222,9 +223,10 @@ def add_product(request):
             'price': price,
             'category': category_id,
             'brand': brand_id,
-            'stock_S': stock_s,
-            'stock_M': stock_m,
-            'stock_L': stock_l,
+            'stock_6': stock_6,
+            'stock_7': stock_7,
+            'stock_8': stock_8,
+
             'discount_percentage': discount_percentage,
         }
 
@@ -251,14 +253,11 @@ def add_product(request):
         except (ValueError, TypeError):
             errors['price'] = "Enter a valid number for price."
 
-        try:
-            s = int(stock_s)
-            m = int(stock_m)
-            l = int(stock_l)
-            if s < 0 or m < 0 or l < 0:
-                errors['stock_sizes'] = "Stock values must be non-negative."
-        except:
-            errors['stock_sizes'] = "All sizes (S, M, L) must have valid stock."
+        s6 = int(stock_6)
+        s7 = int(stock_7)
+        s8 = int(stock_8)
+        if s6 < 0 or s7 < 0 or s8 < 0:
+            errors['stock_sizes'] = "Stock values must be non-negative."
 
         try:
             category = Category.objects.get(id=category_id)
@@ -290,7 +289,7 @@ def add_product(request):
                 'form_data': form_data
             })
 
-        total_stock = s + m + l
+        total_stock = s6 + s7 + s8
 
         product = Product.objects.create(
             name=name,
@@ -306,9 +305,9 @@ def add_product(request):
             ProductImage.objects.create(product=product, image=image)
 
         ProductSizeStock.objects.bulk_create([
-            ProductSizeStock(product=product, size='S', quantity=s),
-            ProductSizeStock(product=product, size='M', quantity=m),
-            ProductSizeStock(product=product, size='L', quantity=l),
+            ProductSizeStock(product=product, size='6', quantity=s6),
+            ProductSizeStock(product=product, size='7', quantity=s7),
+            ProductSizeStock(product=product, size='8', quantity=s8),
         ])
 
         messages.success(request, "Product added successfully.")
@@ -340,28 +339,27 @@ def edit_product(request, product_id):
         brand_id = request.POST.get('brand')
         new_images = request.FILES.getlist('images')
 
-        stock_s = request.POST.get('stock_S')
-        stock_m = request.POST.get('stock_M')
-        stock_l = request.POST.get('stock_L')
+        stock_6 = request.POST.get('stock_6', '0')
+        stock_7 = request.POST.get('stock_7', '0')
+        stock_8 = request.POST.get('stock_8', '0')
 
         form_data = {
             'name': name,
             'description': description,
             'price': price,
             'discount_percentage': discount_percentage,
-            'stock_S': stock_s,
-            'stock_M': stock_m,
-            'stock_L': stock_l,
+            'stock_6': stock_6,
+            'stock_7': stock_7,
+            'stock_8': stock_8,
             'category_id': category_id,
             'brand_id': brand_id,
         }
 
+        # --- Validation ---
         if not name:
             errors['name'] = 'Product name is required.'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
-            errors['name'] = (
-                "Enter a valid product name (at least one letter, only letters, numbers, spaces, hyphens, underscores)."
-            )
+            errors['name'] = "Enter a valid product name with at least one letter."
         elif name == "_" * len(name):
             errors['name'] = "Product name cannot be only underscores."
 
@@ -384,23 +382,21 @@ def edit_product(request, product_id):
         except (Category.DoesNotExist, ValueError, TypeError):
             errors['category'] = "Invalid category selected"
             category = None
+
         try:
             brand = Brand.objects.get(id=brand_id)
         except (Brand.DoesNotExist, ValueError, TypeError):
             errors['brand'] = "Invalid brand selected"
             brand = None
 
-        if not stock_s or not stock_m or not stock_l:
-            errors['stock_sizes'] = "All sizes (S, M, L) must have stock."
-        else:
-            try:
-                s = int(stock_s)
-                m = int(stock_m)
-                l = int(stock_l)
-                if s < 0 or m < 0 or l < 0:
-                    errors['stock_sizes'] = "Stock quantities must be non-negative."
-            except ValueError:
-                errors['stock_sizes'] = "Stock quantities must be integers."
+        try:
+            s6 = int(stock_6)
+            s7 = int(stock_7)
+            s8 = int(stock_8)
+            if s6 < 0 or s7 < 0 or s8 < 0:
+                errors['stock_sizes'] = "Stock quantities must be non-negative."
+        except:
+            errors['stock_sizes'] = "All size fields must have valid stock quantities."
 
         allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
         if new_images:
@@ -416,6 +412,7 @@ def edit_product(request, product_id):
             if existing_images.count() != 3:
                 errors['format'] = "Exactly 3 images are required. Please upload 3 images."
 
+        # --- If Errors ---
         if errors:
             return render(request, 'user_app/edit_product.html', {
                 'product': product,
@@ -425,22 +422,23 @@ def edit_product(request, product_id):
                 'form_data': form_data,
                 'images': existing_images,
                 'stock': {
-                    'stock_S': stock_s or size_stock.get('S', 0),
-                    'stock_M': stock_m or size_stock.get('M', 0),
-                    'stock_L': stock_l or size_stock.get('L', 0),
+                    'stock_6': stock_6 or size_stock.get('6', 0),
+                    'stock_7': stock_7 or size_stock.get('7', 0),
+                    'stock_8': stock_8 or size_stock.get('8', 0),
                 }
             })
 
+        # --- Update Product ---
         product.name = name
         product.description = description
         product.price = price_val
         product.discount_percentage = discount_val
         product.category = category
         product.brand = brand
-        product.stock = s + m + l
+        product.stock = s6 + s7 + s8
         product.save()
 
-        for size, quantity in [('S', s), ('M', m), ('L', l)]:
+        for size, quantity in [('6', s6), ('7', s7), ('8', s8)]:
             ProductSizeStock.objects.update_or_create(
                 product=product,
                 size=size,
@@ -458,14 +456,15 @@ def edit_product(request, product_id):
         messages.success(request, "Product updated successfully.")
         return redirect('product_list')
 
+    # --- GET Request (prefill form) ---
     form_data = {
         'name': product.name,
         'description': product.description,
         'price': product.price,
         'discount_percentage': product.discount_percentage,
-        'stock_S': size_stock.get('S', 0),
-        'stock_M': size_stock.get('M', 0),
-        'stock_L': size_stock.get('L', 0),
+        'stock_6': size_stock.get('6', 0),
+        'stock_7': size_stock.get('7', 0),
+        'stock_8': size_stock.get('8', 0),
         'category_id': product.category.id if product.category else None,
         'brand_id': product.brand.id if product.brand else None,
     }
@@ -478,9 +477,9 @@ def edit_product(request, product_id):
         'form_data': form_data,
         'images': existing_images,
         'stock': {
-            'stock_S': size_stock.get('S', 0),
-            'stock_M': size_stock.get('M', 0),
-            'stock_L': size_stock.get('L', 0),
+            'stock_6': size_stock.get('6', 0),
+            'stock_7': size_stock.get('7', 0),
+            'stock_8': size_stock.get('8', 0),
         }
     })
 
