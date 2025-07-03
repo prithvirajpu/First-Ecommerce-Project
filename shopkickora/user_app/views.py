@@ -22,7 +22,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils import timezone
 
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.messages import get_messages
@@ -33,7 +33,7 @@ from django.views.decorators.cache import never_cache
 from django.core.paginator import Paginator
 from decimal import Decimal
 from .models import (
-    Brand, Category, CustomUser, Product,
+    Brand, Category, Coupon, CustomUser, Product,
     ProductSizeStock, Address, WalletTransaction,Wishlist,Cart,
     Order,OrderItem,Cart,Wallet,
 )
@@ -435,14 +435,23 @@ def toggle_wishlist(request,product_id):
     except Product.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
 
+def get_cart_grand_total(user):
+    cart_items = Cart.objects.filter(user=user).select_related('product')
+    grand_total = Decimal('0.00')
+
+    for item in cart_items:
+        final_price = item.product.final_price
+        grand_total += final_price * item.quantity
+
+    return grand_total
 
 @login_required
 def cart_view(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
     grand_total = Decimal('0.00')
     original_total = Decimal('0.00')
-    total_discount = Decimal('0.00')  # manual discount via product.discount_percentage
-    total_offer = Decimal('0.00')     # offer-based discount
+    total_discount = Decimal('0.00')  # manual discount
+    total_offer = Decimal('0.00')     # offer discount
     stock_info = {}
 
     for item in cart_items:
@@ -454,25 +463,28 @@ def cart_view(request):
             item.max_quantity = 0
             stock_info[item.id] = 0
 
-        # Pricing setup
         original_price = item.product.price
-        discounted_price = item.product.discounted_price  # manual discount price
-        final_price = item.product.final_price            # best price considering offer or discount
+        manual_discounted_price = item.product.discounted_price  # price after manual discount
+        final_price = item.product.final_price  # best (lowest) price after all discounts
 
+        # For display
         item.discounted_price = final_price
         item.total_price = final_price * item.quantity
 
-        # Totals
         original_total += original_price * item.quantity
         grand_total += final_price * item.quantity
 
-        # Calculate manual discount only if it's applied
-        if item.product.discount_percentage:
-            total_discount += (original_price - discounted_price) * item.quantity
+        # Detect source of discount
+        if final_price < manual_discounted_price:
+            # Offer is better
+            total_offer += (original_price - final_price) * item.quantity
+        elif item.product.discount_percentage:
+            # Manual discount applied
+            total_discount += (original_price - final_price) * item.quantity
 
-        # If offer applied (final price < manual discount price), it's an offer
-        if final_price < discounted_price:
-            total_offer += (discounted_price - final_price) * item.quantity
+    total_savings = total_offer + total_discount
+
+    request.session['cart_total'] = str(grand_total)
 
     return render(request, 'user_app/cart.html', {
         'cart_items': cart_items,
@@ -480,9 +492,9 @@ def cart_view(request):
         'original_total': original_total,
         'total_discount': total_discount,
         'total_offer': total_offer,
+        'total_savings': total_savings,
         'stock_info': stock_info,
     })
-
 MAX_QUANTITY_PER_ITEM = getattr(settings, 'MAX_CART_ITEM_QUANTITY', 5)
 
 
@@ -927,16 +939,14 @@ def delete_address(request, address_id):
 @login_required
 def checkout(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
-
-    if not cart_items.exists():
-        return redirect('cart_view')
+    grand_total = Decimal('0.00')
 
     addresses = Address.objects.filter(user=request.user)
     default_address = addresses.filter(is_default=True).first()
 
-    grand_total = Decimal('0.00')
     original_total = Decimal('0.00')
     total_discount = Decimal('0.00')
+
 
     for item in cart_items:
         # Apply the best discount (manual + offer logic)
@@ -949,10 +959,21 @@ def checkout(request):
         grand_total += item.total_price
         original_total += item.product.price * item.quantity
         total_discount += (item.product.price - discounted_price) * item.quantity
+        request.session['cart_total'] = str(grand_total)
+    valid_coupons = Coupon.objects.filter(
+        active=True,
+        valid_from__lte=timezone.now(),
+        valid_to__gte=timezone.now(),
+        minimum_order_amount__lte=grand_total
+        )
 
     # You can change this if you want shipping cost
     shipping_charge = Decimal('0.00')
-    final_total = grand_total + shipping_charge
+        # Coupon from session (if any)
+    coupon_code = request.session.get('applied_coupon_code')
+    coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
+
+    final_total = (grand_total + shipping_charge)-coupon_discount
 
     # Create Razorpay order
     razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -970,8 +991,11 @@ def checkout(request):
         'original_total': original_total,
         'total_discount': total_discount,
         'shipping': shipping_charge,
-        'total': final_total,
+        'coupon_code': coupon_code,
+        'coupon_discount': coupon_discount,
+        'final_total': final_total,
         'has_addresses': addresses.exists(),
+        'valid_coupons': valid_coupons,
 
         # Razorpay
         'razorpay_key': settings.RAZORPAY_KEY_ID,
@@ -1036,22 +1060,34 @@ def place_order(request):
             is_default=False
         )
 
-    # Calculate total
-    total_amount = sum(item.product.final_price * item.quantity for item in cart_items)
+    # Calculate totals
+    grand_total = Decimal('0.00')
+    for item in cart_items:
+        grand_total += item.product.final_price * item.quantity
+
+    # Coupon and shipping
+    coupon_code = request.session.get('applied_coupon_code')
+    coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
+    shipping_charge = Decimal('0.00')  # Add your own logic if needed
+
+    final_total = (grand_total + shipping_charge) - coupon_discount
 
     # COD Limit Check
-    if payment_method == "cod" and total_amount > 10000:
+    if payment_method == "cod" and final_total > 10000:
         return redirect('/checkout/?error=cod_limit_exceeded')
 
-    # Set default payment status
-    payment_status = 'pending'
+    # Wallet check
+    if payment_method == "wallet":
+        wallet = request.user.wallet
+        if wallet.balance < final_total:
+            return redirect('/checkout/?error=wallet_insufficient')
 
-    # Create Order first (must happen before WalletTransaction)
+    # Create Order
     order = Order.objects.create(
         user=request.user,
         order_id=get_random_string(10).upper(),
         status='PENDING',
-        total_amount=total_amount,
+        total_amount=final_total,
         full_name=address.full_name,
         mobile=address.mobile,
         street_address=address.street_address,
@@ -1061,26 +1097,25 @@ def place_order(request):
         country=address.country,
         address=address,
         payment_method=payment_method,
-        payment_status='paid' if payment_method == 'wallet' else 'pending'
+        payment_status='paid' if payment_method == 'wallet' else 'pending',
+        coupon_code=coupon_code,
+        coupon_discount=coupon_discount,
+        shipping_charge=shipping_charge
     )
 
-    # Handle Wallet Payment after order is created
+    # Handle wallet deduction
     if payment_method == "wallet":
-        wallet = request.user.wallet
-        if wallet.balance < total_amount:
-            return redirect('/checkout/?error=wallet_insufficient')
-
-        wallet.balance -= total_amount
+        wallet.balance -= final_total
         wallet.save()
 
         WalletTransaction.objects.create(
             wallet=wallet,
-            amount=total_amount,
+            amount=final_total,
             transaction_type='DEBIT',
             description=f"Order #{order.order_id} payment"
         )
 
-    # Create Order Items
+    # Create order items
     for item in cart_items:
         OrderItem.objects.create(
             order=order,
@@ -1090,20 +1125,24 @@ def place_order(request):
             price=item.product.final_price
         )
 
-    # Reduce stock and clear cart for Wallet or COD
-    if payment_method in ['wallet', 'cod']:
-        for item in cart_items:
-            stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
-            stock.quantity -= item.quantity
-            stock.save()
-        cart_items.delete()
-        return redirect('order_success', order_id=order.id)
+    # Reduce stock
+    for item in cart_items:
+        stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
+        stock.quantity -= item.quantity
+        stock.save()
 
-    # Razorpay integration
+    # Clear cart
+    cart_items.delete()
+
+    # Clear coupon session
+    request.session.pop('applied_coupon_code', None)
+    request.session.pop('coupon_discount', None)
+
+    # Handle Razorpay
     if payment_method == "razorpay":
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         razorpay_order = client.order.create({
-            'amount': int(total_amount * 100),  # amount in paisa
+            'amount': int(final_total * 100),  # paise
             'currency': 'INR',
             'payment_capture': 1
         })
@@ -1115,6 +1154,8 @@ def place_order(request):
             'razorpay_order': razorpay_order,
             'razorpay_key': settings.RAZORPAY_KEY_ID,
         })
+
+    return redirect('order_success', order_id=order.id)
 
 @login_required
 def order_success(request, order_id):
@@ -1318,6 +1359,52 @@ def download_invoice(request, order_id):
     pisa.CreatePDF(html, dest=response)
     return response
 
+
+@login_required
+def apply_coupon(request):
+    if request.method == "POST":
+        code = request.POST.get('coupon_code', "").strip()
+        if not code:
+            messages.error(request, 'Please enter a coupon code.')
+            return redirect('checkout')
+
+        # Toggle logic: remove if same code is already applied
+        if request.session.get('applied_coupon_code') == code:
+            request.session.pop('applied_coupon_code', None)
+            request.session.pop('coupon_discount', None)
+            messages.info(request, f"Coupon '{code}' removed.")
+            return redirect('checkout')
+
+        # Apply new coupon
+        try:
+            coupon = Coupon.objects.get(code__iexact=code)
+
+            if not coupon.is_valid():
+                messages.error(request, 'Coupon is not valid.')
+                return redirect('checkout')
+
+            cart_items = Cart.objects.filter(user=request.user).select_related('product')
+            cart_total = Decimal('0.00')
+            for item in cart_items:
+                cart_total += item.product.final_price * item.quantity
+
+            if cart_total < coupon.minimum_order_amount:
+                messages.error(request, f'Minimum order amount for this coupon is ₹{coupon.minimum_order_amount}.')
+                return redirect('checkout')
+
+            # Apply coupon
+            best_discount = coupon.discount_amount
+            request.session['applied_coupon_code'] = coupon.code
+            request.session['coupon_discount'] = str(best_discount)
+            messages.success(request, f"Coupon '{coupon.code}' applied! You saved ₹{best_discount:.2f}.")
+            return redirect('checkout')
+
+        except Coupon.DoesNotExist:
+            messages.error(request, "Coupon does not exist.")
+            return redirect('checkout')
+
+    return redirect('checkout')
+  
 
 def custom_404(request, exception):
     return render(request, 'user_app/404.html', {

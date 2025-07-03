@@ -5,7 +5,7 @@ from django.contrib import messages
 from .forms import AdminLoginForm, ProductOfferForm,CategoryOfferForm
 from django.core.paginator import Paginator
 from django.db.models import Q
-from user_app.models import (CustomUser,Product, ProductImage, Category,
+from user_app.models import (Coupon, CustomUser,Product, ProductImage, Category,
         Brand, ProductSizeStock,Order,OrderItem,Wallet,ProductOffer, CategoryOffer, Product, Category)
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
@@ -790,6 +790,59 @@ def edit_category_offer(request, offer_id):
         'offer': offer,
     })
 
+
+@user_passes_test(lambda x: x.is_superuser)
+def admin_coupon_list(request):
+    coupons=Coupon.objects.all().order_by('-valid_to')
+    return render(request,'admin_app/admin_coupon_list.html',{'coupons':coupons})
+
+@user_passes_test(lambda x:x.is_superuser)
+def add_coupon(request):
+    if request.method=='POST':
+        code=request.POST.get('code','').strip()
+        discount_amount=request.POST.get('discount_amount','').strip()
+        minimum_order_amount=request.POST.get('minimum_order_amount','').strip()
+        valid_from=request.POST.get('valid_from','').strip()
+        valid_to=request.POST.get('valid_to','').strip()
+        active=request.POST.get('active')=='on'
+
+        Coupon.objects.create(code=code,discount_amount=discount_amount,
+        minimum_order_amount=minimum_order_amount,valid_from=valid_from,valid_to=valid_to,active=active)
+        messages.success(request,'Coupon created successfully.')
+        return redirect('admin_coupon_list')
+    return render(request,'admin_app/admin_add_coupon.html')
+
+@user_passes_test(lambda x:x.is_superuser)
+def edit_coupon(request,coupon_id):
+    coupon=get_object_or_404(Coupon,id=coupon_id)
+    if request.method=="POST":
+        code=request.POST.get('code','').strip()
+        discount_amount=request.POST.get('discount_amount','').strip()
+        minimum_order_amount=request.POST.get('minimum_order_amount','').strip()
+        valid_from=request.POST.get('valid_from','').strip()
+        valid_to=request.POST.get('valid_to','').strip()
+        active=True if request.POST.get('is_active') else False
+        if Coupon.objects.exclude(id=coupon_id).filter(code__iexact=code).exists():
+            messages.error(request,'Another coupon with this code already exists')
+        else:
+            coupon.code=code
+            coupon.discount_amount=discount_amount
+            coupon.minimum_order_amount=minimum_order_amount
+            coupon.valid_from=valid_from
+            coupon.valid_to=valid_to
+            coupon.active=active
+            coupon.save()
+            messages.success(request,'Coupon updated successfully.')
+            return redirect('admin_coupon_list')
+    form={
+        'code':coupon.code,
+        'discount_amount':coupon.discount_amount,
+        'minimum_order_amount' :coupon.minimum_order_amount,
+            'valid_from':coupon.valid_from,
+            'valid_to':coupon.valid_to,
+           'active': coupon.active
+    }
+    return render(request,'admin_app/admin_edit_coupon.html',{'form':form,'coupon':coupon})
 
 def admin_logout(request):
     logout(request)

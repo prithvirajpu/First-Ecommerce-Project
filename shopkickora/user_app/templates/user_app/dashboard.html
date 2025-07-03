@@ -221,42 +221,30 @@
             {{ product.description|truncatewords:10 }}
           </p>
 
-  <div class="flex items-center justify-between mb-1">
-  {% if product.final_price != product.price %}
+        <div class="flex items-center justify-between mb-1">
+  {% if product.discount_percentage > 0 %}
     <div class="flex items-center space-x-2">
-      <span class="text-lg font-bold text-green-600">₹{{ product.final_price|floatformat:2 }}</span>
+      <span class="text-lg font-bold text-green-600">₹{{ product.discounted_price|floatformat:2 }}</span>
       <span class="text-sm text-gray-500 line-through">₹{{ product.price|floatformat:2 }}</span>
     </div>
   {% else %}
     <span class="text-lg font-bold text-gray-800">₹{{ product.price|floatformat:2 }}</span>
   {% endif %}
 </div>
-
-
-
-
-
           <div class="flex justify-between items-center space-x-2">
-            <form action="{% url 'product_detail' product.id %}" method="POST" class="w-full">
-              {% csrf_token %}
-              <input type="hidden" name="quantity" value="1">
-              <input type="hidden" name="size" value="{{ selected_size|default_if_none:'' }}">
-              <button
+              
+              <a href="{% url 'product_detail' product.slug %}"><button
                 type="submit"
-                class="w-full bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 disabled:opacity-80"
-                {% if not selected_size %}disabled{% endif %}
-              >
+                class="w-full bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 disabled:opacity-80">
                 Add to Cart
-            </button>
-            </form>
+            </button></a>
+           
 
             <button type="button"
         class="wishlist-toggle p-2 rounded-full hover:bg-gray-200 transition"
         data-product-id="{{ product.id }}">
   <i class="fa-heart w-5 h-5 transition {% if product.id in wishlist_products %}fas text-red-500{% else %}far text-gray-700{% endif %}"></i>
 </button>
-
-
 
           </div>  
         </div>

@@ -106,6 +106,7 @@ class Product(models.Model):
             discount = ((self.price - self.final_price_with_offer) / self.price) * 100
             return round(discount)
         return 0
+    
     @property
     def effective_discount_info(self):
         """
@@ -142,6 +143,7 @@ class Product(models.Model):
         base_price = self.price
         offer_discounts = []
 
+        
         # Active Product Offers
         for offer in self.product_offers.all():
             if offer.is_valid():
@@ -263,7 +265,6 @@ class Order(models.Model):
         ('OUT_FOR_DELIVERY', 'Out for Delivery'),
         ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
-        
     ]
 
     PAYMENT_METHOD_CHOICES = [
@@ -286,7 +287,7 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     # 🔽 Payment fields
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES,default='cod')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cod')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
@@ -303,6 +304,11 @@ class Order(models.Model):
     state = models.CharField(max_length=100)
     pincode = models.CharField(max_length=6)
     country = models.CharField(max_length=100, default='India')
+
+    # 🔽 NEWLY ADDED
+    coupon_code = models.CharField(max_length=20, blank=True, null=True)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"Order {self.order_id} by {self.user.email}"
@@ -388,3 +394,15 @@ class WalletTransaction(models.Model):
     transaction_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     description = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Coupon(models.Model):
+    code=models.CharField(max_length=20,unique=True)
+    discount_amount=models.DecimalField(max_digits=10,decimal_places=2)
+    minimum_order_amount=models.DecimalField(max_digits=10,decimal_places=2)
+    valid_from=models.DateTimeField()
+    valid_to=models.DateTimeField()
+    active=models.BooleanField(default=True)
+
+    def is_valid(self):
+        now=timezone.now()
+        return self.valid_from<=now<=self.valid_to and self.active

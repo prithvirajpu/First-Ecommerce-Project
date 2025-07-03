@@ -102,16 +102,24 @@
               </div>
 
               <div class="flex items-center space-x-4">
-                <div class="text-right w-20 flex-shrink-0">
+       <div class="text-right w-24 flex-shrink-0">
   {% if item.product.final_price < item.product.price %}
-    <span class="text-sm text-gray-500 line-through block">₹{{ item.product.price|floatformat:2 }}</span>
-<span class="text-xl font-bold text-green-600" id="item-total-{{ item.id }}">
-  ₹{{ item.discounted_price|multiply:item.quantity|floatformat:2 }}
-</span>
+    <span class="text-sm text-gray-500 line-through block">
+      ₹{{ item.product.price|floatformat:2 }}
+    </span>
+    <span class="text-xl font-bold text-green-600">
+      ₹{{ item.discounted_price|floatformat:2 }}
+    </span>
   {% else %}
-    <span class="text-xl font-bold text-gray-800">₹{{ item.product.price|floatformat:2 }}</span>
+    <span class="text-xl font-bold text-gray-800">
+      ₹{{ item.product.price|floatformat:2 }}
+    </span>
   {% endif %}
 </div>
+
+
+
+
 
 
                 <div class="quantity-control-group">
@@ -152,51 +160,49 @@
 
       <div class="lg:col-span-1">
         <div class="bg-white rounded-2xl shadow-xl p-8 sticky top-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
+  <h2 class="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
 
-         <div class="flex justify-between items-center">
-  <span class="text-gray-600">Subtotal</span>
-<span class="font-semibold text-gray-800" id="subtotal">₹{{ original_total|floatformat:2 }}</span>
+  <div class="flex justify-between items-center">
+    <span class="text-gray-600">Subtotal</span>
+    <span class="font-semibold text-gray-800">₹{{ original_total|floatformat:2 }}</span>
+  </div>
+
+  {% if total_offer > 0 %}
+  <div class="flex justify-between items-center">
+    <span class="text-gray-600">Offer Discount</span>
+    <span class="text-red-600 font-semibold">– ₹{{ total_offer|floatformat:2 }}</span>
+  </div>
+  {% endif %}
+
+  {% if total_discount > 0 %}
+  <div class="flex justify-between items-center">
+    <span class="text-gray-600">Discount</span>
+    <span class="text-red-600 font-semibold">– ₹{{ total_discount|floatformat:2 }}</span>
+  </div>
+  {% endif %}
+
+  <hr class="my-2 border-gray-200" />
+
+  <div class="flex justify-between items-center text-lg">
+    <span class="font-bold text-gray-800">Total</span>
+    <span class="font-bold text-gray-800">₹{{ grand_total|floatformat:2 }}</span>
+  </div>
+
+  <button
+    id="checkout-btn"
+    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 mt-6 shadow-lg"
+  >
+    Proceed to Checkout
+  </button>
+
+  <a
+    href="{% url 'user_product_list' %}"
+    class="w-full text-blue-600 hover:text-blue-700 font-medium py-2 block text-center"
+  >
+    Continue Shopping
+  </a>
 </div>
 
-<div class="flex justify-between items-center">
-  <span class="text-gray-600">Discount</span>
-  <span class="font-semibold text-red-600" id="discount-amount">
-  {% if total_discount > 0 %}– ₹{{ total_discount|floatformat:2 }}{% else %}₹0.00{% endif %}
-</span>
-
-</div>
-
-<div class="flex justify-between items-center">
-  <span class="text-gray-600">Offer</span>
-  <span class="font-semibold text-red-600">
-    {% if total_offer > 0 %}– ₹{{ total_offer|floatformat:2 }}{% else %}₹0.00{% endif %}
-  </span>
-</div>
-
-<hr class="border-gray-200" />
-
-<div class="flex justify-between items-center text-lg">
-  <span class="font-bold text-gray-800">Total</span>
-<span class="font-bold text-gray-800" id="total">₹{{ grand_total|floatformat:2 }}</span>
-</div>
-
-
-
-          <button
-            id="checkout-btn"
-            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 shadow-lg mb-4 block text-center"
-          >
-            Proceed to Checkout
-          </button>
-
-          <a
-            href="{% url 'user_product_list' %}"
-            class="w-full text-blue-600 hover:text-blue-700 font-medium py-2 transition-colors block text-center"
-          >
-            Continue Shopping
-          </a>
-        </div>
       </div>
       
     </div>

@@ -64,47 +64,18 @@
     <div class="admin-wrapper">
       <!-- Sidebar -->
       <nav class="sidebar">
-        <h4>Admin Panel</h4>
-        <a
-          href="{% url 'admin_dashboard' %}"
-          class="{% if request.path == '/myadmin/dashboard/' %}active{% endif %}"
-          >Dashboard</a
-        >
-        <a
-          href="{% url 'user_list' %}"
-          class="{% if request.path == '/myadmin/users/' %}active{% endif %}"
-          >Users</a
-        >
-        <a
-          href="{% url 'category_list' %}"
-          class="{% if request.path == '/myadmin/categories/' %}active{% endif %}"
-          >Categories</a
-        >
-        <a
-          href="{% url 'brand_list' %}"
-          class="{% if request.path == '/myadmin/brands/' %}active{% endif %}"
-          >Brands</a
-        >
-        <a
-          href="{% url 'product_list' %}"
-          class="{% if request.path == '/myadmin/products/' %}active{% endif %}"
-          >Products</a
-        >
-        <a
-          href="{% url 'list_offers' %}"
-          class="{% if request.path == '/myadmin/offers/' %}active{% endif %}"
-        >
-          Offers
-        </a>
-        <a
-          href="{% url 'admin_order_list' %}"
-          class="{% if request.path == '/myadmin/orders/' %}active{% endif %}"
-          >Orders</a
-        >
-        <a href="#" data-bs-toggle="modal" data-bs-target="#logoutModal"
-          >Logout</a
-        >
-      </nav>
+  <h4>Admin Panel</h4>
+  <a href="{% url 'admin_dashboard' %}" class="{% if request.path == '/myadmin/dashboard/' %}active{% endif %}">Dashboard</a>
+  <a href="{% url 'user_list' %}" class="{% if request.path == '/myadmin/users/' %}active{% endif %}">Users</a>
+  <a href="{% url 'category_list' %}" class="{% if request.path == '/myadmin/categories/' %}active{% endif %}">Categories</a>
+  <a href="{% url 'brand_list' %}" class="{% if request.path == '/myadmin/brands/' %}active{% endif %}">Brands</a>
+  <a href="{% url 'product_list' %}" class="{% if request.path == '/myadmin/products/' %}active{% endif %}">Products</a>
+  <a href="{% url 'list_offers' %}" class="{% if request.path == '/myadmin/offers/' %}active{% endif %}">Offers</a>
+  <a href="{% url 'admin_order_list' %}" class="{% if request.path == '/myadmin/orders/' %}active{% endif %}">Orders</a>
+  <a href="{% url 'admin_coupon_list' %}" class="{% if request.path == '/myadmin/coupon/' %}active{% endif %}">Coupons</a>
+  <a href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</a>
+</nav>
+
 
       <!-- Main Content -->
       <main class="content-area">

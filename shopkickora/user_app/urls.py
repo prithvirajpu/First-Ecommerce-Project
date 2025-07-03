@@ -50,5 +50,8 @@ urlpatterns = [
     path('wallet_page/',views.wallet_page,name='wallet_page'),
     path('payment-success/', views.payment_success, name='payment_success'),
     path('payment-failed/', views.payment_failed, name='payment_failed'),
+    path('apply-coupon/', views.apply_coupon, name='apply_coupon'),
+    # path('remove-coupon/', views.remove_coupon, name='remove_coupon'),
+
 
 ]
