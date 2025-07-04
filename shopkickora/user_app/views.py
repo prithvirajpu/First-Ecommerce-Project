@@ -584,27 +584,36 @@ def increment_quantity(request, item_id):
     except ProductSizeStock.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
 
-    # 🛑 Enforce max quantity limit
     if cart_item.quantity >= MAX_QUANTITY_PER_ITEM:
-        return JsonResponse({
-            'status': 'warning',
-            'message': f"Maximum 5 items allowed per product.",
-        })
+        return JsonResponse({'status': 'warning', 'message': "Maximum 5 items allowed per product."})
 
-    # 🛑 Enforce available stock
     if cart_item.quantity >= stock.quantity:
-        return JsonResponse({
-            'status': 'warning',
-            'message': f"Only {stock.quantity} items left in stock.",
-        })
+        return JsonResponse({'status': 'warning', 'message': f"Only {stock.quantity} items left in stock."})
 
     cart_item.quantity += 1
     cart_item.save()
 
-    cart_items = Cart.objects.filter(user=request.user)
-    subtotal = sum(item.product.price * item.quantity for item in cart_items)
-    total = sum(item.product.final_price * item.quantity for item in cart_items)
-    discount = subtotal - total
+    # Recalculate all totals
+    cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    subtotal = Decimal('0.00')
+    total = Decimal('0.00')
+    total_discount = Decimal('0.00')
+    total_offer = Decimal('0.00')
+
+    for item in cart_items:
+        original_price = item.product.price
+        manual_discounted_price = item.product.discounted_price
+        final_price = item.product.final_price
+
+        subtotal += original_price * item.quantity
+        total += final_price * item.quantity
+
+        if final_price < manual_discounted_price:
+            # Offer applied
+            total_offer += (original_price - final_price) * item.quantity
+        elif item.product.discount_percentage:
+            # Manual product discount
+            total_discount += (original_price - final_price) * item.quantity
 
     return JsonResponse({
         'status': 'success',
@@ -612,7 +621,8 @@ def increment_quantity(request, item_id):
         'new_quantity': cart_item.quantity,
         'item_total': float(cart_item.product.final_price * cart_item.quantity),
         'subtotal': float(subtotal),
-        'discount': float(discount),
+        'discount': float(total_discount),
+        'offer': float(total_offer),
         'grand_total': float(total),
         'available_stock': stock.quantity,
     })
@@ -631,16 +641,31 @@ def decrement_quantity(request, item_id):
     except ProductSizeStock.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Stock info not found'})
 
-    if cart_item.quantity > 1:
-        cart_item.quantity -= 1
-        cart_item.save()
-    else:
+    if cart_item.quantity <= 1:
         return JsonResponse({'status': 'warning', 'message': 'Minimum quantity is 1'})
 
-    cart_items = Cart.objects.filter(user=request.user)
-    subtotal = sum(item.product.price * item.quantity for item in cart_items)
-    total = sum(item.product.final_price * item.quantity for item in cart_items)
-    discount = subtotal - total
+    cart_item.quantity -= 1
+    cart_item.save()
+
+    # Recalculate all totals
+    cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    subtotal = Decimal('0.00')
+    total = Decimal('0.00')
+    total_discount = Decimal('0.00')
+    total_offer = Decimal('0.00')
+
+    for item in cart_items:
+        original_price = item.product.price
+        manual_discounted_price = item.product.discounted_price
+        final_price = item.product.final_price
+
+        subtotal += original_price * item.quantity
+        total += final_price * item.quantity
+
+        if final_price < manual_discounted_price:
+            total_offer += (original_price - final_price) * item.quantity
+        elif item.product.discount_percentage:
+            total_discount += (original_price - final_price) * item.quantity
 
     return JsonResponse({
         'status': 'success',
@@ -648,7 +673,8 @@ def decrement_quantity(request, item_id):
         'new_quantity': cart_item.quantity,
         'item_total': float(cart_item.product.final_price * cart_item.quantity),
         'subtotal': float(subtotal),
-        'discount': float(discount),
+        'discount': float(total_discount),
+        'offer': float(total_offer),
         'grand_total': float(total),
     })
 
@@ -939,49 +965,62 @@ def delete_address(request, address_id):
 @login_required
 def checkout(request):
     cart_items = Cart.objects.filter(user=request.user).select_related('product')
+    
+    if not cart_items.exists():
+        return redirect('cart_view')  # Prevent checkout on empty cart
+
     grand_total = Decimal('0.00')
-
-    addresses = Address.objects.filter(user=request.user)
-    default_address = addresses.filter(is_default=True).first()
-
     original_total = Decimal('0.00')
     total_discount = Decimal('0.00')
 
-
     for item in cart_items:
-        # Apply the best discount (manual + offer logic)
         discounted_price = item.product.final_price
-
-        # Attach for use in template
         item.discounted_price = discounted_price
         item.total_price = discounted_price * item.quantity
 
         grand_total += item.total_price
         original_total += item.product.price * item.quantity
         total_discount += (item.product.price - discounted_price) * item.quantity
-        request.session['cart_total'] = str(grand_total)
+
+    request.session['cart_total'] = str(grand_total)
+
+    addresses = Address.objects.filter(user=request.user)
+    default_address = addresses.filter(is_default=True).first()
+
+    shipping_charge = Decimal('0.00')
+
+    # Get applied coupon
+    coupon_code = request.session.get('applied_coupon_code')
+    coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
+
+    final_total = (grand_total + shipping_charge) - coupon_discount
+
+    # 🛑 Minimum amount check for Razorpay (₹1.00 = 100 paise)
+    if final_total < Decimal('1.00'):
+        # Clear any broken session coupon
+        request.session.pop('applied_coupon_code', None)
+        request.session.pop('coupon_discount', None)
+        return redirect('cart')  # or show a message
+
+    # ✅ Create Razorpay order
+    razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    razorpay_order = razorpay_client.order.create({
+        'amount': int(final_total * 100),  # in paise
+        'currency': 'INR',
+        'payment_capture': 1,
+    })
+
+    # Optionally clear previous razorpay session/order ID if stored
+    request.session['razorpay_order_id'] = razorpay_order['id']
+
     valid_coupons = Coupon.objects.filter(
         active=True,
         valid_from__lte=timezone.now(),
         valid_to__gte=timezone.now(),
         minimum_order_amount__lte=grand_total
-        )
+    )
+    print("Valid coupons:", valid_coupons)
 
-    # You can change this if you want shipping cost
-    shipping_charge = Decimal('0.00')
-        # Coupon from session (if any)
-    coupon_code = request.session.get('applied_coupon_code')
-    coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
-
-    final_total = (grand_total + shipping_charge)-coupon_discount
-
-    # Create Razorpay order
-    razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    razorpay_order = razorpay_client.order.create({
-        'amount': int(final_total * 100),  # Razorpay uses paise
-        'currency': 'INR',
-        'payment_capture': 1
-    })
 
     context = {
         'cart_items': cart_items,
@@ -990,7 +1029,7 @@ def checkout(request):
         'grand_total': grand_total,
         'original_total': original_total,
         'total_discount': total_discount,
-        'shipping': shipping_charge,
+        'shipping_charge': shipping_charge,
         'coupon_code': coupon_code,
         'coupon_discount': coupon_discount,
         'final_total': final_total,
@@ -1132,7 +1171,9 @@ def place_order(request):
         stock.save()
 
     # Clear cart
-    cart_items.delete()
+    if payment_method in ["cod", "wallet"]:
+        cart_items.delete()
+
 
     # Clear coupon session
     request.session.pop('applied_coupon_code', None)
@@ -1307,11 +1348,7 @@ def payment_success(request):
         razorpay_payment_id = data.get("razorpay_payment_id")
         razorpay_signature = data.get("razorpay_signature")
         order_id = data.get("order_id")
-        print("Incoming data:", data)
-        print("Looking for Order ID:", order_id)
-        print("Razorpay Order ID:", razorpay_order_id)
 
-        # Verify the Razorpay signature
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         params_dict = {
             'razorpay_order_id': razorpay_order_id,
@@ -1320,18 +1357,21 @@ def payment_success(request):
         }
 
         try:
-            # Will raise an error if verification fails
             client.utility.verify_payment_signature(params_dict)
 
-            # Payment is verified - update order
             order = Order.objects.get(id=order_id, razorpay_order_id=razorpay_order_id)
+
+            if order.payment_status == "paid":
+                return JsonResponse({"status": "already_paid", "order_id": order.id})
+
+            # Update order payment info
             order.payment_status = "paid"
             order.razorpay_payment_id = razorpay_payment_id
             order.razorpay_signature = razorpay_signature
-            order.status = "PENDING"  # or 'CONFIRMED' if you prefer
+            order.status = "CONFIRMED"
             order.save()
 
-            # Reduce stock and delete cart
+            # Reduce stock
             for item in order.order_items.all():
                 stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
                 stock.quantity -= item.quantity
@@ -1339,12 +1379,15 @@ def payment_success(request):
 
             # Clear user's cart
             Cart.objects.filter(user=order.user).delete()
+
             return JsonResponse({"status": "success", "order_id": order.id})
+
         except Exception as e:
             print("Signature verification failed:", e)
-            return JsonResponse({"status": "failed"})
+            return JsonResponse({"status": "failed"}, status=400)
 
     return JsonResponse({"status": "invalid"}, status=400)
+
 
 def payment_failed(request):
     return render(request,'user_app/payment_failed.html')

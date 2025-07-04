@@ -98,45 +98,7 @@ class Product(models.Model):
         if self.discount_percentage:
             return self.price - (self.price * self.discount_percentage / 100)
         return self.price
-
-    @property
-    def discount_percentage_effective(self):
-        """Returns discount % from offers only (product or category)."""
-        if self.final_price_with_offer < self.price:
-            discount = ((self.price - self.final_price_with_offer) / self.price) * 100
-            return round(discount)
-        return 0
     
-    @property
-    def effective_discount_info(self):
-        """
-        Determines whether to show a badge based on best discount source.
-        Returns:
-            - percentage: discount % to show
-            - label: 'OFF' if from offer, else None
-        """
-        base_price = Decimal(self.price)
-        product_discount = self.discount_percentage or 0
-
-        offer_discounts = []
-
-        for offer in self.product_offers.all():
-            if offer.is_valid():
-                offer_discounts.append(offer.discount_percentage)
-
-        if self.category:
-            for offer in self.category.category_offers.all():
-                if offer.is_valid():
-                    offer_discounts.append(offer.discount_percentage)
-
-        best_offer = max(offer_discounts) if offer_discounts else 0
-
-        if best_offer > product_discount:
-            return {'percentage': best_offer, 'label': 'OFF'}
-        
-        return {'percentage': None, 'label': None}
-
-
     @property
     def final_price_with_offer(self):
         """Price after product/category offer only (excluding direct product discount)."""
@@ -161,14 +123,7 @@ class Product(models.Model):
 
         return base_price
 
-
-    @property
-    def image_url(self):
-        try:
-            return self.image.url if self.image else None
-        except ValueError:
-            return None
-    
+    #compairing every offer and price - last price of product......
     @property
     def final_price(self):
         """
@@ -200,9 +155,49 @@ class Product(models.Model):
 
         # If no discounts, return original price
         return base_price
+    
+    
+    # how much % you saved from offers only
+    @property
+    def discount_percentage_effective(self):
+        if self.final_price_with_offer < self.price:
+            discount = ((self.price - self.final_price_with_offer) / self.price) * 100
+            return round(discount)
+        return 0
+    
+    # Decides whether to show a discount badge on the product.
+    @property
+    def effective_discount_info(self):
+       
+        product_discount = self.discount_percentage or 0
+
+        offer_discounts = []
+
+        for offer in self.product_offers.all():
+            if offer.is_valid():
+                offer_discounts.append(offer.discount_percentage)
+
+        if self.category:
+            for offer in self.category.category_offers.all():
+                if offer.is_valid():
+                    offer_discounts.append(offer.discount_percentage)
+
+        best_offer = max(offer_discounts) if offer_discounts else 0
+
+        if best_offer > product_discount:
+            return {'percentage': best_offer, 'label': 'OFF'}
+        
+        return {'percentage': None, 'label': None}
 
 
 
+    @property
+    def image_url(self):
+        try:
+            return self.image.url if self.image else None
+        except ValueError:
+            return None
+    
 
 class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')

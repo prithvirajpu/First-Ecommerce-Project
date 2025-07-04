@@ -8,7 +8,6 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
   <h2 class="text-3xl font-extrabold text-gray-900 mb-10">Checkout</h2>
 
-  <!-- Messages Display -->
   {% if messages %}
   <div class="mb-6 space-y-2">
     {% for message in messages %}
@@ -20,95 +19,87 @@
   {% endif %}
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Left Column: Address and Payment -->
+    <!-- Left Column -->
     <div class="space-y-6">
-      <!-- Address Section -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-        <h3 class="text-xl font-semibold text-gray-800 mb-6">Shipping Address</h3>
-        {% if addresses %}
-          <div class="space-y-4">
-            {% for addr in addresses %}
-            <div class="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
-              <input type="radio" name="selected_address" value="{{ addr.id }}" id="address_{{ addr.id }}" class="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500" {% if addr.is_default %}checked{% endif %}>
-              <label for="address_{{ addr.id }}" class="flex-1">
-                <p class="font-semibold text-gray-900">{{ addr.full_name }}</p>
-                <p class="text-gray-600">{{ addr.street }} {{ addr.district }} {{ addr.state }} - {{ addr.pincode }}</p>
-                <p class="text-gray-600">{{ addr.country }} | Mobile: {{ addr.mobile }}</p>
-              </label>
+      <form method="POST" action="{% url 'place_order' %}" id="place_order_form">
+        {% csrf_token %}
+        <!-- Address Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+          <h3 class="text-xl font-semibold text-gray-800 mb-6">Shipping Address</h3>
+          {% if addresses %}
+            <div class="space-y-4">
+              {% for addr in addresses %}
+              <div class="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
+                <input type="radio" name="selected_address" value="{{ addr.id }}" id="address_{{ addr.id }}" class="mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500" {% if addr.is_default %}checked{% endif %}>
+                <label for="address_{{ addr.id }}" class="flex-1">
+                  <p class="font-semibold text-gray-900">{{ addr.full_name }}</p>
+                  <p class="text-gray-600">{{ addr.street }} {{ addr.district }} {{ addr.state }} - {{ addr.pincode }}</p>
+                  <p class="text-gray-600">{{ addr.country }} | Mobile: {{ addr.mobile }}</p>
+                </label>
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
+          {% else %}
+            <p class="text-gray-500">No saved addresses found. Please add a new address below.</p>
+          {% endif %}
+
+          <div class="flex items-center gap-3 mt-6">
+            <input type="radio" name="selected_address" value="new" id="new_address_option" class="h-5 w-5 text-blue-600 focus:ring-blue-500">
+            <label for="new_address_option" class="font-semibold text-blue-600">Add a new address</label>
           </div>
-        {% else %}
-          <p class="text-gray-500">No saved addresses found. Please add a new address below.</p>
-        {% endif %}
-
-        <div class="flex items-center gap-3 mt-6">
-          <input type="radio" name="selected_address" value="new" id="new_address_option" class="h-5 w-5 text-blue-600 focus:ring-blue-500">
-          <label for="new_address_option" class="font-semibold text-blue-600">Add a new address</label>
         </div>
-      </div>
 
-      <!-- New Address Form -->
-      <div id="newAddressForm" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hidden">
-        <h3 class="text-xl font-semibold text-gray-800 mb-6">New Shipping Address</h3>
-        <form method="POST" action="{% url 'place_order' %}" id="place_order_form">
-          {% csrf_token %}
+        <!-- New Address Form -->
+        <div id="newAddressForm" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hidden">
+          <h3 class="text-xl font-semibold text-gray-800 mb-6">New Shipping Address</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input type="text" name="full_name" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
               <input type="text" name="mobile" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
+            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
               <input type="text" name="street" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">District</label>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">District</label>
               <input type="text" name="district" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">State</label>
               <input type="text" name="state" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
               <input type="text" name="pincode" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
               <input type="text" name="country" value="India" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
           </div>
-        </form>
-      </div>
-
-      <!-- Payment Method -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-        <h3 class="text-xl font-semibold text-gray-800 mb-6">Payment Method</h3>
-        <div class="space-y-4">
-          <label class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
-            <input type="radio" name="payment_method" value="wallet" required class="h-5 w-5 text-blue-600 focus:ring-blue-500">
-            <span class="text-gray-700">Pay with Wallet</span>
-          </label>
-          <label class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
-            <input type="radio" name="payment_method" value="cod" class="h-5 w-5 text-blue-600 focus:ring-blue-500">
-            <span class="text-gray-700">Cash on Delivery</span>
-          </label>
-          <label class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
-            <input type="radio" name="payment_method" value="razorpay" required class="h-5 w-5 text-blue-600 focus:ring-blue-500">
-            <span class="text-gray-700">Pay Online</span>
-          </label>
         </div>
-      </div>
+
+        <!-- Payment Method -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+          <h3 class="text-xl font-semibold text-gray-800 mb-6">Payment Method</h3>
+          <div class="space-y-4">
+            <label class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
+              <input type="radio" name="payment_method" value="wallet" required class="h-5 w-5 text-blue-600 focus:ring-blue-500">
+              <span class="text-gray-700">Pay with Wallet</span>
+            </label>
+            <label class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
+              <input type="radio" name="payment_method" value="cod" class="h-5 w-5 text-blue-600 focus:ring-blue-500">
+              <span class="text-gray-700">Cash on Delivery</span>
+            </label>
+            <label class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition">
+              <input type="radio" name="payment_method" value="razorpay" required class="h-5 w-5 text-blue-600 focus:ring-blue-500">
+              <span class="text-gray-700">Pay Online</span>
+            </label>
+          </div>
+        </div>
+      </form>
     </div>
 
-    <!-- Right Column: Order Summary and Coupon -->
+    <!-- Right Column -->
     <div class="space-y-6">
-      <!-- Order Summary -->
       <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
         <h3 class="text-xl font-semibold text-gray-800 mb-6">Order Summary</h3>
         <div class="overflow-x-auto">
@@ -127,9 +118,7 @@
               {% for item in cart_items %}
               <tr class="hover:bg-gray-50 transition">
                 <td class="py-3 font-medium text-gray-700">{{ item.product.name }}</td>
-                <td class="py-3">
-                  <img src="{{ item.product.images.first.image.url }}" class="w-12 h-12 object-cover rounded-md mx-auto">
-                </td>
+                <td class="py-3"><img src="{{ item.product.images.first.image.url }}" class="w-12 h-12 object-cover rounded-md mx-auto"></td>
                 <td class="py-3">{{ item.size }}</td>
                 <td class="py-3">{{ item.quantity }}</td>
                 <td class="py-3">₹{{ item.discounted_price }}</td>
@@ -148,13 +137,13 @@
           {% endif %}
           <p class="text-xl font-bold text-gray-800 border-t pt-3"><strong>Total:</strong> ₹{{ final_total }}</p>
         </div>
+
         <!-- Coupon Toggle Button -->
-        <button id="couponToggle" class="mt-4 w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition flex items-center justify-center">
+        <button id="couponToggle" type="button" class="mt-4 w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition flex items-center justify-center">
           <span>Apply Coupon</span>
-          {% if coupon_code %}
-            <span class="ml-2 text-green-600">✓ {{ coupon_code }}</span>
-          {% endif %}
+          {% if coupon_code %}<span class="ml-2 text-green-600">✓ {{ coupon_code }}</span>{% endif %}
         </button>
+
         <!-- Coupon Dropdown -->
         <div id="couponDropdown" class="hidden mt-2 bg-white rounded-lg shadow-lg p-3 border border-gray-100 max-w-xs">
           {% if valid_coupons %}
@@ -163,30 +152,28 @@
             {% for coupon in valid_coupons %}
             <li class="flex justify-between items-center border p-2 rounded bg-gray-50">
               <div>
-                <span class="font-semibold text-blue-700 text-xs">{{ coupon.code }}</span> - ₹{{ coupon.discount_amount }} off
+                <p class="font-semibold text-blue-700 text-xs">{{ coupon.code }}</p>
+                <p class="text-xs text-gray-500">₹{{ coupon.discount_amount }} off</p>
                 <p class="text-xs text-gray-500">Min: ₹{{ coupon.minimum_order_amount }}</p>
                 <p class="text-xs text-gray-500">Valid till: {{ coupon.valid_to|date:"M d, Y" }}</p>
               </div>
-              {% if coupon.code == coupon_code %}
               <form method="POST" action="{% url 'apply_coupon' %}">
                 {% csrf_token %}
                 <input type="hidden" name="coupon_code" value="{{ coupon.code }}">
+                {% if coupon.code == coupon_code %}
                 <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded text-xs font-medium hover:bg-red-600 transition">Remove</button>
-              </form>
-              {% else %}
-              <form method="POST" action="{% url 'apply_coupon' %}">
-                {% csrf_token %}
-                <input type="hidden" name="coupon_code" value="{{ coupon.code }}">
+                {% else %}
                 <button type="submit" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition">Apply</button>
+                {% endif %}
               </form>
-              {% endif %}
             </li>
             {% endfor %}
           </ul>
           {% else %}
-          <p class="text-gray-500 text-sm">No coupons available.</p>
+            <p class="text-gray-500 text-sm">No coupons available.</p>
           {% endif %}
         </div>
+
         <button type="submit" form="place_order_form" class="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-md">
           Place Order
         </button>
@@ -194,7 +181,6 @@
     </div>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -203,7 +189,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const newAddressOption = document.getElementById('new_address_option');
   const addressRadios = document.querySelectorAll('input[name="selected_address"]');
   const newAddressForm = document.getElementById('newAddressForm');
-  const checkoutForm = document.querySelector('form[action="{% url 'place_order' %}"]');
+  const checkoutForm = document.querySelector('#place_order_form');
   const couponToggle = document.getElementById('couponToggle');
   const couponDropdown = document.getElementById('couponDropdown');
 
@@ -219,7 +205,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   checkoutForm.addEventListener('submit', function (e) {
     const selected = document.querySelector('input[name="selected_address"]:checked');
-
     if (!selected) {
       e.preventDefault();
       showToast("Please add or select an address with phone number", "error");
@@ -230,7 +215,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const label = document.querySelector(`label[for="${selected.id}"]`);
       const labelText = label ? label.innerText : '';
       const mobileMatch = labelText.match(/Mobile:\s*(\d{10})/);
-
       if (!mobileMatch || mobileMatch[1].trim() === "") {
         e.preventDefault();
         showToast("Please add a valid phone number for the selected address", "error");
@@ -242,7 +226,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const fullName = document.querySelector('input[name="full_name"]').value.trim();
       const mobile = document.querySelector('input[name="mobile"]').value.trim();
       const street = document.querySelector('input[name="street"]').value.trim();
-
       if (!fullName || !mobile || !street || !/^\d{10}$/.test(mobile)) {
         e.preventDefault();
         showToast("Please fill in the new address form correctly", "error");

@@ -162,31 +162,32 @@
         <div class="bg-white rounded-2xl shadow-xl p-8 sticky top-8">
   <h2 class="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
 
-  <div class="flex justify-between items-center">
-    <span class="text-gray-600">Subtotal</span>
-    <span class="font-semibold text-gray-800">₹{{ original_total|floatformat:2 }}</span>
-  </div>
+ <div class="flex justify-between items-center">
+  <span class="text-gray-600">Subtotal</span>
+  <span class="font-semibold text-gray-800" id="subtotal">₹{{ original_total|floatformat:2 }}</span>
+</div>
 
-  {% if total_offer > 0 %}
-  <div class="flex justify-between items-center">
-    <span class="text-gray-600">Offer Discount</span>
-    <span class="text-red-600 font-semibold">– ₹{{ total_offer|floatformat:2 }}</span>
-  </div>
-  {% endif %}
+{% if total_offer > 0 %}
+<div class="flex justify-between items-center">
+  <span class="text-gray-600">Offer Discount</span>
+  <span class="text-red-600 font-semibold" id="offer-amount">– ₹{{ total_offer|floatformat:2 }}</span>
+</div>
+{% endif %}
 
-  {% if total_discount > 0 %}
-  <div class="flex justify-between items-center">
-    <span class="text-gray-600">Discount</span>
-    <span class="text-red-600 font-semibold">– ₹{{ total_discount|floatformat:2 }}</span>
-  </div>
-  {% endif %}
+{% if total_discount > 0 %}
+<div class="flex justify-between items-center">
+  <span class="text-gray-600">Discount</span>
+  <span class="text-red-600 font-semibold" id="discount-amount">– ₹{{ total_discount|floatformat:2 }}</span>
+</div>
+{% endif %}
 
-  <hr class="my-2 border-gray-200" />
+<hr class="my-2 border-gray-200" />
 
-  <div class="flex justify-between items-center text-lg">
-    <span class="font-bold text-gray-800">Total</span>
-    <span class="font-bold text-gray-800">₹{{ grand_total|floatformat:2 }}</span>
-  </div>
+<div class="flex justify-between items-center text-lg">
+  <span class="font-bold text-gray-800">Total</span>
+  <span class="font-bold text-gray-800" id="total">₹{{ grand_total|floatformat:2 }}</span>
+</div>
+
 
   <button
     id="checkout-btn"
@@ -234,7 +235,8 @@
     </div>
   </div>
 </body>
-{% endblock %} {% block extra_js %}
+{% endblock %} 
+{% block extra_js %}
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -280,6 +282,11 @@
               const discountEl = document.getElementById("discount-amount");
               if (discountEl) {
                 discountEl.textContent = `– ₹${parseFloat(data.discount).toFixed(2)}`;
+              }
+
+              const offerEl = document.getElementById("offer-amount");
+              if (offerEl && data.offer !== undefined) {
+                offerEl.textContent = `– ₹${parseFloat(data.offer).toFixed(2)}`;
               }
 
               const totalEl = document.getElementById("total");
@@ -349,6 +356,5 @@
     }
   });
 </script>
-
-
 {% endblock %}
+
