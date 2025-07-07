@@ -1,66 +1,70 @@
 {% extends 'user_app/base_user.html' %}
 {% load static %}
+
 {% block content %}
-<div class="flex flex-col lg:flex-row gap-6">
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-6">
 
-    <!-- Sidebar -->
-    <div class="lg:w-1/4">
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <nav class="space-y-2">
-                <a href="{% url 'user_profile' %}" class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                    <i data-lucide="user" class="w-5 h-5"></i>
-                    <span class="font-medium">Profile</span>
-                </a>
-                <a href="{% url 'user_order_list' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                    <span class="font-medium">Orders</span>
-                </a>
-                <a href="{% url 'wallet_page' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                    <i data-lucide="wallet" class="w-5 h-5"></i>
-                    <span class="font-medium">Wallet</span>
-                </a>
-                <a href="{% url 'address_view' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                    <i data-lucide="map-pin" class="w-5 h-5"></i>
-                    <span class="font-medium">Address</span>
-                </a>
-                <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                    <i data-lucide="lock" class="w-5 h-5"></i>
-                    <span class="font-medium">Password</span>
-                </a>
-                <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
-                    <i data-lucide="gift" class="w-5 h-5"></i>
-                    <span class="font-medium">Refer & Earn</span>
-                </a>
-            </nav>
+        <!-- Sidebar -->
+        <div class="lg:w-1/4">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <nav class="space-y-2">
+                    <a href="{% url 'user_profile' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <span class="font-medium">Profile</span>
+                    </a>
+                    <a href="{% url 'user_order_list' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="font-medium">Orders</span>
+                    </a>
+                    <a href="{% url 'wallet_page' %}" class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg text-blue-600 bg-blue-50 font-semibold">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                        <span class="font-medium">Wallet</span>
+                    </a>
+                    <a href="{% url 'address_view' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <span class="font-medium">Address</span>
+                    </a>
+                    <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <span class="font-medium">Password</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="gift" class="w-5 h-5"></i>
+                        <span class="font-medium">Refer & Earn</span>
+                    </a>
+                </nav>
+            </div>
         </div>
-    </div>
 
-    <!-- Wallet Section -->
-    <div class="lg:w-3/4">
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <h2 class="text-2xl font-bold mb-4">My Wallet</h2>
-            <p class="text-lg font-semibold mb-6">Current Balance: <span class="text-green-600">₹{{ wallet.balance }}</span></p>
+        <!-- Wallet Section -->
+        <div class="lg:w-3/4">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4">My Wallet</h2>
+                <p class="text-lg font-semibold mb-6">
+                    Current Balance: <span class="text-green-600">₹{{ wallet.balance }}</span>
+                </p>
 
-            <form method="POST" class="space-y-4 max-w-sm">
-                {% csrf_token %}
-                <div>
-                    <label for="amount" class="block mb-1 text-gray-700">Enter Amount (₹):</label>
-                    <input type="number" step="0.01" name="amount" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <button type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                    Add to Wallet
-                </button>
-            </form>
+                <form id="add-money-form" class="space-y-4 max-w-sm">
+                    {% csrf_token %}
+                    <div>
+                        <label for="amount" class="block mb-1 text-gray-700">Enter Amount (₹):</label>
+                        <input type="number" id="amount" name="amount" step="0.01" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                        Add to Wallet
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
- <!-- Transaction History Section -->
+<!-- Transaction History Section -->
 <div class="bg-white rounded-xl shadow-md p-6 mt-8">
     <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Transactions</h3>
-
     {% if transactions %}
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center border border-gray-200">
@@ -94,4 +98,121 @@
         <p class="text-gray-500">No transactions yet.</p>
     {% endif %}
 </div>
+<!-- Toast Elements -->
+<div id="wallet-toast-success" class="fixed bottom-6 right-6 z-50 hidden bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg">
+  Amount successfully added to wallet!
+</div>
+
+<div id="wallet-toast-error" class="fixed bottom-6 right-6 z-50 hidden bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg">
+  Something went wrong.
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(id, message) {
+    const toast = document.getElementById(id);
+    if (toast) {
+        toast.textContent = message;
+        toast.classList.remove("hidden");
+        setTimeout(() => {
+            toast.classList.add("hidden");
+        }, 3000);
+    }
+}
+
+document.getElementById("add-money-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const amount = document.getElementById("amount").value;
+    const csrfToken = getCookie('csrftoken');
+
+    if (!amount || parseFloat(amount) <= 0) {
+        showToast("wallet-toast-error", "Please enter a valid amount.");
+        return;
+    }
+
+    fetch("{% url 'create_wallet_order' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ amount: amount })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast("wallet-toast-error", data.error);
+            return;
+        }
+
+        const options = {
+            key: "{{ razorpay_key_id }}",
+            amount: data.amount,
+            currency: "INR",
+            name: "ShopKickora",
+            description: "Add to Wallet",
+            order_id: data.order_id,
+
+            handler: function (response) {
+                fetch("{% url 'verify_wallet_payment' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        showToast("wallet-toast-success", "₹" + amount + " successfully added to wallet!");
+                        setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                        showToast("wallet-toast-error", result.error || "Payment verification failed.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Verification error:", err);
+                    showToast("wallet-toast-error", "Something went wrong. Please try again.");
+                });
+            },
+
+            modal: {
+                ondismiss: function () {
+                    showToast("wallet-toast-error", "Payment was not completed.");
+                }
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+    })
+    .catch(() => {
+        showToast("wallet-toast-error", "Network error. Try again.");
+    });
+});
+</script>
 {% endblock %}

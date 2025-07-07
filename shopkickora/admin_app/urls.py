@@ -30,10 +30,13 @@ urlpatterns = [
     path('offers/add-category/',views.add_category_offer,name='add_category_offer'),
     path('offers/edit-product/<int:offer_id>/', views.edit_product_offer, name='edit_product_offer'),
     path('offers/edit-category/<int:offer_id>/', views.edit_category_offer, name='edit_category_offer'),
-    # path('remove-coupon/', views.remove_coupon, name='remove_coupon'),
+    path('offers/delete-product/<int:offer_id>/', views.delete_product_offer, name='delete_category_offer'),
+    path('offers/delete-category/<int:offer_id>/', views.delete_category_offer, name='delete_product_offer'),
     path('coupon/',views.admin_coupon_list,name='admin_coupon_list'),
     path('coupon/add-coupon/',views.add_coupon,name='add_coupon'),
     path('coupon/edit-coupon/<int:coupon_id>',views.edit_coupon,name='edit_coupon'),
-    
+    path('coupon/delete-coupon/<int:coupon_id>',views.toggle_coupon,name='toggle_coupon'),
+    path('sales-report/', views.sales_report, name='sales_report'),
+
 ]
 

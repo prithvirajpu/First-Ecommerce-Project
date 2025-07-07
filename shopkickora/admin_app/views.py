@@ -1,15 +1,18 @@
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from django.db import IntegrityError
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import AdminLoginForm, ProductOfferForm,CategoryOfferForm
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q,Sum, F, DecimalField, ExpressionWrapper, Count
 from user_app.models import (Coupon, CustomUser,Product, ProductImage, Category,
-        Brand, ProductSizeStock,Order,OrderItem,Wallet,ProductOffer, CategoryOffer, Product, Category)
+        Brand, ProductSizeStock,Order,OrderItem,Wallet,ProductOffer, CategoryOffer, Product, Category, WalletTransaction)
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
+from django.utils import timezone
 
 
 @never_cache
@@ -206,16 +209,19 @@ def add_product(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
-        price = request.POST.get('price')
+        price = Decimal(request.POST.get('price') or 0)
+
         category_id = request.POST.get('category')
         brand_id = request.POST.get('brand')
         images = request.FILES.getlist('images')
 
-        stock_6 = request.POST.get('stock_6','0')
-        stock_7 = request.POST.get('stock_7','0')
-        stock_8 = request.POST.get('stock_8','0')
+        stock_6 = int(request.POST.get('stock_6') or 0)
+        stock_7 = int(request.POST.get('stock_7') or 0)
+        stock_8 = int(request.POST.get('stock_8') or 0)
 
-        discount_percentage = request.POST.get('discount_percentage')
+        discount_str = request.POST.get('discount_percentage', '')
+        discount_percentage = int(discount_str) if discount_str.isdigit() else 0
+
 
         form_data = {
             'name': name,
@@ -333,8 +339,8 @@ def edit_product(request, product_id):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
-        price = request.POST.get('price')
-        discount_percentage = request.POST.get('discount_percentage', '0') or '0'
+        price = Decimal(request.POST.get('price')or 0)
+        discount_percentage =int( request.POST.get('discount_percentage', '0') or '0')
         category_id = request.POST.get('category')
         brand_id = request.POST.get('brand')
         new_images = request.FILES.getlist('images')
@@ -362,6 +368,9 @@ def edit_product(request, product_id):
             errors['name'] = "Enter a valid product name with at least one letter."
         elif name == "_" * len(name):
             errors['name'] = "Product name cannot be only underscores."
+        elif Product.objects.exclude(id=product_id).filter(name__iexact=name).exists():
+            errors['name'] = "The product name already exists"
+
 
         try:
             price_val = float(price)
@@ -662,6 +671,11 @@ def admin_update_order_status(request, order_id):
 
         if new_status in dict(Order.STATUS_CHOICES).keys():
             order.status = new_status
+
+            # ✅ Update payment status if delivered
+            if new_status == 'DELIVERED' and order.payment_method in ['cod', 'wallet']:
+                order.payment_status = 'paid'
+
             order.save()
             messages.success(request, f"Order status updated to {order.get_status_display()}.")
         else:
@@ -679,12 +693,30 @@ def approve_return(request, order_item_id):
         return redirect('admin_order_detail', order_id=item.order.id)
 
     item.is_return_approved = True
+    item.status = 'RETURN_ACCEPTED'
     item.save()
 
+    # ✅ Update stock
+    try:
+        stock_obj = ProductSizeStock.objects.get(product=item.product, size=item.size)
+        stock_obj.quantity += item.quantity
+        stock_obj.save()
+    except ProductSizeStock.DoesNotExist:
+        messages.warning(request, f"Stock entry for size {item.size} not found. Please add it manually.")
+
+    # ✅ Refund to wallet
     wallet, created = Wallet.objects.get_or_create(user=item.order.user)
     refund_amount = item.price * item.quantity
     wallet.balance += refund_amount
     wallet.save()
+
+    # ✅ Create wallet transaction log
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        amount=refund_amount,
+        transaction_type='CREDIT',
+        description=f"Refund for return: {item.product.name} (Size {item.size})"
+    )
 
     messages.success(request, f"Return approved and ₹{refund_amount} refunded to user's wallet.")
     return redirect('admin_order_detail', order_id=item.order.id)
@@ -749,6 +781,15 @@ def edit_product_offer(request, offer_id):
         'offer': offer,  # if you're using offer.name or ID in template
     })
 
+@user_passes_test(lambda x:x.is_superuser)
+def delete_product_offer(request,offer_id):
+    val=get_object_or_404(ProductOffer,id=offer_id)
+    val.is_active=not val.is_active
+    val.save()
+    status='enabled' if val.is_active else 'disabled'
+    messages.success(request,f'Offer has been {status} successfully.')
+    return redirect('list_offers')
+
 
 @user_passes_test(lambda x: x.is_superuser)
 def add_category_offer(request):
@@ -790,31 +831,106 @@ def edit_category_offer(request, offer_id):
         'offer': offer,
     })
 
+@user_passes_test(lambda x: x.is_superuser)
+def delete_category_offer(request,offer_id):
+    val=get_object_or_404(CategoryOffer,id=offer_id)
+    val.is_active=not val.is_active
+    val.save()
+    status='enabled' if val.is_active else 'disabled'
+    messages.success(request,f'Offer  has been {status} successfully')
+    return redirect('list_offers')
 
 @user_passes_test(lambda x: x.is_superuser)
 def admin_coupon_list(request):
     coupons=Coupon.objects.all().order_by('-valid_to')
     return render(request,'admin_app/admin_coupon_list.html',{'coupons':coupons})
 
-@user_passes_test(lambda x:x.is_superuser)
+@user_passes_test(lambda x: x.is_superuser)
 def add_coupon(request):
-    if request.method=='POST':
-        code=request.POST.get('code','').strip()
-        discount_amount=request.POST.get('discount_amount','').strip()
-        minimum_order_amount=request.POST.get('minimum_order_amount','').strip()
-        valid_from=request.POST.get('valid_from','').strip()
-        valid_to=request.POST.get('valid_to','').strip()
-        active=request.POST.get('active')=='on'
+    form={}
+    error = {}
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        discount_amount = request.POST.get('discount_amount', '').strip()
+        minimum_order_amount = request.POST.get('minimum_order_amount', '').strip()
+        valid_from = request.POST.get('valid_from', '').strip()
+        valid_to = request.POST.get('valid_to', '').strip()
+        active = request.POST.get('active') == 'on'
 
-        Coupon.objects.create(code=code,discount_amount=discount_amount,
-        minimum_order_amount=minimum_order_amount,valid_from=valid_from,valid_to=valid_to,active=active)
-        messages.success(request,'Coupon created successfully.')
-        return redirect('admin_coupon_list')
-    return render(request,'admin_app/admin_add_coupon.html')
+        # CODE validation
+        if not code:
+            error['code'] = 'Coupon code is required.'
+        elif re.fullmatch(r'_+', code):
+            error['code'] = 'Coupon code cannot be only underscores.'
+        elif code.isdigit():
+            error['code'] = 'Coupon code cannot be only digits.'
+        elif not re.match(r'^[A-Za-z0-9_-]+$', code):
+            error['code'] = 'Coupon code can only contain letters, numbers, dashes, and underscores.'
+
+        # DISCOUNT_AMOUNT validation
+        if not discount_amount:
+            error['discount_amount'] = 'Discount amount is required.'
+        else:
+            try:
+                discount_amount = float(discount_amount)
+                if discount_amount <= 0:
+                    error['discount_amount'] = 'Discount must be greater than zero.'
+            except ValueError:
+                error['discount_amount'] = 'Discount must be a number.'
+
+        # MINIMUM_ORDER_AMOUNT validation
+        if not minimum_order_amount:
+            error['minimum_order_amount'] = 'Minimum order amount is required.'
+        else:
+            try:
+                minimum_order_amount = float(minimum_order_amount)
+                if minimum_order_amount <= 0:
+                    error['minimum_order_amount'] = 'Minimum order must be greater than zero.'
+            except ValueError:
+                error['minimum_order_amount'] = 'Minimum order must be a number.'
+
+        # DATE validation
+        date_format = '%Y-%m-%d'
+        try:
+            valid_from_date = datetime.strptime(valid_from, date_format)
+        except ValueError:
+            error['valid_from'] = 'Invalid start date format (YYYY-MM-DD).'
+
+        try:
+            valid_to_date = datetime.strptime(valid_to, date_format)
+        except ValueError:
+            error['valid_to'] = 'Invalid end date format (YYYY-MM-DD).'
+
+        # Compare dates only if both are valid
+        if 'valid_from' not in error and 'valid_to' not in error:
+            if valid_to_date < valid_from_date:
+                error['valid_to'] = 'End date cannot be before start date.'
+        
+        # Final creation if no errors
+        if not error:
+            Coupon.objects.create(
+                code=code,
+                discount_amount=discount_amount,
+                minimum_order_amount=minimum_order_amount,
+                valid_from=valid_from_date,
+                valid_to=valid_to_date,
+                active=active
+            )
+            messages.success(request, 'Coupon created successfully.')
+            return redirect('admin_coupon_list')
+        form={'code':code,
+                'discount_amount':discount_amount,
+                'minimum_order_amount':minimum_order_amount,
+                'valid_from':valid_from_date,
+                'valid_to':valid_to_date,
+                'active':active}
+
+    return render(request, 'admin_app/admin_add_coupon.html', {'error': error,'form':form})
 
 @user_passes_test(lambda x:x.is_superuser)
 def edit_coupon(request,coupon_id):
     coupon=get_object_or_404(Coupon,id=coupon_id)
+    error={}
     if request.method=="POST":
         code=request.POST.get('code','').strip()
         discount_amount=request.POST.get('discount_amount','').strip()
@@ -823,17 +939,43 @@ def edit_coupon(request,coupon_id):
         valid_to=request.POST.get('valid_to','').strip()
         active=True if request.POST.get('is_active') else False
         if Coupon.objects.exclude(id=coupon_id).filter(code__iexact=code).exists():
-            messages.error(request,'Another coupon with this code already exists')
+            error['exist']='This is already exist.'
+        if not code:
+            error['code']='"Coupon code is required.'
+        elif re.fullmatch(r'_+',code):
+            error['code']="Coupon code can't be only underscores. "
+        elif code.isdigit():
+            error['code']="Coupon code can't be only digits"
+        if not discount_amount:
+            error['discount_amount']='Discount amount is required.'
         else:
-            coupon.code=code
-            coupon.discount_amount=discount_amount
-            coupon.minimum_order_amount=minimum_order_amount
-            coupon.valid_from=valid_from
-            coupon.valid_to=valid_to
-            coupon.active=active
-            coupon.save()
-            messages.success(request,'Coupon updated successfully.')
-            return redirect('admin_coupon_list')
+            try:
+                discount_amount=float(discount_amount)
+                if discount_amount<0:
+                    error['discount_amount']='Discount amount should be more than 0'
+            except ValueError:
+                error['discount_amount']='Discount amount should be number'
+        if not discount_amount:
+            error['discount_amount']='Discount amount is required.'
+        else:
+            try:
+                minimum_order_amount=float(minimum_order_amount)
+                if minimum_order_amount<0:
+                    error['minimum_order_amount']='Discount amount should be more than 0'
+            except ValueError:
+                error['minimum_order_amount']='Discount amount should be number'
+        
+
+        coupon.code=code
+        coupon.discount_amount=discount_amount
+        coupon.minimum_order_amount=minimum_order_amount
+        coupon.valid_from=valid_from
+        coupon.valid_to=valid_to
+        coupon.active=active
+        coupon.save()       
+
+        messages.success(request,'Coupon updated successfully.')
+        return redirect('admin_coupon_list')
     form={
         'code':coupon.code,
         'discount_amount':coupon.discount_amount,
@@ -842,7 +984,65 @@ def edit_coupon(request,coupon_id):
             'valid_to':coupon.valid_to,
            'active': coupon.active
     }
-    return render(request,'admin_app/admin_edit_coupon.html',{'form':form,'coupon':coupon})
+    return render(request,'admin_app/admin_edit_coupon.html',{'form':form,'coupon':coupon,'error':error})
+
+@user_passes_test(lambda x: x.is_superuser)
+def toggle_coupon(request,coupon_id):
+    val=get_object_or_404(Coupon,id=coupon_id)
+    val.active=not val.active
+    val.save()
+    status='Disabled' if val.active else 'Enabled'
+    messages.success(request,f'Coupon has been {status} successfully.')
+    return redirect('admin_coupon_list')
+
+@user_passes_test(lambda x: x.is_superuser)
+def sales_report(request):
+    today=timezone.now()
+    filter_type=request.GET.get('filter','today')
+    from_date=request.GET.get('from_date')
+    to_date=request.GET.get('to_date')
+
+    start_date=end_date=today
+    if filter_type=='today':
+        start_date=end_date=today
+    elif filter_type=='week':
+        start_date=today-timedelta(days=7)
+        end_date=today
+    elif filter_type=='month':
+        start_date=today.replace(day=1)
+        end_date=today
+    elif filter_type == 'year':
+        start_date = today.replace(month=1, day=1)
+        end_date = today
+    orders = Order.objects.filter(
+            created_at__date__range=(start_date, end_date),
+            payment_status='paid',
+            status='DELIVERED'
+        )
+
+    total_orders = orders.count()
+    total_discount = orders.aggregate(total=Sum('coupon_discount'))['total'] or 0
+    total_order_amount = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    order_items = OrderItem.objects.filter(order__in=orders)
+    total_quantity = order_items.aggregate(qty=Sum('quantity'))['qty'] or 0
+    total_item_sales = order_items.annotate(
+        total_price=ExpressionWrapper(F('quantity') * F('price'), output_field=DecimalField())
+    ).aggregate(sales=Sum('total_price'))['sales'] or 0
+
+    context = {
+            'orders': orders,
+            'total_orders': total_orders,
+            'total_discount': total_discount,
+            'total_order_amount': total_order_amount,
+            'total_quantity': total_quantity,
+            'total_item_sales': total_item_sales,
+            'filter_type': filter_type,
+            'from_date': start_date,
+            'to_date': end_date,
+        }
+    return render(request, 'admin_app/sales_report.html', context)
+
 
 def admin_logout(request):
     logout(request)

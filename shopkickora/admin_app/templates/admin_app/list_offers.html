@@ -30,7 +30,7 @@
       <th>Start</th>
       <th>End</th>
       <th>Status</th>
-      <th>Edit</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -46,14 +46,22 @@
       <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
       <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
       <td>
-        {% if offer.is_valid %}
+        {% if offer.is_active and offer.is_valid %}
           <span class="badge bg-success">Active</span>
+        {% elif not offer.is_active %}
+          <span class="badge bg-danger">Disabled</span>
         {% else %}
-          <span class="badge bg-secondary">Inactive</span>
+          <span class="badge bg-secondary">Expired</span>
         {% endif %}
       </td>
       <td>
         <a href="{% url 'edit_product_offer' offer.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+        <a href="#"
+           class="btn btn-sm {% if offer.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} toggle-offer-status-btn"
+           data-url="{% url 'delete_category_offer' offer.id %}"
+           data-action="{% if offer.is_active %}deactivate{% else %}activate{% endif %}">
+           {% if offer.is_active %}Disable{% else %}Enable{% endif %}
+        </a>
       </td>
     </tr>
     {% empty %}
@@ -72,7 +80,7 @@
       <th>Start</th>
       <th>End</th>
       <th>Status</th>
-      <th>Edit</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -87,14 +95,22 @@
       <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
       <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
       <td>
-        {% if offer.is_valid %}
+        {% if offer.is_active and offer.is_valid %}
           <span class="badge bg-success">Active</span>
+        {% elif not offer.is_active %}
+          <span class="badge bg-danger">Disabled</span>
         {% else %}
-          <span class="badge bg-secondary">Inactive</span>
+          <span class="badge bg-secondary">Expired</span>
         {% endif %}
       </td>
       <td>
         <a href="{% url 'edit_category_offer' offer.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+        <a href="#"
+           class="btn btn-sm {% if offer.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} toggle-offer-status-btn"
+           data-url="{% url 'delete_category_offer' offer.id %}"
+           data-action="{% if offer.is_active %}deactivate{% else %}activate{% endif %}">
+           {% if offer.is_active %}Disable{% else %}Enable{% endif %}
+        </a>
       </td>
     </tr>
     {% empty %}
@@ -102,4 +118,44 @@
     {% endfor %}
   </tbody>
 </table>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="offerConfirmModal" tabindex="-1" aria-labelledby="offerConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="offerConfirmModalLabel">Confirm Action</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to <span id="offerActionText"></span> this offer?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="#" id="offerConfirmBtn" class="btn btn-primary">Yes, proceed</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = new bootstrap.Modal(document.getElementById("offerConfirmModal"));
+    const actionTextSpan = document.getElementById("offerActionText");
+    const confirmBtn = document.getElementById("offerConfirmBtn");
+
+    document.querySelectorAll(".toggle-offer-status-btn").forEach(function (button) {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        const url = this.getAttribute("data-url");
+        const action = this.getAttribute("data-action");
+        actionTextSpan.textContent = action;
+        confirmBtn.setAttribute("href", url);
+        modal.show();
+      });
+    });
+  });
+</script>
 {% endblock %}

@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+import uuid
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
@@ -18,7 +19,15 @@ class CustomUser(AbstractUser):
     profile_image=models.ImageField(upload_to='profiles/',default='profiles/default.png',null=True,blank=True)
     otp_code=models.CharField(max_length=6,blank=True,null=True)
     otp_created_at=models.DateTimeField(blank=True,null=True)
+    referral_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
 
+
+    def save(self, *args, **kwargs):
+            if not self.referral_code:
+                self.referral_code = str(uuid.uuid4()).split('-')[0].upper()
+            super().save(*args, **kwargs)
+            
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
@@ -70,6 +79,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percentage = models.PositiveIntegerField(
         default=0,
+        
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Enter discount percentage (0-100)"
     )    
@@ -106,12 +116,10 @@ class Product(models.Model):
         offer_discounts = []
 
         
-        # Active Product Offers
         for offer in self.product_offers.all():
             if offer.is_valid():
                 offer_discounts.append(offer.discount_percentage)
 
-        # Active Category Offers
         if self.category:
             for offer in self.category.category_offers.all():
                 if offer.is_valid():
@@ -126,34 +134,26 @@ class Product(models.Model):
     #compairing every offer and price - last price of product......
     @property
     def final_price(self):
-        """
-        ✅ FINAL PRICE to be used everywhere (template/view/cart/etc).
-        Chooses best among: manual discount, product offer, category offer.
-        """
+       
         base_price = Decimal(self.price)
         discounts = []
 
-        # Add manual discount (from Product model)
         if self.discount_percentage:
             discounts.append(self.discount_percentage)
 
-        # Add active product offers
         for offer in self.product_offers.all():
             if offer.is_valid():
                 discounts.append(offer.discount_percentage)
 
-        # Add active category offers
         if self.category:
             for offer in self.category.category_offers.all():
                 if offer.is_valid():
                     discounts.append(offer.discount_percentage)
 
-        # Apply the best (maximum) discount
         if discounts:
             best_discount = max(discounts)
             return round(base_price - (base_price * Decimal(best_discount) / 100), 2)
 
-        # If no discounts, return original price
         return base_price
     
     
@@ -281,17 +281,14 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
-    # 🔽 Payment fields
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cod')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
 
-    # 🔽 Optional cancel details
     cancel_reason = models.TextField(blank=True, null=True)
 
-    # 🔽 Shipping details
     full_name = models.CharField(max_length=255)
     mobile = models.CharField(max_length=15)
     street_address = models.TextField()
@@ -300,7 +297,6 @@ class Order(models.Model):
     pincode = models.CharField(max_length=6)
     country = models.CharField(max_length=100, default='India')
 
-    # 🔽 NEWLY ADDED
     coupon_code = models.CharField(max_length=20, blank=True, null=True)
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -389,6 +385,9 @@ class WalletTransaction(models.Model):
     transaction_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     description = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.wallet.user.email} - {self.transaction_type} ₹{self.amount} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
 
 class Coupon(models.Model):
     code=models.CharField(max_length=20,unique=True)

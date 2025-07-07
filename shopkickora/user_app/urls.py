@@ -51,7 +51,13 @@ urlpatterns = [
     path('payment-success/', views.payment_success, name='payment_success'),
     path('payment-failed/', views.payment_failed, name='payment_failed'),
     path('apply-coupon/', views.apply_coupon, name='apply_coupon'),
-    # path('remove-coupon/', views.remove_coupon, name='remove_coupon'),
+    path('apply-referral/', views.apply_referral, name='apply_referral'),
+    path('refer/', views.referal, name='referal'),
+    path('wallet/create-order/', views.create_wallet_order, name='create_wallet_order'),
+    path('wallet/verify-payment/', views.verify_wallet_payment, name='verify_wallet_payment'),
+
+
+
 
 
 ]

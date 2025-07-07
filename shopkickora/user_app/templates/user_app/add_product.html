@@ -25,9 +25,10 @@
       <div class="mb-3">
         <label for="name" class="form-label">Product Name</label>
         <input type="text" name="name" id="name" class="form-control" required value="{{ form_data.name|default:'' }}">
+       
         {% if errors.name %}
-          <p class="error-text">{{ errors.name }}</p>
-        {% endif %}
+            <p style="color: red;">{{ errors.name }}</p>
+          {% endif %}
       </div>
 
       <div class="mb-3">
@@ -48,7 +49,7 @@
             {% endfor %}
           </select>
           {% if errors.category %}
-            <p class="error-text">{{ errors.category }}</p>
+            <p style="color: red;">{{ errors.category }}</p>
           {% endif %}
         </div>
 
@@ -64,7 +65,7 @@
             {% endfor %}
           </select>
           {% if errors.brand %}
-            <p class="error-text">{{ errors.brand }}</p>
+            <p style="color: red;">{{ errors.brand }}</p>
           {% endif %}
         </div>
 
@@ -72,7 +73,7 @@
           <label for="price" class="form-label">Price ($)</label>
           <input type="number" name="price" id="price" step="0.01" class="form-control" required value="{{ form_data.price|default:'' }}">
           {% if errors.price %}
-            <p class="error-text">{{ errors.price }}</p>
+            <p style="color: red;">{{ errors.price }}</p>
           {% endif %}
         </div>
       </div>
@@ -84,6 +85,9 @@
             <div class="input-group">
               <span class="input-group-text">6</span>
               <input type="number" name="stock_6" min="0" class="form-control" placeholder="Qty for 6" value="{{ form_data.stock_S|default:'' }}">
+           {% if errors.stock_sizes %}
+            <p style="color: red;">{{ errors.stock_sizes }}</p>
+          {% endif %}
             </div>
           </div>
 
@@ -106,12 +110,9 @@
        value="{{ form_data.discount_percentage|default:0 }}"
        class="form-input" placeholder="0-100">
 {% if errors.discount_percentage %}
-    <p class="text-red-500 text-sm mt-1">{{ errors.discount_percentage }}</p>
+    <p style="color: red;">{{ errors.discount_percentage }}</p>
 {% endif %}
 
-        {% if errors.stock_sizes %}
-          <p class="error-text">{{ errors.stock_sizes }}</p>
-        {% endif %}
       </div>
 
       <div class="mb-3">

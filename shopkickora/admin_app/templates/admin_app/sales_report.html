@@ -1,0 +1,140 @@
+{% extends "user_app/base_admin.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Sales Report</h2>
+ 
+  </div>
+
+  <!-- Filter Form -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="filter" class="form-label">Filter by Period</label>
+          <select name="filter" id="filter" class="form-select" onchange="toggleCustomDate(this.value)">
+            <option value="today" {% if filter_type == 'today' %}selected{% endif %}>Today</option>
+            <option value="week" {% if filter_type == 'week' %}selected{% endif %}>Last 7 Days</option>
+            <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
+            <option value="year" {% if filter_type == 'year' %}selected{% endif %}>This Year</option>
+            <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+          </select>
+        </div>
+        <div class="col-md-5" id="custom-date-fields" style="{% if filter_type != 'custom' %}display: none;{% endif %}">
+          <div class="row g-2">
+            <div class="col">
+              <label for="from_date" class="form-label">From</label>
+              <input type="date" name="from_date" id="from_date" class="form-control" value="{{ from_date }}">
+            </div>
+            <div class="col">
+              <label for="to_date" class="form-label">To</label>
+              <input type="date" name="to_date" id="to_date" class="form-control" value="{{ to_date }}">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Summary</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4 col-lg-2">
+          <div class="p-3 bg-info bg-opacity-10 rounded">
+            <strong>Total Orders</strong><br>{{ total_orders }}
+          </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+          <div class="p-3 bg-success bg-opacity-10 rounded">
+            <strong>Total Quantity Sold</strong><br>{{ total_quantity }}
+          </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+          <div class="p-3 bg-primary bg-opacity-10 rounded">
+            <strong>Total Item Sales</strong><br>₹{{ total_item_sales|floatformat:2 }}
+          </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+          <div class="p-3 bg-warning bg-opacity-10 rounded">
+            <strong>Total Coupon Discount</strong><br>₹{{ total_discount|floatformat:2 }}
+          </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+          <div class="p-3 bg-success bg-opacity-10 rounded">
+            <strong>Final Amount Received</strong><br>₹{{ total_order_amount|floatformat:2 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Orders</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Order ID</th>
+              <th>User</th>
+              <th>Total Items</th>
+              <th>Coupon</th>
+              <th>Discount</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td>{{ order.created_at|date:"Y-m-d" }}</td>
+              <td>{{ order.order_id }}</td>
+              <td>{{ order.user.email|default:"N/A" }}</td>
+              <td>{{ order.order_items.count }}</td>
+              <td>{{ order.coupon_code|default:"-" }}</td>
+              <td>₹{{ order.coupon_discount|floatformat:2 }}</td>
+              <td>₹{{ order.total_amount|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">No orders found in this range.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for Custom Date Toggle -->
+<script>
+function toggleCustomDate(value) {
+  const customFields = document.getElementById("custom-date-fields");
+  customFields.style.display = value === 'custom' ? 'block' : 'none';
+}
+</script>
+
+<!-- Optional: Initialize tooltips or other Bootstrap JS features -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+});
+</script>
+{% endblock %}

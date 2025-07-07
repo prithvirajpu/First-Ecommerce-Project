@@ -67,6 +67,7 @@
   <h4>Admin Panel</h4>
   <a href="{% url 'admin_dashboard' %}" class="{% if request.path == '/myadmin/dashboard/' %}active{% endif %}">Dashboard</a>
   <a href="{% url 'user_list' %}" class="{% if request.path == '/myadmin/users/' %}active{% endif %}">Users</a>
+  <a href="{% url 'sales_report' %}" class="{% if request.path == '/myadmin/sales-report/' %}active{% endif %}">Sales</a>
   <a href="{% url 'category_list' %}" class="{% if request.path == '/myadmin/categories/' %}active{% endif %}">Categories</a>
   <a href="{% url 'brand_list' %}" class="{% if request.path == '/myadmin/brands/' %}active{% endif %}">Brands</a>
   <a href="{% url 'product_list' %}" class="{% if request.path == '/myadmin/products/' %}active{% endif %}">Products</a>

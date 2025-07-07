@@ -372,8 +372,8 @@ def user_product_list(request):
         'category': category,
         'sort': sort,
         'product_count': product_count,
-        'sizes_list': ['6', '7', '8'],  # ✅ This replaces the need for 'split'
-        'selected_size': selected_size,  # ✅ Keep track of current selection
+        'sizes_list': ['6', '7', '8'], 
+        'selected_size': selected_size,  
         'categories': categories,
         'brands': brands,
         'selected_brands': brand_ids,
@@ -389,17 +389,14 @@ def user_product_list(request):
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
 
-    # Get related products from the same category
     related_products = Product.objects.filter(
         category=product.category
     ).exclude(id=product.id)[:4]
 
-    # Get available sizes (with stock > 0)
     sizes = ProductSizeStock.objects.filter(
         product=product, quantity__gt=0
     ).values_list('size', flat=True).distinct()
 
-    # Optional: If you still want a label (though '6' is already display-friendly)
     size_choices = dict(ProductSizeStock.SIZE_CHOICES)
 
     return render(request, 'user_app/product_detail.html', {
@@ -1019,8 +1016,6 @@ def checkout(request):
         valid_to__gte=timezone.now(),
         minimum_order_amount__lte=grand_total
     )
-    print("Valid coupons:", valid_coupons)
-
 
     context = {
         'cart_items': cart_items,
@@ -1036,7 +1031,6 @@ def checkout(request):
         'has_addresses': addresses.exists(),
         'valid_coupons': valid_coupons,
 
-        # Razorpay
         'razorpay_key': settings.RAZORPAY_KEY_ID,
         'razorpay_order': razorpay_order,
     }
@@ -1336,8 +1330,83 @@ def wallet_page(request):
 
     return render(request, 'user_app/wallet.html', {
         'wallet': wallet,
-        'transactions': transactions  # Pass this to template
+        'transactions': transactions,  # Pass this to template
+        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
     })
+
+
+
+
+@csrf_exempt
+@login_required
+def create_wallet_order(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        amount = Decimal(data.get("amount", "0.00"))
+
+        if amount <= 0:
+            return JsonResponse({'error': 'Invalid amount'})
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        razorpay_order = client.order.create({
+            'amount': int(amount * 100),
+            'currency': 'INR',
+            'payment_capture': 1
+        })
+
+        request.session['wallet_order_id'] = razorpay_order['id']
+        request.session['wallet_amount'] = str(amount)
+
+        return JsonResponse({
+            'order_id': razorpay_order['id'],
+            'amount': int(amount * 100)
+        })
+    
+
+@csrf_exempt
+@login_required
+def verify_wallet_payment(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        order_id = data.get('razorpay_order_id')
+        payment_id = data.get('razorpay_payment_id')
+        signature = data.get('razorpay_signature')
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature
+            })
+
+            if order_id != request.session.get('wallet_order_id'):
+                return JsonResponse({'success': False})
+
+            amount = Decimal(request.session.get('wallet_amount', '0.00'))
+
+            wallet = request.user.wallet
+            wallet.balance += amount
+            wallet.save()
+
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                amount=amount,
+                transaction_type='CREDIT',
+                description='Razorpay wallet top-up'
+            )
+
+            # Clear session
+            request.session.pop('wallet_order_id', None)
+            request.session.pop('wallet_amount', None)
+
+            return JsonResponse({'success': True})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
 
 @csrf_exempt
 def payment_success(request):
@@ -1448,7 +1517,68 @@ def apply_coupon(request):
 
     return redirect('checkout')
   
+@login_required
+def referal(request):
+    return render(request,'user_app/referal.html',{'referal':request.user.referral_code})
 
+@login_required
+def apply_referral(request):
+    if request.method == 'POST':
+        code = request.POST.get('referral_code', '').strip().upper()
+        user = request.user
+
+        # Check if already referred
+        if user.referred_by:
+            messages.error(request, 'Referral code already used.')
+            return redirect('user_dashboard')
+
+        # Prevent self-referral
+        if user.referral_code == code:
+            messages.error(request, 'You cannot use your own referral code.')
+            return redirect('user_dashboard')
+
+        # Find the referrer
+        try:
+            referrer = CustomUser.objects.get(referral_code=code)
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'Invalid referral code.')
+            return redirect('user_dashboard')
+
+        # Create or get wallets
+        referred_wallet, _ = Wallet.objects.get_or_create(user=user)
+        referrer_wallet, _ = Wallet.objects.get_or_create(user=referrer)
+
+        # Credit ₹100 to both wallets
+        reward_amount = Decimal('100.00')
+
+        referred_wallet.balance += reward_amount
+        referred_wallet.save()
+
+        referrer_wallet.balance += reward_amount
+        referrer_wallet.save()
+
+        # Create transactions
+        WalletTransaction.objects.create(
+            wallet=referred_wallet,
+            amount=reward_amount,
+            transaction_type='CREDIT',
+            description="Referral bonus received"
+        )
+
+        WalletTransaction.objects.create(
+            wallet=referrer_wallet,
+            amount=reward_amount,
+            transaction_type='CREDIT',
+            description=f"Referral bonus for referring {user.username}"
+        )
+
+        # Save referral link
+        user.referred_by = referrer
+        user.save()
+
+        messages.success(request, 'Referral applied! ₹100 added to your wallet and the referrer.')
+        return redirect('user_dashboard')
+    
 def custom_404(request, exception):
     return render(request, 'user_app/404.html', {
         'request_path': request.path,

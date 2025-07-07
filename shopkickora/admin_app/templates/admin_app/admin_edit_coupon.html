@@ -20,26 +20,41 @@
     <div class="mb-3">
       <label for="code" class="form-label">Coupon Code</label>
       <input type="text" name="code" id="code" class="form-control" required value="{{ form.code }}">
+      {% if error.code %}
+      <p style="color: red;" >{{error.code}}</p>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="discount" class="form-label">Discount Amount (₹)</label>
       <input type="number" name="discount_amount" id="discount" step="0.01" class="form-control" required value="{{ form.discount_amount }}">
+       {% if error.code %}
+      <p style="color: red;" >{{error.code}}</p>
+      {% endif %}
     </div>
 
     <div class="mb-3">
       <label for="min_amount" class="form-label">Minimum Order Amount (₹)</label>
       <input type="number" name="minimum_order_amount" id="min_amount" step="0.01" class="form-control" required value="{{ coupon.minimum_order_amount }}">
+       {% if error.code %}
+      <p style="color: red;" >{{error.code}}</p>
+      {% endif %}
     </div>
 
     <div class="row">
       <div class="col-md-6 mb-3">
         <label for="valid_from" class="form-label">Valid From</label>
         <input type="date" name="valid_from" id="valid_from" class="form-control" required value="{{ coupon.valid_from|date:'Y-m-d' }}">
+       {% if error.code %}
+      <p style="color: red;" >{{error.code}}</p>
+      {% endif %}
       </div>
       <div class="col-md-6 mb-3">
         <label for="valid_to" class="form-label">Valid To</label>
         <input type="date" name="valid_to" id="valid_to" class="form-control" required value="{{ coupon.valid_to|date:'Y-m-d' }}">
+         {% if error.code %}
+      <p style="color: red;" >{{error.code}}</p>
+      {% endif %}
       </div>
     </div>
 

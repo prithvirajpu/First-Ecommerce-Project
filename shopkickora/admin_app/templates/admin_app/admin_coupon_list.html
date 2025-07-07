@@ -47,14 +47,23 @@
           <td>{{ coupon.valid_from|date:"M d, Y" }}</td>
           <td>{{ coupon.valid_to|date:"M d, Y" }}</td>
           <td>
-            {% if coupon.active %}
+            {% if coupon.active and coupon.is_valid %}
               <span class="badge bg-success">Active</span>
+            {% elif not coupon.active %}
+              <span class="badge bg-danger">Disabled</span>
             {% else %}
-              <span class="badge bg-secondary">Inactive</span>
+              <span class="badge bg-secondary">Expired</span>
             {% endif %}
           </td>
           <td>
             <a href="{% url 'edit_coupon' coupon.id %}" class="btn btn-sm btn-primary">Edit</a>
+            <a href="#"
+              class="btn btn-sm {% if coupon.active %}btn-outline-danger{% else %}btn-outline-success{% endif %} toggle-coupon-status-btn"
+              data-url="{% url 'toggle_coupon' coupon.id %}"
+              data-action="{% if coupon.active %}disable{% else %}activate{% endif %}">
+              {% if coupon.active %}Disable{% else %}Activate{% endif %}
+            </a>
+
           </td>
         </tr>
         {% empty %}
@@ -66,4 +75,46 @@
     </table>
   </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="couponConfirmModal" tabindex="-1" aria-labelledby="couponConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="couponConfirmModalLabel">Confirm Action</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to <span id="couponActionText"></span> this coupon?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="#" id="couponConfirmBtn" class="btn btn-primary">Yes, proceed</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var couponModal = new bootstrap.Modal(document.getElementById("couponConfirmModal"));
+    var actionTextSpan = document.getElementById("couponActionText");
+    var confirmBtn = document.getElementById("couponConfirmBtn");
+
+    document.querySelectorAll(".toggle-coupon-status-btn").forEach(function (button) {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        var url = this.getAttribute("data-url");
+        var action = this.getAttribute("data-action");
+        actionTextSpan.textContent = action;
+        confirmBtn.setAttribute("href", url);
+        couponModal.show();
+      });
+    });
+  });
+</script>
+{% endblock %}
+

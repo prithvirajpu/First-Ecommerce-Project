@@ -112,6 +112,7 @@
         
   <body class="min-h-screen flex flex-col">
     <nav class="md:hidden hidden pb-4" id="mobile-menu">
+      
           <div class="flex flex-col space-y-2">
             <a
               href="{% url 'user_dashboard' %}"
@@ -143,9 +144,14 @@
             >
             {% endif %}
           </div>
+          
         </nav>
+        
       </div>
+      
+
     </header>
+    
 
     <section class="text-black py-12 sm:py-16">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -280,10 +286,53 @@
         </div>
       </div>
     </section>
+    <!-- Referral Code Modal -->
+<div id="referralModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-40 justify-center items-center">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold">Apply Referral Code</h2>
+      <button onclick="closeReferralModal()" class="text-gray-600 hover:text-red-500">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <form method="POST" action="{% url 'apply_referral' %}">
+      {% csrf_token %}
+      <input type="text" name="referral_code" placeholder="Enter referral code" required
+             class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+      <div class="flex justify-end space-x-2">
+        <button type="button" onclick="closeReferralModal()"
+                class="px-4 py-2 text-gray-600 hover:text-red-500">Cancel</button>
+        <button type="submit" class="btn-primary px-6 py-2">Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
     {% endblock %}
 
   
     {% block extra_js %}
+    <script>
+  function openReferralModal() {
+    const modal = document.getElementById("referralModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function closeReferralModal() {
+    const modal = document.getElementById("referralModal");
+    modal.classList.remove("flex");
+    modal.classList.add("hidden");
+  }
+
+  // Optional: ESC to close modal
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeReferralModal();
+    }
+  });
+</script>
+
 
     <script>
       const logoutBtn = document.getElementById("logoutBtn");
