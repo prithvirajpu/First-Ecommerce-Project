@@ -11,8 +11,6 @@ from requests import delete
 
 
 
-
-
 class CustomUser(AbstractUser):
     is_email_verified = models.BooleanField(default=True)
     is_blocked=models.BooleanField(default=False)
@@ -312,12 +310,13 @@ class OrderItem(models.Model):
         ('RETURN_REQUESTED', 'Return Requested'),
         ('RETURN_ACCEPTED', 'Return Accepted'),
         ]
+    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     size = models.CharField(max_length=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ORDERED')  # ✅ added
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ORDERED')
 
     is_return_requested = models.BooleanField(default=False)
     is_return_approved = models.BooleanField(default=False)
@@ -327,6 +326,7 @@ class OrderItem(models.Model):
     return_requested_at = models.DateTimeField(blank=True, null=True)
     is_return_rejected = models.BooleanField(default=False)
     return_rejected_reason = models.TextField(blank=True, null=True)
+
     def __str__(self):
         return f"{self.product.name} (x{self.quantity})"
 
@@ -367,24 +367,20 @@ class CategoryOffer(models.Model):
         now = timezone.now()
         return self.is_active and self.start_date <= now <= self.end_date
 
-class Wallet(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wallet')
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    created_at = models.DateTimeField( default=timezone.now)
 
-    def __str__(self):
-        return f"{self.user.email} - Wallet: ₹{self.balance}"
 
 class WalletTransaction(models.Model):
     TRANSACTION_TYPES = [
         ('CREDIT', 'Credit'),
         ('DEBIT', 'Debit'),
     ]
+
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     description = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return f"{self.wallet.user.email} - {self.transaction_type} ₹{self.amount} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 

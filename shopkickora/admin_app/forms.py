@@ -49,8 +49,6 @@ class ProductOfferForm(forms.ModelForm):
 
         return cleaned_data
 
-
-
     
 class CategoryOfferForm(forms.ModelForm):
     class Meta:

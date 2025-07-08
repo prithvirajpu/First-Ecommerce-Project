@@ -14,6 +14,13 @@ from django.views.decorators.cache import never_cache
 import re
 from django.utils import timezone
 
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from django.http import FileResponse
+
+
+
 
 @never_cache
 def admin_login(request):
@@ -361,7 +368,6 @@ def edit_product(request, product_id):
             'brand_id': brand_id,
         }
 
-        # --- Validation ---
         if not name:
             errors['name'] = 'Product name is required.'
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
@@ -421,7 +427,6 @@ def edit_product(request, product_id):
             if existing_images.count() != 3:
                 errors['format'] = "Exactly 3 images are required. Please upload 3 images."
 
-        # --- If Errors ---
         if errors:
             return render(request, 'user_app/edit_product.html', {
                 'product': product,
@@ -437,7 +442,6 @@ def edit_product(request, product_id):
                 }
             })
 
-        # --- Update Product ---
         product.name = name
         product.description = description
         product.price = price_val
@@ -465,7 +469,6 @@ def edit_product(request, product_id):
         messages.success(request, "Product updated successfully.")
         return redirect('product_list')
 
-    # --- GET Request (prefill form) ---
     form_data = {
         'name': product.name,
         'description': product.description,
@@ -512,6 +515,7 @@ def brand_list(request):
     brands=Brand.objects.all().order_by('-created_at')
     context={'brands':brands}
     return render(request,'user_app/brand_list.html',context)
+
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def add_brand(request):
@@ -672,7 +676,6 @@ def admin_update_order_status(request, order_id):
         if new_status in dict(Order.STATUS_CHOICES).keys():
             order.status = new_status
 
-            # ✅ Update payment status if delivered
             if new_status == 'DELIVERED' and order.payment_method in ['cod', 'wallet']:
                 order.payment_status = 'paid'
 
@@ -682,6 +685,7 @@ def admin_update_order_status(request, order_id):
             messages.error(request, "Invalid status selected.")
 
     return redirect('admin_order_detail', order_id=order_id)
+
 
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
@@ -696,7 +700,6 @@ def approve_return(request, order_item_id):
     item.status = 'RETURN_ACCEPTED'
     item.save()
 
-    # ✅ Update stock
     try:
         stock_obj = ProductSizeStock.objects.get(product=item.product, size=item.size)
         stock_obj.quantity += item.quantity
@@ -704,13 +707,11 @@ def approve_return(request, order_item_id):
     except ProductSizeStock.DoesNotExist:
         messages.warning(request, f"Stock entry for size {item.size} not found. Please add it manually.")
 
-    # ✅ Refund to wallet
     wallet, created = Wallet.objects.get_or_create(user=item.order.user)
     refund_amount = item.price * item.quantity
     wallet.balance += refund_amount
     wallet.save()
 
-    # ✅ Create wallet transaction log
     WalletTransaction.objects.create(
         wallet=wallet,
         amount=refund_amount,
@@ -751,7 +752,7 @@ def add_product_offer(request):
         if form.is_valid():
             offer = form.save(commit=False)
             offer.save()
-            form.save_m2m()  # This is necessary for ManyToManyField
+            form.save_m2m() 
             messages.success(request, 'Product offer added successfully.')
             return redirect('list_offers')
     else:
@@ -768,17 +769,16 @@ def edit_product_offer(request, offer_id):
     if request.method == 'POST':
         form = ProductOfferForm(request.POST, instance=offer)
         if form.is_valid():
-            form.save()  # or form.save(commit=False) + form.save_m2m() if needed
+            form.save() 
             messages.success(request, 'Product offer updated successfully.')
             return redirect('list_offers')
     else:
-        # ✅ Important: include the instance when showing the form initially
         form = ProductOfferForm(instance=offer)
     
     return render(request, 'admin_app/edit_offer.html', {
         'form': form,
         'offer_type': 'Product',
-        'offer': offer,  # if you're using offer.name or ID in template
+        'offer': offer, 
     })
 
 @user_passes_test(lambda x:x.is_superuser)
@@ -796,9 +796,9 @@ def add_category_offer(request):
     if request.method == "POST":
         form = CategoryOfferForm(request.POST)
         if form.is_valid():
-            offer = form.save(commit=False)  # First save the main object
+            offer = form.save(commit=False) 
             offer.save()
-            form.save_m2m()  # Then save the many-to-many relationship
+            form.save_m2m()  
             messages.success(request, 'Category offer added successfully.')
             return redirect('list_offers')
     else:
@@ -820,9 +820,8 @@ def edit_category_offer(request, offer_id):
     else:
         form = CategoryOfferForm(instance=offer)
 
-    # Like product offer: manually pass selected/unselected categories
     form.selected_categories = offer.categories.all()
-    from user_app.models import Category  # adjust if your Category model is elsewhere
+    from user_app.models import Category 
     form.unselected_categories = Category.objects.exclude(id__in=offer.categories.values_list('id', flat=True))
 
     return render(request, 'admin_app/edit_offer.html', {
@@ -857,7 +856,6 @@ def add_coupon(request):
         valid_to = request.POST.get('valid_to', '').strip()
         active = request.POST.get('active') == 'on'
 
-        # CODE validation
         if not code:
             error['code'] = 'Coupon code is required.'
         elif re.fullmatch(r'_+', code):
@@ -867,7 +865,6 @@ def add_coupon(request):
         elif not re.match(r'^[A-Za-z0-9_-]+$', code):
             error['code'] = 'Coupon code can only contain letters, numbers, dashes, and underscores.'
 
-        # DISCOUNT_AMOUNT validation
         if not discount_amount:
             error['discount_amount'] = 'Discount amount is required.'
         else:
@@ -878,7 +875,6 @@ def add_coupon(request):
             except ValueError:
                 error['discount_amount'] = 'Discount must be a number.'
 
-        # MINIMUM_ORDER_AMOUNT validation
         if not minimum_order_amount:
             error['minimum_order_amount'] = 'Minimum order amount is required.'
         else:
@@ -889,7 +885,6 @@ def add_coupon(request):
             except ValueError:
                 error['minimum_order_amount'] = 'Minimum order must be a number.'
 
-        # DATE validation
         date_format = '%Y-%m-%d'
         try:
             valid_from_date = datetime.strptime(valid_from, date_format)
@@ -901,12 +896,10 @@ def add_coupon(request):
         except ValueError:
             error['valid_to'] = 'Invalid end date format (YYYY-MM-DD).'
 
-        # Compare dates only if both are valid
         if 'valid_from' not in error and 'valid_to' not in error:
             if valid_to_date < valid_from_date:
                 error['valid_to'] = 'End date cannot be before start date.'
         
-        # Final creation if no errors
         if not error:
             Coupon.objects.create(
                 code=code,
@@ -997,52 +990,174 @@ def toggle_coupon(request,coupon_id):
 
 @user_passes_test(lambda x: x.is_superuser)
 def sales_report(request):
-    today=timezone.now()
-    filter_type=request.GET.get('filter','today')
-    from_date=request.GET.get('from_date')
-    to_date=request.GET.get('to_date')
+    today = timezone.now().date()
+    filter_type = request.GET.get('filter', 'today')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
 
-    start_date=end_date=today
-    if filter_type=='today':
-        start_date=end_date=today
-    elif filter_type=='week':
-        start_date=today-timedelta(days=7)
-        end_date=today
-    elif filter_type=='month':
-        start_date=today.replace(day=1)
-        end_date=today
+    if filter_type == 'today':
+        start_date = end_date = today
+    elif filter_type == 'week':
+        start_date = today - timedelta(days=7)
+        end_date = today
+    elif filter_type == 'month':
+        start_date = today.replace(day=1)
+        end_date = today
     elif filter_type == 'year':
         start_date = today.replace(month=1, day=1)
         end_date = today
-    orders = Order.objects.filter(
-            created_at__date__range=(start_date, end_date),
-            payment_status='paid',
-            status='DELIVERED'
-        )
+    elif filter_type == 'custom' and from_date and to_date:
+        try:
+            start_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = end_date = today
+    else:
+        start_date = end_date = today
 
-    total_orders = orders.count()
-    total_discount = orders.aggregate(total=Sum('coupon_discount'))['total'] or 0
-    total_order_amount = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    orders_queryset = Order.objects.filter(
+        created_at__date__range=(start_date, end_date),
+        payment_status='paid',
+        status='DELIVERED'
+    ).order_by('-created_at')
 
-    order_items = OrderItem.objects.filter(order__in=orders)
+    total_orders = orders_queryset.count()
+    total_discount = orders_queryset.aggregate(total=Sum('coupon_discount'))['total'] or 0
+    total_order_amount = orders_queryset.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    order_items = OrderItem.objects.filter(order__in=orders_queryset)
     total_quantity = order_items.aggregate(qty=Sum('quantity'))['qty'] or 0
     total_item_sales = order_items.annotate(
         total_price=ExpressionWrapper(F('quantity') * F('price'), output_field=DecimalField())
     ).aggregate(sales=Sum('total_price'))['sales'] or 0
 
+    paginator = Paginator(orders_queryset, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-            'orders': orders,
-            'total_orders': total_orders,
-            'total_discount': total_discount,
-            'total_order_amount': total_order_amount,
-            'total_quantity': total_quantity,
-            'total_item_sales': total_item_sales,
-            'filter_type': filter_type,
-            'from_date': start_date,
-            'to_date': end_date,
-        }
+        'page_obj': page_obj,
+        'orders': page_obj,
+        'total_orders': total_orders,
+        'total_discount': total_discount,
+        'total_order_amount': total_order_amount,
+        'total_quantity': total_quantity,
+        'total_item_sales': total_item_sales,
+        'filter_type': filter_type,
+        'from_date': from_date,
+        'to_date': to_date,
+    }
+
     return render(request, 'admin_app/sales_report.html', context)
 
+@user_passes_test(lambda x: x.is_superuser)
+def download_sales_report_pdf(request):
+    today = timezone.now().date()
+    filter_type = request.GET.get('filter', 'today')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+
+    if filter_type == 'today':
+        start_date = end_date = today
+    elif filter_type == 'week':
+        start_date = today - timedelta(days=7)
+        end_date = today
+    elif filter_type == 'month':
+        start_date = today.replace(day=1)
+        end_date = today
+    elif filter_type == 'year':
+        start_date = today.replace(month=1, day=1)
+        end_date = today
+    elif filter_type == 'custom' and from_date and to_date:
+        try:
+            start_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = end_date = today
+    else:
+        start_date = end_date = today
+
+    orders_queryset = Order.objects.filter(
+        created_at__date__range=(start_date, end_date),
+        payment_status='paid',
+        status='DELIVERED'
+    ).order_by('-created_at')
+
+    total_orders = orders_queryset.count()
+    total_discount = orders_queryset.aggregate(total=Sum('coupon_discount'))['total'] or 0
+    total_order_amount = orders_queryset.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    order_items = OrderItem.objects.filter(order__in=orders_queryset)
+    total_quantity = order_items.aggregate(qty=Sum('quantity'))['qty'] or 0
+    total_item_sales = order_items.annotate(
+        total_price=ExpressionWrapper(F('quantity') * F('price'), output_field=DecimalField())
+    ).aggregate(sales=Sum('total_price'))['sales'] or 0
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    y = height - 50
+
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(200, y, "Sales Report")
+    y -= 30
+
+    p.setFont("Helvetica", 12)
+    p.drawString(50, y, f"Filter: {filter_type.capitalize()}")
+    y -= 20
+    p.drawString(50, y, f"Date Range: {start_date} to {end_date}")
+    y -= 30
+
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Summary:")
+    y -= 20
+
+    p.setFont("Helvetica", 12)
+    p.drawString(60, y, f"Total Orders: {total_orders}")
+    y -= 20
+    p.drawString(60, y, f"Total Quantity Sold: {total_quantity}")
+    y -= 20
+    p.drawString(60, y, f"Total Item Sales (price × qty): ₹{total_item_sales}")
+    y -= 20
+    p.drawString(60, y, f"Total Order Amount: ₹{total_order_amount}")
+    y -= 20
+    p.drawString(60, y, f"Total Discount: ₹{total_discount}")
+    y -= 30
+
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(50, y, "Order ID")
+    p.drawString(120, y, "Date")
+    p.drawString(200, y, "User")
+    p.drawString(330, y, "Amount")
+    p.drawString(420, y, "Discount")
+    y -= 20
+
+    p.setFont("Helvetica", 10)
+    for order in orders_queryset:
+        if y < 80:
+            p.showPage()
+            y = height - 50
+
+            p.setFont("Helvetica-Bold", 11)
+            p.drawString(50, y, "Order ID")
+            p.drawString(120, y, "Date")
+            p.drawString(200, y, "User")
+            p.drawString(330, y, "Amount")
+            p.drawString(420, y, "Discount")
+            y -= 20
+            p.setFont("Helvetica", 10)
+
+        p.drawString(50, y, str(order.id))
+        p.drawString(120, y, order.created_at.strftime('%Y-%m-%d'))
+        p.drawString(200, y, str(order.user.first_name))
+        p.drawString(330, y, f"₹{order.total_amount}")
+        p.drawString(420, y, f"₹{order.coupon_discount}")
+        y -= 18
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="sales_report.pdf")
 
 def admin_logout(request):
     logout(request)
