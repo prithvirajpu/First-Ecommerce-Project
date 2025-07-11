@@ -1,5 +1,5 @@
 from django import forms
-from user_app.models import ProductOffer, CategoryOffer,Product
+from user_app.models import Category, ProductOffer, CategoryOffer,Product
 from django.utils import timezone
 
 class AdminLoginForm(forms.Form):
@@ -23,17 +23,24 @@ class ProductOfferForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        all_products = Product.objects.filter(is_deleted=False)
 
-        # instance is available during update
+        all_products = Product.objects.filter(
+            is_deleted=False,
+            category__is_deleted=False,
+            category__is_active=True,
+            brand__is_active=True
+        )
+
+        # Retain selected products in edit view
         selected_products = self.instance.products.all() if self.instance.pk else Product.objects.none()
         unselected_products = all_products.exclude(pk__in=selected_products)
 
-        # Store for template use
+        # Store for template access if needed
         self.selected_products = selected_products
         self.unselected_products = unselected_products
 
-        self.fields['products'].queryset = all_products
+        # Set filtered queryset
+        self.fields['products'].queryset = all_products | selected_products  # to avoid removing selected deleted ones
         self.fields['products'].required = False
 
     def clean(self):
@@ -49,6 +56,7 @@ class ProductOfferForm(forms.ModelForm):
 
         return cleaned_data
 
+
     
 class CategoryOfferForm(forms.ModelForm):
     class Meta:
@@ -59,8 +67,11 @@ class CategoryOfferForm(forms.ModelForm):
             'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'end_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields['categories'].queryset = Category.objects.filter(is_deleted=False, is_active=True)
         self.fields['categories'].required = False
 
     def clean(self):
@@ -71,7 +82,6 @@ class CategoryOfferForm(forms.ModelForm):
 
         if start and end and start >= end:
             self.add_error('start_date', "Start date must be before end date.")
-
         if not categories or categories.count() == 0:
             self.add_error('categories', "Please select at least one category.")
 

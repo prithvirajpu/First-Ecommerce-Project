@@ -1,48 +1,758 @@
 {% extends 'user_app/base_admin.html' %}
-{% load static %} 
+{% load static %}
 
 {% block title %}Edit Category - Admin Panel{% endblock %}
 
-
-
 {% block content %}
-<div class="d-flex justify-content-center">
-  <div class="form-section" style="width: 100%; max-width: 700px;">
-    <h3 class="mb-4">Edit Category</h3>
-
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="edit-category-container">
+    <!-- Page Header - Compact -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Category
+                </h1>
+                <p class="page-subtitle">Update category information</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'category_list' %}" class="btn-back">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Categories
+                </a>
+            </div>
         </div>
-      {% endfor %}
+    </div>
+
+    <!-- Messages - Better Aligned -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} custom-alert">
+            <div class="alert-content">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle alert-icon"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                {% else %}
+                    <i class="fas fa-info-circle alert-icon"></i>
+                {% endif %}
+                <span class="alert-text">{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
-    <form method="POST">
-      {% csrf_token %}
+    <!-- Form Section -->
+    <div class="form-section">
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-title">
+                    <i class="fas fa-tag me-2"></i>
+                    Category Information
+                </div>
+                <div class="form-subtitle">
+                    Update the details below to modify the category
+                </div>
+            </div>
+            <div class="form-body">
+                <form method="POST" class="category-form">
+                    {% csrf_token %}
+                    
+                    <!-- Category Name Field -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag me-2"></i>
+                            Category Name
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                name="name" 
+                                id="name" 
+                                class="form-input {% if errors.name %}error{% endif %}" 
+                                value="{{ form_data.name|default:category.name }}"
+                                placeholder="Enter category name..."
+                                required 
+                            />
+                            <div class="input-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                        </div>
+                        {% if errors.name %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.name }}
+                        </div>
+                        {% endif %}
+                    </div>
 
-      <div class="mb-3">
-        <label class="form-label">Category Name</label>
-        <input type="text" class="form-control" name="name" value="{{ form_data.name|default:category.name }}" required>
-        {% if errors.name %}<p class="error-text">{{ errors.name }}</p>{% endif %}
-      </div>
+                    <!-- Description Field -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>
+                            Description
+                            <span class="required">*</span>
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea 
+                                name="description" 
+                                id="description" 
+                                class="form-textarea {% if errors.description %}error{% endif %}" 
+                                rows="4"
+                                placeholder="Enter category description..."
+                                required
+                            >{{ form_data.description|default:category.description }}</textarea>
+                            <div class="textarea-icon">
+                                <i class="fas fa-align-left"></i>
+                            </div>
+                        </div>
+                        {% if errors.description %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.description }}
+                        </div>
+                        {% endif %}
+                        <div class="field-help">
+                            Provide a detailed description of what this category contains
+                        </div>
+                    </div>
 
-      <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea class="form-control" name="description" rows="4"  required>{{ form_data.description|default:category.description }}</textarea>
-        {% if errors.description %}<p class="error-text">{{ errors.description }}</p>{% endif %}
-      </div>
+                    <!-- Category Status Info -->
+                    <div class="info-section">
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Category Status
+                            </div>
+                            <div class="info-content">
+                                <div class="status-item">
+                                    <span class="status-label">Current Status:</span>
+                                    {% if not category.is_deleted %}
+                                    <span class="status-badge status-active">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-disabled">
+                                        <i class="fas fa-ban me-1"></i>
+                                        Disabled
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Created:</span>
+                                    <span class="status-value">{{ category.created_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                                {% if category.updated_at %}
+                                <div class="status-item">
+                                    <span class="status-label">Last Updated:</span>
+                                    <span class="status-value">{{ category.updated_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
 
-      <button type="submit" class="btn btn-primary">Update Category</button>
-      <a href="{% url 'category_list' %}" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
-  </div>
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-update">
+                            <i class="fas fa-save me-2"></i>
+                            Update Category
+                        </button>
+                        <a href="{% url 'category_list' %}" class="btn-cancel">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    .edit-category-container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Page Header - Compact and Dark */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 16px 25px;
+        margin: -30px -30px 20px -30px;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.2rem;
+    }
+
+    .page-subtitle {
+        margin: 2px 0 0 0;
+        opacity: 0.8;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-back:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.2);
+        color: white;
+    }
+
+    .btn-back i {
+        font-size: 0.8rem;
+    }
+
+    /* Messages - Better Aligned and Smaller */
+    .messages-container {
+        margin-bottom: 18px;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        font-size: 0.9rem;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .alert-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .alert-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .custom-close {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        padding: 4px;
+        margin-left: 10px;
+        flex-shrink: 0;
+    }
+
+    .custom-close:hover {
+        opacity: 1;
+    }
+
+    /* Alert Colors */
+    .alert-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .alert-danger, .alert-error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    /* Form Section */
+    .form-section {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        max-width: 700px;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 20px 25px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .form-title i {
+        font-size: 1rem;
+    }
+
+    .form-subtitle {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .form-body {
+        padding: 25px;
+    }
+
+    .category-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .form-label i {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .required {
+        color: #dc2626;
+        font-size: 0.8rem;
+    }
+
+    /* Input Styling */
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #475569;
+        box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
+        background: white;
+    }
+
+    .form-input.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    /* Textarea Styling */
+    .textarea-wrapper {
+        position: relative;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #475569;
+        box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
+        background: white;
+    }
+
+    .form-textarea.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .textarea-icon {
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .field-help {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    .error-message {
+        color: #dc2626;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .error-message i {
+        font-size: 0.75rem;
+    }
+
+    /* Info Section */
+    .info-section {
+        margin: 20px 0;
+    }
+
+    .info-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .info-header {
+        background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+        padding: 12px 16px;
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-header i {
+        font-size: 0.8rem;
+    }
+
+    .info-content {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .status-item:last-child {
+        border-bottom: none;
+    }
+
+    .status-label {
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.85rem;
+    }
+
+    .status-value {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .status-badge i {
+        font-size: 0.7rem;
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .status-disabled {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-update, .btn-cancel {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        justify-content: center;
+        min-width: 140px;
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-update:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    .btn-update i, .btn-cancel i {
+        font-size: 0.8rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 12px 16px;
+            margin: -30px -30px 16px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .page-title {
+            font-size: 1.2rem;
+            justify-content: center;
+        }
+
+        .form-card {
+            margin: 0 10px;
+        }
+
+        .form-header {
+            padding: 16px 20px;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-update, .btn-cancel {
+            min-width: auto;
+        }
+
+        .status-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll(".custom-alert");
+            alerts.forEach((alert) => {
+                alert.classList.remove("show");
+                alert.classList.add("fade");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
 
+        // Form validation enhancement
+        const form = document.querySelector('.category-form');
+        const nameInput = document.getElementById('name');
+        const descriptionInput = document.getElementById('description');
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const updateBtn = document.querySelector('.btn-update');
+                if (updateBtn) {
+                    updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+                    updateBtn.disabled = true;
+                }
+            });
+
+            // Real-time validation for name field
+            if (nameInput) {
+                nameInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    if (value.length > 0) {
+                        this.classList.remove('error');
+                        // Remove any existing error message
+                        const errorMsg = this.parentNode.parentNode.querySelector('.error-message');
+                        if (errorMsg) {
+                            errorMsg.remove();
+                        }
+                    }
+                });
+            }
+
+            // Real-time validation for description field
+            if (descriptionInput) {
+                descriptionInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    if (value.length > 0) {
+                        this.classList.remove('error');
+                        // Remove any existing error message
+                        const errorMsg = this.parentNode.parentNode.querySelector('.error-message');
+                        if (errorMsg) {
+                            errorMsg.remove();
+                        }
+                    }
+                });
+            }
+        }
+
+        // Add smooth focus transitions
+        const inputs = document.querySelectorAll('.form-input, .form-textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentNode.style.transform = 'translateY(-1px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentNode.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Character counter for description (optional enhancement)
+        if (descriptionInput) {
+            const maxLength = 500; // You can adjust this
+            const counter = document.createElement('div');
+            counter.className = 'char-counter';
+            counter.style.cssText = 'font-size: 0.75rem; color: #6b7280; text-align: right; margin-top: 4px;';
+            
+            function updateCounter() {
+                const remaining = maxLength - descriptionInput.value.length;
+                counter.textContent = `${descriptionInput.value.length}/${maxLength} characters`;
+                if (remaining < 50) {
+                    counter.style.color = '#dc2626';
+                } else {
+                    counter.style.color = '#6b7280';
+                }
+            }
+            
+            descriptionInput.parentNode.parentNode.appendChild(counter);
+            descriptionInput.addEventListener('input', updateCounter);
+            updateCounter(); // Initial count
+        }
+    });
 </script>
 {% endblock %}

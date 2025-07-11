@@ -276,7 +276,12 @@ def user_dashboard(request):
         logout(request)
         return redirect('login')
     
-    all_products = Product.objects.filter(is_deleted=False)
+    all_products = Product.objects.filter(
+        is_deleted=False,
+        category__is_deleted=False,
+        category__is_active=True,
+        brand__is_active=True,
+    )
     
     best_selling_products = random.sample(list(all_products), min(4, len(all_products))) if all_products else []
     
@@ -293,6 +298,7 @@ def user_dashboard(request):
         'wishlist_products': list(wishlist_products),  
     }
     return render(request, 'user_app/dashboard.html', context)
+
 
 
 @never_cache
@@ -325,7 +331,7 @@ def user_product_list(request):
         is_deleted=False,
         category__is_deleted=False,
         category__is_active=True,
-        brand__is_active=True
+        brand__is_active=True,
     )
 
     if category != 'all':
@@ -1023,6 +1029,7 @@ def checkout(request):
     return render(request, 'user_app/checkout.html', context)
 
 
+
 @login_required
 @transaction.atomic
 def place_order(request):
@@ -1039,6 +1046,7 @@ def place_order(request):
     if not cart_items.exists():
         return redirect('/checkout/?error=empty_cart')
 
+    # Stock check
     for item in cart_items:
         try:
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
@@ -1047,6 +1055,7 @@ def place_order(request):
         except ProductSizeStock.DoesNotExist:
             return redirect('/checkout/?stock_error=true')
 
+    # Address handling
     if selected_address != 'new':
         try:
             address = Address.objects.get(id=int(selected_address), user=request.user)
@@ -1076,24 +1085,24 @@ def place_order(request):
             is_default=False
         )
 
-    grand_total = Decimal('0.00')
-    for item in cart_items:
-        grand_total += item.product.final_price * item.quantity
-
+    # Price calculations
+    grand_total = sum(item.product.final_price * item.quantity for item in cart_items)
     coupon_code = request.session.get('applied_coupon_code')
     coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
-    shipping_charge = Decimal('0.00')  
+    shipping_charge = Decimal('0.00')  # You can update this later
 
     final_total = (grand_total + shipping_charge) - coupon_discount
 
-    if payment_method == "cod" and final_total > 10000:
+    if payment_method == "cod" and final_total > 1000:
         return redirect('/checkout/?error=cod_limit_exceeded')
 
+    # Wallet balance check
     if payment_method == "wallet":
         wallet = request.user.wallet
         if wallet.balance < final_total:
             return redirect('/checkout/?error=wallet_insufficient')
 
+    # Create order
     order = Order.objects.create(
         user=request.user,
         order_id=get_random_string(10).upper(),
@@ -1114,17 +1123,37 @@ def place_order(request):
         shipping_charge=shipping_charge
     )
 
+    # Handle wallet payment
     if payment_method == "wallet":
-        wallet.balance -= final_total
-        wallet.save()
+        # 1. Deduct from user's wallet
+        user_wallet = request.user.wallet
+        user_wallet.balance -= final_total
+        user_wallet.save()
 
         WalletTransaction.objects.create(
-            wallet=wallet,
+            wallet=user_wallet,
             amount=final_total,
             transaction_type='DEBIT',
-            description=f"Order #{order.order_id} payment"
+            description=f"Order #{order.order_id} payment",
+            order=order
         )
 
+        # 2. Credit to admin wallet
+        admin_user = CustomUser.objects.filter(is_superuser=True).first()
+        if admin_user:
+            admin_wallet = Wallet.objects.get(user=admin_user)
+            admin_wallet.balance += final_total
+            admin_wallet.save()
+
+            WalletTransaction.objects.create(
+                wallet=admin_wallet,
+                amount=final_total,
+                transaction_type='CREDIT',
+                description=f"Received from {request.user.email} for Order #{order.order_id}",
+                order=order
+            )
+
+    # Create order items
     for item in cart_items:
         OrderItem.objects.create(
             order=order,
@@ -1134,21 +1163,25 @@ def place_order(request):
             price=item.product.final_price
         )
 
+    # Update stock
     for item in cart_items:
         stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
         stock.quantity -= item.quantity
         stock.save()
 
+    # Clear cart
     if payment_method in ["cod", "wallet"]:
         cart_items.delete()
 
+    # Clear session coupon
     request.session.pop('applied_coupon_code', None)
     request.session.pop('coupon_discount', None)
 
+    # Handle Razorpay
     if payment_method == "razorpay":
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         razorpay_order = client.order.create({
-            'amount': int(final_total * 100),  
+            'amount': int(final_total * 100),
             'currency': 'INR',
             'payment_capture': 1
         })
@@ -1162,6 +1195,7 @@ def place_order(request):
         })
 
     return redirect('order_success', order_id=order.id)
+
 
 @login_required
 def order_success(request, order_id):
@@ -1261,7 +1295,25 @@ def request_return(request, item_id):
             messages.error(request, "Reason is required.")
             return redirect('user_order_detail', order_id=item.order.id)
 
-        item.is_return_requested = True   
+        item.is_return_requested = True 
+        subject = f"Return Requested - Order {item.order.order_id}"
+        message = (
+            f"A return has been requested.\n\n"
+            f"User: {item.order.user.get_full_name()}\n"
+            f"Product: {item.product.name}\n"
+            f"Quantity: {item.quantity}\n"
+            f"Size: {item.size}\n"
+            f"Order ID: {item.order.order_id}\n"
+            f"Time: {timezone.now().strftime('%d-%m-%Y %H:%M')}\n"
+        )
+
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.ADMIN_EMAIL],
+            fail_silently=False
+        )  
         item.return_reason = reason
         item.return_requested_at = timezone.now()
         item.save()

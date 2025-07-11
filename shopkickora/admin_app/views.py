@@ -7,8 +7,12 @@ from django.contrib import messages
 from .forms import AdminLoginForm, ProductOfferForm,CategoryOfferForm
 from django.core.paginator import Paginator
 from django.db.models import Q,Sum, F, DecimalField, ExpressionWrapper, Count
-from user_app.models import (Coupon, CustomUser,Product, ProductImage, Category,
-        Brand, ProductSizeStock,Order,OrderItem,Wallet,ProductOffer, CategoryOffer, Product, Category, WalletTransaction)
+from user_app.models import (
+    Coupon, CustomUser, Product, ProductImage, Category,
+    Brand, ProductSizeStock, Order, OrderItem, Wallet,
+    ProductOffer, CategoryOffer, WalletTransaction
+)
+
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
@@ -18,6 +22,8 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models.functions import TruncDay, TruncMonth, TruncYear
 
 
 
@@ -57,7 +63,7 @@ def admin_dashboard(request):
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def user_list(request):
     query=request.GET.get('q','')
-    users=CustomUser.objects.filter(is_superuser=False).order_by('-date_joined')
+    users=CustomUser.objects.filter(is_superuser=False,is_blocked=False, is_deleted=False).order_by('-date_joined')
     if query:
         users=users.filter(Q(username__icontains=query) | Q(email__icontains=query))
 
@@ -70,27 +76,31 @@ def user_list(request):
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
-def block_user(request,user_id):
-    user=get_object_or_404(CustomUser,id=user_id)
-    user.is_blocked=True
+def toggle_user_status(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    user.is_active = not user.is_active  # Toggle status
     user.save()
-    messages.success(request,f"{user.username} has been blocked.")
+
+    status = "unblocked" if user.is_active else "blocked"
+    messages.success(request, f"{user.username} has been {status}.")
     return redirect('user_list')
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
-def unblock_user(request,user_id):
-    user=get_object_or_404(CustomUser,id=user_id)
-    user.is_blocked=False
+def soft_delete_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    user.is_deleted = True
+    user.is_active = False  
     user.save()
-    messages.success(request,f"{user.username} has been unblocked.")
+    messages.success(request, f"{user.username} has been deleted.")
     return redirect('user_list')
+
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def category_list(request):
     query = request.GET.get('q', '').strip()
-    categories = Category.objects.all().order_by('-created_at')
+    categories = Category.objects.filter(is_deleted=False).order_by('-created_at')
 
     if query:
         categories = categories.filter(name__icontains=query)
@@ -125,7 +135,7 @@ def add_category(request):
 
         if not errors:
             try:
-                Category.objects.create(name=name, description=description)
+                Category.objects.create(name=name, description=description,is_active=True,is_deleted=False)
                 messages.success(request, "Category added successfully.")
                 return redirect('category_list')
             except IntegrityError:
@@ -179,10 +189,20 @@ def edit_category(request, category_id):
 @user_passes_test(lambda x:x.is_superuser,login_url='admin_login')
 def toggle_category_status(request,category_id):
     category=get_object_or_404(Category,id=category_id)
-    category.is_deleted=not category.is_deleted 
+    category.is_active=not category.is_active 
     category.save()
-    status= "disabled" if category.is_deleted else "enabled"
+    status= "disabled" if category.is_active else "enabled"
     messages.success(request,f"Category {status} successfully")
+    return redirect('category_list')
+
+@never_cache
+@user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
+def soft_delete_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    category.is_deleted = True
+    category.is_active = False  # Optional
+    category.save()
+    messages.success(request, f"Category '{category.name}' deleted successfully.")
     return redirect('category_list')
 
 
@@ -190,7 +210,7 @@ def toggle_category_status(request,category_id):
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def product_list(request):
     query = request.GET.get('q', '')  
-    products = Product.objects.prefetch_related('size_stocks').order_by('-created_at')
+    products = Product.objects.filter(is_deleted=False).prefetch_related('size_stocks').order_by('-created_at')
 
     if query:
         products = products.filter(Q(name__icontains=query))
@@ -508,11 +528,21 @@ def toggle_product_status(request, product_id):
     
     return redirect('product_list')
 
+@never_cache
+@user_passes_test(lambda x :x.is_superuser,login_url='admin_login')
+def soft_product_delete(request,product_id):
+    product=get_object_or_404(Product,id=product_id)
+    product.is_deleted=True
+    product.is_active=False
+    product.save()
+    messages.success(request,f"Product '{product.name} is successfully deleted")
+    return redirect('product_list')
+
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def brand_list(request):
-    brands=Brand.objects.all().order_by('-created_at')
+    brands=Brand.objects.filter(is_deleted=False).order_by('-created_at')
     context={'brands':brands}
     return render(request,'user_app/brand_list.html',context)
 
@@ -634,16 +664,29 @@ def toggle_brand_status(request, brand_id):
     return redirect('brand_list')
 
 @never_cache
+@user_passes_test(lambda x :x.is_superuser, login_url='admin_login')
+def soft_brand_delete(request,brand_id):
+    brand=get_object_or_404(Brand,id=brand_id)
+    brand.is_deleted=True
+    brand.is_active=False
+    brand.save()
+    messages.success(request,f"Brand '{brand.name}' is deleted successfully")
+    return redirect('brand_list')
+
+
+@never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
 def admin_order_list(request):
     query=request.GET.get('q','')
     status_filter=request.GET.get('status','')
     orders=Order.objects.select_related('user').order_by('-created_at')
-
     if query:
-        orders=orders.filter(Q (order_id__icontains=query) | 
-                            Q (user__email__icontails=query)|
-                            Q (user__full_name__icontains=query))
+        orders = orders.filter(
+            Q(order_id__icontains=query) |
+            Q(user__email__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query)
+        )
     if status_filter:
         orders=orders.filter(status=status_filter)
     paginator=Paginator(orders,10)
@@ -700,6 +743,7 @@ def approve_return(request, order_item_id):
     item.status = 'RETURN_ACCEPTED'
     item.save()
 
+    # Restore stock
     try:
         stock_obj = ProductSizeStock.objects.get(product=item.product, size=item.size)
         stock_obj.quantity += item.quantity
@@ -707,8 +751,18 @@ def approve_return(request, order_item_id):
     except ProductSizeStock.DoesNotExist:
         messages.warning(request, f"Stock entry for size {item.size} not found. Please add it manually.")
 
-    wallet, created = Wallet.objects.get_or_create(user=item.order.user)
-    refund_amount = item.price * item.quantity
+    # Calculate proportional refund
+    item_total = item.price * item.quantity
+    order_items = item.order.order_items.all()
+    order_total_before_coupon = sum(i.price * i.quantity for i in order_items)
+
+    coupon_discount = item.order.coupon_discount or 0
+    proportional_discount = (item_total / order_total_before_coupon) * coupon_discount if order_total_before_coupon > 0 else 0
+
+    refund_amount = item_total - proportional_discount
+
+    # Update wallet
+    wallet, _ = Wallet.objects.get_or_create(user=item.order.user)
     wallet.balance += refund_amount
     wallet.save()
 
@@ -719,8 +773,9 @@ def approve_return(request, order_item_id):
         description=f"Refund for return: {item.product.name} (Size {item.size})"
     )
 
-    messages.success(request, f"Return approved and ₹{refund_amount} refunded to user's wallet.")
+    messages.success(request, f"Return approved and ₹{refund_amount:.2f} refunded to user's wallet (after applying coupon share).")
     return redirect('admin_order_detail', order_id=item.order.id)
+
 
 @user_passes_test(lambda x: x.is_superuser)
 def reject_return(request, order_item_id):
@@ -738,12 +793,27 @@ def reject_return(request, order_item_id):
 
 @user_passes_test(lambda x: x.is_superuser)
 def list_offers(request):
-    product_offers=ProductOffer.objects.prefetch_related('products').all()
-    category_offers=CategoryOffer.objects.prefetch_related('categories').all()
-    return render(request,'admin_app/list_offers.html',{
-        'product_offers':product_offers,
-        'category_offers':category_offers,
+    # Filter product offers
+    product_offers = ProductOffer.objects.filter(
+        is_delete=False,
+        products__is_deleted=False,
+        products__category__is_deleted=False,
+        products__category__is_active=True,
+        products__brand__is_active=True
+    ).distinct().prefetch_related('products')
+
+    # Filter category offers
+    category_offers = CategoryOffer.objects.filter(
+        is_delete=False,
+        categories__is_deleted=False,
+        categories__is_active=True
+    ).distinct().prefetch_related('categories')
+
+    return render(request, 'admin_app/list_offers.html', {
+        'product_offers': product_offers,
+        'category_offers': category_offers,
     })
+
 
 @user_passes_test(lambda x: x.is_superuser)
 def add_product_offer(request):
@@ -782,12 +852,21 @@ def edit_product_offer(request, offer_id):
     })
 
 @user_passes_test(lambda x:x.is_superuser)
-def delete_product_offer(request,offer_id):
+def toggle_product_offer_status(request,offer_id):
     val=get_object_or_404(ProductOffer,id=offer_id)
     val.is_active=not val.is_active
     val.save()
     status='enabled' if val.is_active else 'disabled'
     messages.success(request,f'Offer has been {status} successfully.')
+    return redirect('list_offers')
+
+@user_passes_test(lambda x: x.is_superuser,login_url='admin_login')
+def soft_product_offer_delete(request,offer_id):
+    off=get_object_or_404(ProductOffer,id=offer_id)
+    off.is_delete=True
+    off.is_active=False
+    off.save()
+    messages.success(request,f" The product offer '{off.name}' is deleted successfully .")
     return redirect('list_offers')
 
 
@@ -831,13 +910,23 @@ def edit_category_offer(request, offer_id):
     })
 
 @user_passes_test(lambda x: x.is_superuser)
-def delete_category_offer(request,offer_id):
+def toggle_category_offer_status(request,offer_id):
     val=get_object_or_404(CategoryOffer,id=offer_id)
     val.is_active=not val.is_active
     val.save()
     status='enabled' if val.is_active else 'disabled'
     messages.success(request,f'Offer  has been {status} successfully')
     return redirect('list_offers')
+
+@user_passes_test(lambda x: x.is_superuser,login_url='admin_login')
+def soft_category_offer_delete(request,offer_id):
+    off=get_object_or_404(CategoryOffer,id=offer_id)
+    off.is_delete=True
+    off.is_active=False
+    off.save()
+    messages.success(request,f" The product offer '{off.name}' is deleted successfully .")
+    return redirect('list_offers')
+
 
 @user_passes_test(lambda x: x.is_superuser)
 def admin_coupon_list(request):
@@ -989,6 +1078,15 @@ def toggle_coupon(request,coupon_id):
     return redirect('admin_coupon_list')
 
 @user_passes_test(lambda x: x.is_superuser)
+def soft_delete_coupon(request, coupon_id):
+    coupon = get_object_or_404(Coupon, id=coupon_id, is_deleted=False)
+    coupon.is_deleted = True
+    coupon.save()
+    messages.success(request, f"Coupon '{coupon.code}'has been deleted  successfully.")
+    return redirect('admin_coupon_list')
+
+
+@user_passes_test(lambda x: x.is_superuser)
 def sales_report(request):
     today = timezone.now().date()
     filter_type = request.GET.get('filter', 'today')
@@ -1117,19 +1215,19 @@ def download_sales_report_pdf(request):
     y -= 20
     p.drawString(60, y, f"Total Quantity Sold: {total_quantity}")
     y -= 20
-    p.drawString(60, y, f"Total Item Sales (price × qty): ₹{total_item_sales}")
+    p.drawString(60, y, f"Total Item Sales (price × qty): Rs.{total_item_sales}")
     y -= 20
-    p.drawString(60, y, f"Total Order Amount: ₹{total_order_amount}")
+    p.drawString(60, y, f"Total Order Amount: Rs.{total_order_amount}")
     y -= 20
-    p.drawString(60, y, f"Total Discount: ₹{total_discount}")
+    p.drawString(60, y, f"Total Discount: Rs.{total_discount}")
     y -= 30
 
     p.setFont("Helvetica-Bold", 11)
     p.drawString(50, y, "Order ID")
     p.drawString(120, y, "Date")
     p.drawString(200, y, "User")
-    p.drawString(330, y, "Amount")
-    p.drawString(420, y, "Discount")
+    p.drawString(330, y, "Total Amount")
+    p.drawString(420, y, "Discount Amount")
     y -= 20
 
     p.setFont("Helvetica", 10)
@@ -1142,16 +1240,16 @@ def download_sales_report_pdf(request):
             p.drawString(50, y, "Order ID")
             p.drawString(120, y, "Date")
             p.drawString(200, y, "User")
-            p.drawString(330, y, "Amount")
-            p.drawString(420, y, "Discount")
+            p.drawString(330, y, "Total Amount")
+            p.drawString(420, y, "Discount Amount")
             y -= 20
             p.setFont("Helvetica", 10)
 
         p.drawString(50, y, str(order.id))
         p.drawString(120, y, order.created_at.strftime('%Y-%m-%d'))
         p.drawString(200, y, str(order.user.first_name))
-        p.drawString(330, y, f"₹{order.total_amount}")
-        p.drawString(420, y, f"₹{order.coupon_discount}")
+        p.drawString(330, y, f"Rs.{order.total_amount}")
+        p.drawString(420, y, f"Rs.{order.coupon_discount}")
         y -= 18
 
     p.showPage()
@@ -1159,7 +1257,70 @@ def download_sales_report_pdf(request):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="sales_report.pdf")
 
+
+@staff_member_required
+def wallet_transaction_list(request):
+    transactions = WalletTransaction.objects.select_related('wallet__user').order_by('-created_at')
+    return render(request, 'admin_app/wallet_transaction_list.html', {
+        'transactions': transactions
+    })
+
+
+@staff_member_required
+def wallet_transaction_detail(request, transaction_id):
+    transaction = get_object_or_404(WalletTransaction, transaction_id=transaction_id)
+    return render(request, 'admin_app/wallet_transaction_detail.html', {
+        'transaction': transaction
+    })
+
+@staff_member_required
+def admin_dashboard(request):
+    filter_type = request.GET.get('filter', 'monthly')  
+    today = timezone.now()
+
+    if filter_type == 'daily':
+        orders = Order.objects.annotate(period=TruncDay('created_at'))
+    elif filter_type == 'yearly':
+        orders = Order.objects.annotate(period=TruncYear('created_at'))
+    else:  # monthly
+        orders = Order.objects.annotate(period=TruncMonth('created_at'))
+
+    sales_data = orders.values('period').annotate(total=Sum('total_amount')).order_by('period')
+
+    # Best Selling Products
+    top_products = (
+        OrderItem.objects
+        .values('product__name')
+        .annotate(total_sold=Sum('quantity'))
+        .order_by('-total_sold')[:10]
+    )
+
+    # Best Selling Categories
+    top_categories = (
+        OrderItem.objects
+        .values('product__category__name')
+        .annotate(total_sold=Sum('quantity'))
+        .order_by('-total_sold')[:10]
+    )
+
+    # Best Selling Brands
+    top_brands = (
+        OrderItem.objects
+        .values('product__brand__name')
+        .annotate(total_sold=Sum('quantity'))
+        .order_by('-total_sold')[:10]
+    )
+
+    context = {
+        'sales_data': sales_data,
+        'top_products': top_products,
+        'top_categories': top_categories,
+        'top_brands': top_brands,
+        'filter_type': filter_type,
+    }
+    return render(request, 'admin_app/dashboard.html', context)
+
 def admin_logout(request):
     logout(request)
-    request.session.flush()  
+    request.session.flush()
     return redirect('admin_login')

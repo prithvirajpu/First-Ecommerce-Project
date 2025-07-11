@@ -1,49 +1,721 @@
-{% extends "user_app/base_admin.html" %} {% block content %}
+{% extends "user_app/base_admin.html" %}
 
-<div class="container mt-4">
-  <h3>Add Brand</h3>
-  <hr />
-  <form id="brandForm" method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-
-    <div class="mb-3">
-      <label for="name" class="form-label">Brand Name</label>
-      <input
-        type="text"
-        class="form-control"
-        name="name"
-        value="{{ form_data.name|default_if_none:'' }}"
-        required
-      />
-      {% if errors.name %}
-      <p style="color: red">{{ errors.name }}</p>
-      {% endif %}
+{% block content %}
+<div class="brand-form-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-copyright me-2"></i>
+                    Add Brand
+                </h1>
+                <p class="page-subtitle">Create a new brand with logo and description</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'brand_list' %}" class="btn-back">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Brands
+                </a>
+            </div>
+        </div>
     </div>
 
-    <div class="mb-3">
-      <label for="description" class="form-label">Description</label>
-      <textarea class="form-control" name="description" rows="3">
-{{ form_data.description|default_if_none:'' }}</textarea
-      >
-    </div>
+    <!-- Form Section -->
+    <div class="form-section">
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-title">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    <span>Brand Information</span>
+                </div>
+                <div class="form-subtitle">
+                    Fill in the details below to create a new brand
+                </div>
+            </div>
+            
+            <div class="form-body">
+                <form id="brandForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Brand Name Field -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag me-2"></i>
+                            Brand Name
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input
+                                type="text"
+                                class="form-input {% if errors.name %}error{% endif %}"
+                                name="name"
+                                id="name"
+                                value="{{ form_data.name|default_if_none:'' }}"
+                                placeholder="Enter brand name..."
+                                required
+                            />
+                            <i class="fas fa-tag input-icon"></i>
+                        </div>
+                        {% if errors.name %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.name }}
+                        </div>
+                        {% endif %}
+                    </div>
 
-    <div class="mb-3">
-      <label for="logo" class="form-label">Logo</label>
-      <input
-        type="file"
-        class="form-control"
-        name="logo"
-        id="logo"
-        accept="image/*"
-      />
-      {% if errors.logo %}
-      <p style="color: red">{{ errors.logo }}</p>
-      {% endif %}
-    </div>
+                    <!-- Description Field -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>
+                            Description
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea 
+                                class="form-textarea" 
+                                name="description" 
+                                id="description"
+                                rows="4"
+                                placeholder="Enter brand description (optional)..."
+                            >{{ form_data.description|default_if_none:'' }}</textarea>
+                            <i class="fas fa-align-left textarea-icon"></i>
+                        </div>
+                        <div class="field-help">
+                            Provide a brief description of the brand (optional)
+                        </div>
+                    </div>
 
-    <button type="submit" class="btn btn-primary">Add Brand</button>
-    <a href="{% url 'brand_list' %}" class="btn btn-secondary ms-2">Cancel</a>
-  </form>
+                    <!-- Logo Upload Field -->
+                    <div class="form-group">
+                        <label for="logo" class="form-label">
+                            <i class="fas fa-image me-2"></i>
+                            Brand Logo
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input
+                                type="file"
+                                class="file-input {% if errors.logo %}error{% endif %}"
+                                name="logo"
+                                id="logo"
+                                accept="image/*"
+                            />
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <span class="upload-title">Click to upload logo</span>
+                                    <span class="upload-subtitle">or drag and drop</span>
+                                </div>
+                                <div class="upload-info">
+                                    PNG, JPG, GIF up to 10MB
+                                </div>
+                            </div>
+                            <div class="file-preview" id="filePreview" style="display: none;">
+                                <img id="previewImage" src="/placeholder.svg" alt="Preview" />
+                                <div class="file-info">
+                                    <span class="file-name" id="fileName"></span>
+                                    <button type="button" class="remove-file" id="removeFile">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% if errors.logo %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.logo }}
+                        </div>
+                        {% endif %}
+                        <div class="field-help">
+                            Upload a logo image for the brand (optional)
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Brand
+                        </button>
+                        <a href="{% url 'brand_list' %}" class="btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
+<style>
+    .brand-form-container {
+        padding: 0;
+        max-width: 100%;
+        min-height: 100vh;
+        background: #f8fafc;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 20px 30px;
+        margin: -30px -30px 30px -30px;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.4rem;
+    }
+
+    .page-subtitle {
+        margin: 4px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+    }
+
+    .btn-back {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-back:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    /* Form Section */
+    .form-section {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .form-title i {
+        font-size: 1.1rem;
+        color: #059669;
+    }
+
+    .form-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .form-body {
+        padding: 30px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .required {
+        color: #dc2626;
+        margin-left: 4px;
+    }
+
+    /* Input Styling */
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.1);
+        background: white;
+    }
+
+    .form-input.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    /* Textarea Styling */
+    .textarea-wrapper {
+        position: relative;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.1);
+        background: white;
+    }
+
+    .textarea-icon {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    /* File Upload Styling */
+    .file-upload-wrapper {
+        position: relative;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+        border-color: #059669;
+        background: #f0fdf4;
+    }
+
+    .file-upload-area.dragover {
+        border-color: #059669;
+        background: #f0fdf4;
+        transform: scale(1.02);
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: #9ca3af;
+        margin-bottom: 12px;
+    }
+
+    .upload-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .upload-title {
+        font-weight: 600;
+        color: #374151;
+        font-size: 1rem;
+    }
+
+    .upload-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .upload-info {
+        color: #9ca3af;
+        font-size: 0.8rem;
+    }
+
+    /* File Preview */
+    .file-preview {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 15px;
+        background: white;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .file-preview img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+
+    .file-info {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .file-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+
+    .remove-file {
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .remove-file:hover {
+        background: #fecaca;
+        transform: scale(1.1);
+    }
+
+    /* Error Messages */
+    .error-message {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        background: #fef2f2;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #dc2626;
+    }
+
+    /* Field Help */
+    .field-help {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    /* Loading State */
+    .btn-primary.loading {
+        opacity: 0.8;
+        cursor: not-allowed;
+    }
+
+    .btn-primary.loading i {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 16px 20px;
+            margin: -30px -30px 20px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            justify-content: center;
+        }
+
+        .form-section {
+            padding: 0 15px;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            justify-content: center;
+        }
+
+        .file-upload-area {
+            padding: 30px 15px;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-input,
+        .form-textarea {
+            padding-left: 16px;
+        }
+
+        .input-icon,
+        .textarea-icon {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('logo');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const filePreview = document.getElementById('filePreview');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+        const submitBtn = document.getElementById('submitBtn');
+        const brandForm = document.getElementById('brandForm');
+
+        // File upload handling
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        // Drag and drop handling
+        fileUploadArea.addEventListener('dragover', handleDragOver);
+        fileUploadArea.addEventListener('dragleave', handleDragLeave);
+        fileUploadArea.addEventListener('drop', handleDrop);
+        
+        // Remove file handling
+        removeFile.addEventListener('click', handleRemoveFile);
+
+        // Form submission handling
+        brandForm.addEventListener('submit', handleFormSubmit);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                displayFilePreview(file);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    fileInput.files = files;
+                    displayFilePreview(file);
+                }
+            }
+        }
+
+        function displayFilePreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                fileName.textContent = file.name;
+                fileUploadArea.style.display = 'none';
+                filePreview.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleRemoveFile() {
+            fileInput.value = '';
+            fileUploadArea.style.display = 'block';
+            filePreview.style.display = 'none';
+            previewImage.src = '';
+            fileName.textContent = '';
+        }
+
+        function handleFormSubmit(e) {
+            // Add loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner me-1"></i>Adding Brand...';
+            
+            // Form validation could be added here
+            
+            // Note: Form will submit normally, this is just for UI feedback
+        }
+
+        // Input focus effects
+        const inputs = document.querySelectorAll('.form-input, .form-textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+    });
+</script>
 {% endblock %}

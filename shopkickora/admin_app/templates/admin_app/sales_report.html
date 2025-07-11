@@ -2,179 +2,838 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-4">
-
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Sales Report</h2>
-  </div>
-
-  <!-- Filter & Actions -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-3 col-sm-6">
-          <label for="filter" class="form-label">Filter by Period</label>
-          <select name="filter" id="filter" class="form-select" onchange="toggleCustomDate(this.value)">
-            <option value="today" {% if filter_type == 'today' %}selected{% endif %}>Today</option>
-            <option value="week" {% if filter_type == 'week' %}selected{% endif %}>Last 7 Days</option>
-            <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
-            <option value="year" {% if filter_type == 'year' %}selected{% endif %}>This Year</option>
-            <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
-          </select>
-        </div>
-
-        <div class="col-md-5" id="custom-date-fields" style="{% if filter_type != 'custom' %}display: none;{% endif %}">
-          <div class="row g-2">
-            <div class="col">
-              <label for="from_date" class="form-label">From</label>
-              <input type="date" name="from_date" id="from_date" class="form-control" value="{{ from_date }}">
+<div class="sales-report-container">
+    <!-- Page Header - Compact -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Sales Report
+                </h1>
+                <p class="page-subtitle">Track sales performance and analytics</p>
             </div>
-            <div class="col">
-              <label for="to_date" class="form-label">To</label>
-              <input type="date" name="to_date" id="to_date" class="form-control" value="{{ to_date }}">
+        </div>
+    </div>
+
+    <!-- Filter & Actions Section -->
+    <div class="filter-section">
+        <div class="filter-card">
+            <div class="filter-header">
+                <i class="fas fa-filter me-2"></i>
+                <span>Report Filters</span>
             </div>
-          </div>
-        </div>
+            <form method="get" class="filter-form">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="filter" class="filter-label">Period</label>
+                        <select name="filter" id="filter" class="filter-select" onchange="toggleCustomDate(this.value)">
+                            <option value="today" {% if filter_type == 'today' %}selected{% endif %}>Today</option>
+                            <option value="week" {% if filter_type == 'week' %}selected{% endif %}>Last 7 Days</option>
+                            <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
+                            <option value="year" {% if filter_type == 'year' %}selected{% endif %}>This Year</option>
+                            <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+                        </select>
+                    </div>
 
-        <div class="col-md-2 col-sm-6">
-          <button type="submit" class="btn btn-primary w-100">Generate</button>
-        </div>
+                    <div class="custom-date-group" id="custom-date-fields" style="{% if filter_type != 'custom' %}display: none;{% endif %}">
+                        <div class="date-inputs">
+                            <div class="date-input-wrapper">
+                                <label for="from_date" class="date-label">From</label>
+                                <input type="date" name="from_date" id="from_date" class="date-input" value="{{ from_date }}">
+                            </div>
+                            <div class="date-input-wrapper">
+                                <label for="to_date" class="date-label">To</label>
+                                <input type="date" name="to_date" id="to_date" class="date-input" value="{{ to_date }}">
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="col-md-2 col-sm-6">
-          <a href="{% url 'download_sales_report_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-success w-100">
-            Download PDF
-          </a>
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-generate">
+                            <i class="fas fa-play me-1"></i>
+                            Generate
+                        </button>
+                        <a href="{% url 'download_sales_report_pdf' %}?{{ request.GET.urlencode }}" class="btn-download">
+                            <i class="fas fa-download me-1"></i>
+                            PDF
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
-      </form>
     </div>
-  </div>
 
-  <!-- Summary Section -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-header bg-light">
-      <h5 class="mb-0">Summary</h5>
-    </div>
-    <div class="card-body">
-      <div class="row g-4">
-        <div class="col-md-4 col-lg-2">
-          <div class="p-3 bg-info bg-opacity-10 rounded text-center">
-            <strong>Total Orders</strong><br>{{ total_orders }}
-          </div>
-        </div>
-        <div class="col-md-4 col-lg-2">
-          <div class="p-3 bg-success bg-opacity-10 rounded text-center">
-            <strong>Total Quantity</strong><br>{{ total_quantity }}
-          </div>
-        </div>
-        <div class="col-md-4 col-lg-2">
-          <div class="p-3 bg-primary bg-opacity-10 rounded text-center">
-            <strong>Item Sales</strong><br>₹{{ total_item_sales|floatformat:2 }}
-          </div>
-        </div>
-        <div class="col-md-4 col-lg-2">
-          <div class="p-3 bg-warning bg-opacity-10 rounded text-center">
-            <strong>Discount</strong><br>₹{{ total_discount|floatformat:2 }}
-          </div>
-        </div>
-        <div class="col-md-4 col-lg-2">
-          <div class="p-3 bg-secondary bg-opacity-10 rounded text-center">
-            <strong>Final Amount</strong><br>₹{{ total_order_amount|floatformat:2 }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <!-- Summary Section -->
+    <div class="summary-section">
+        <div class="summary-card">
+            <div class="summary-header">
+                <i class="fas fa-chart-pie me-2"></i>
+                <span>Summary Overview</span>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-item orders-summary">
+                    <div class="summary-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-value">{{ total_orders }}</div>
+                        <div class="summary-label">Total Orders</div>
+                    </div>
+                </div>
 
-  <!-- Orders Table -->
-  <div class="card shadow-sm">
-    <div class="card-header bg-light">
-      <h5 class="mb-0">Orders</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-striped mb-0">
-          <thead class="table-light text-center">
-            <tr>
-              <th>Date</th>
-              <th>Order ID</th>
-              <th>User</th>
-              <th>Total Items</th>
-              <th>Coupon</th>
-              <th>Discount</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody class="text-center">
-            {% for order in orders %}
-              <tr>
-                <td>{{ order.created_at|date:"Y-m-d" }}</td>
-                <td>{{ order.order_id }}</td>
-                <td>{{ order.user.email|default:"N/A" }}</td>
-                <td>{{ order.order_items.count }}</td>
-                <td>{{ order.coupon_code|default:"-" }}</td>
-                <td>₹{{ order.coupon_discount|floatformat:2 }}</td>
-                <td>₹{{ order.total_amount|floatformat:2 }}</td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="7" class="text-muted py-4">No orders found for this period.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+                <div class="summary-item quantity-summary">
+                    <div class="summary-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-value">{{ total_quantity }}</div>
+                        <div class="summary-label">Total Quantity</div>
+                    </div>
+                </div>
 
-      <!-- Pagination -->
-      {% if page_obj.has_other_pages %}
-      <div class="card-footer bg-white border-top py-3">
-        <nav>
-          <ul class="pagination justify-content-center mb-0">
-            {% if page_obj.has_previous %}
-              <li class="page-item">
-                <a class="page-link" href="?page=1&{{ request.GET.urlencode }}">« First</a>
-              </li>
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Previous</a>
-              </li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link">« First</span></li>
-              <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                <div class="summary-item sales-summary">
+                    <div class="summary-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-value">₹{{ total_item_sales|floatformat:2 }}</div>
+                        <div class="summary-label">Item Sales</div>
+                    </div>
+                </div>
+
+                <div class="summary-item discount-summary">
+                    <div class="summary-icon">
+                        <i class="fas fa-percent"></i>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-value">₹{{ total_discount|floatformat:2 }}</div>
+                        <div class="summary-label">Discount</div>
+                    </div>
+                </div>
+
+                <div class="summary-item total-summary">
+                    <div class="summary-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-value">₹{{ total_order_amount|floatformat:2 }}</div>
+                        <div class="summary-label">Final Amount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table Section -->
+    <div class="table-section">
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">
+                    <i class="fas fa-list me-2"></i>
+                    Orders Details
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Order ID</th>
+                            <th>User</th>
+                            <th>Items</th>
+                            <th>Coupon</th>
+                            <th>Discount</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="table-row">
+                            <td>
+                                <div class="date-cell">{{ order.created_at|date:"M d, Y" }}</div>
+                            </td>
+                            <td>
+                                <div class="order-id">{{ order.order_id }}</div>
+                            </td>
+                            <td>
+                                <div class="user-cell">{{ order.user.email|default:"N/A" }}</div>
+                            </td>
+                            <td>
+                                <div class="items-count">{{ order.order_items.count }}</div>
+                            </td>
+                            <td>
+                                <div class="coupon-cell">
+                                    {% if order.coupon_code %}
+                                        <span class="coupon-badge">{{ order.coupon_code }}</span>
+                                    {% else %}
+                                        <span class="no-coupon">-</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="discount-amount">₹{{ order.coupon_discount|floatformat:2 }}</div>
+                            </td>
+                            <td>
+                                <div class="total-amount">₹{{ order.total_amount|floatformat:2 }}</div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="no-data">
+                                <div class="no-data-content">
+                                    <i class="fas fa-receipt"></i>
+                                    <h4>No Orders Found</h4>
+                                    <p>No orders found for the selected period</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination-section">
+                <nav class="pagination-nav">
+                    <ul class="modern-pagination">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1&{{ request.GET.urlencode }}">
+                                <i class="fas fa-angle-double-left"></i>
+                                First
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+                                <i class="fas fa-chevron-left"></i>
+                                Previous
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-angle-double-left"></i>
+                                First
+                            </span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-chevron-left"></i>
+                                Previous
+                            </span>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+                                Next
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode }}">
+                                Last
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Next
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Last
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
             {% endif %}
-
-            <li class="page-item disabled"><span class="page-link">
-              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span></li>
-
-            {% if page_obj.has_next %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Next</a>
-              </li>
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode }}">Last »</a>
-              </li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link">Next</span></li>
-              <li class="page-item disabled"><span class="page-link">Last »</span></li>
-            {% endif %}
-          </ul>
-        </nav>
-      </div>
-      {% endif %}
+        </div>
     </div>
-  </div>
 </div>
+
+<style>
+    .sales-report-container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Page Header - Compact and Dark */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 16px 25px;
+        margin: -30px -30px 20px -30px;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.2rem;
+    }
+
+    .page-subtitle {
+        margin: 2px 0 0 0;
+        opacity: 0.8;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+    }
+
+    /* Filter Section */
+    .filter-section {
+        margin-bottom: 20px;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .filter-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 14px 18px;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .filter-header i {
+        font-size: 0.85rem;
+    }
+
+    .filter-form {
+        padding: 18px;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 140px;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.85rem;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        color: #334155;
+        transition: all 0.3s ease;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #475569;
+        box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
+        background: white;
+    }
+
+    .custom-date-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .date-inputs {
+        display: flex;
+        gap: 10px;
+    }
+
+    .date-input-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .date-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.85rem;
+    }
+
+    .date-input {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        color: #334155;
+        transition: all 0.3s ease;
+        min-width: 140px;
+    }
+
+    .date-input:focus {
+        outline: none;
+        border-color: #475569;
+        box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
+        background: white;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+    }
+
+    .btn-generate, .btn-download {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .btn-generate {
+        background: linear-gradient(135deg, #475569, #334155);
+        color: white;
+    }
+
+    .btn-generate:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(71, 85, 105, 0.2);
+        color: white;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .btn-download:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+        color: white;
+    }
+
+    /* Summary Section */
+    .summary-section {
+        margin-bottom: 20px;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .summary-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 14px 18px;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .summary-header i {
+        font-size: 0.85rem;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        padding: 18px;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .summary-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .orders-summary {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        border-left: 4px solid #3b82f6;
+    }
+
+    .quantity-summary {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        border-left: 4px solid #10b981;
+    }
+
+    .sales-summary {
+        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        border-left: 4px solid #6366f1;
+    }
+
+    .discount-summary {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-left: 4px solid #f59e0b;
+    }
+
+    .total-summary {
+        background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        border-left: 4px solid #6b7280;
+    }
+
+    .summary-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .orders-summary .summary-icon {
+        background: #3b82f6;
+    }
+
+    .quantity-summary .summary-icon {
+        background: #10b981;
+    }
+
+    .sales-summary .summary-icon {
+        background: #6366f1;
+    }
+
+    .discount-summary .summary-icon {
+        background: #f59e0b;
+    }
+
+    .total-summary .summary-icon {
+        background: #6b7280;
+    }
+
+    .summary-content {
+        flex: 1;
+    }
+
+    .summary-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 2px;
+    }
+
+    .summary-label {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Table Section */
+    .table-section {
+        margin-bottom: 20px;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .table-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+    }
+
+    .table-title i {
+        font-size: 0.9rem;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .modern-table th {
+        background: #f8fafc;
+        padding: 14px 16px;
+        text-align: center;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+
+    .modern-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table-row {
+        transition: all 0.3s ease;
+    }
+
+    .table-row:hover {
+        background: #f8fafc;
+    }
+
+    .date-cell, .order-id, .user-cell, .items-count, .discount-amount, .total-amount {
+        font-size: 0.9rem;
+        color: #1e293b;
+        font-weight: 500;
+    }
+
+    .order-id {
+        font-family: monospace;
+        background: #f1f5f9;
+        padding: 4px 8px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    .coupon-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .no-coupon {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    .total-amount {
+        font-weight: 700;
+        color: #059669;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .no-data-content i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 12px;
+    }
+
+    .no-data-content h4 {
+        color: #64748b;
+        margin-bottom: 6px;
+        font-size: 1rem;
+    }
+
+    .no-data-content p {
+        color: #94a3b8;
+        margin: 0;
+        font-size: 0.85rem;
+    }
+
+    /* Pagination */
+    .pagination-section {
+        padding: 16px 20px;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .pagination-nav {
+        display: flex;
+        justify-content: center;
+    }
+
+    .modern-pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 5px;
+    }
+
+    .modern-pagination .page-item {
+        display: flex;
+    }
+
+    .modern-pagination .page-link {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.85rem;
+    }
+
+    .modern-pagination .page-link i {
+        font-size: 0.75rem;
+    }
+
+    .modern-pagination .page-link:hover {
+        background: #475569;
+        border-color: #475569;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .modern-pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #475569, #334155);
+        border-color: #475569;
+        color: white;
+    }
+
+    .modern-pagination .page-item.disabled .page-link {
+        background: #f8fafc;
+        color: #cbd5e1;
+        cursor: not-allowed;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 12px 16px;
+            margin: -30px -30px 16px -30px;
+        }
+
+        .page-title {
+            font-size: 1.2rem;
+        }
+
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .date-inputs {
+            flex-direction: column;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .table-wrapper {
+            overflow-x: scroll;
+        }
+
+        .modern-table {
+            min-width: 700px;
+        }
+
+        .modern-pagination {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+</style>
 
 <!-- JS for custom range -->
 <script>
-  function toggleCustomDate(value) {
-    const customFields = document.getElementById("custom-date-fields");
-    customFields.style.display = value === 'custom' ? 'block' : 'none';
-  }
+    function toggleCustomDate(value) {
+        const customFields = document.getElementById("custom-date-fields");
+        customFields.style.display = value === 'custom' ? 'block' : 'none';
+    }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
-  });
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize tooltips if needed
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        if (typeof bootstrap !== 'undefined') {
+            tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+        }
+
+        // Add smooth scrolling for pagination
+        document.querySelectorAll('.page-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    });
 </script>
 {% endblock %}

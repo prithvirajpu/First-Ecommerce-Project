@@ -1,344 +1,1224 @@
 {% extends 'user_app/base_admin.html' %}
-{% load static %} 
+{% load static %}
 
 {% block title %}Add Product - Admin Panel{% endblock %}
 
-
 {% block content %}
-<div class="d-flex justify-content-center">
-  <div class="form-section" style="width: 100%; max-width: 700px;">
-    <h3 class="mb-4">Add New Product</h3>
-
-    {# Display messages (e.g., success/error messages from Django's messages framework) #}
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="product-form-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add New Product
+                </h1>
+                <p class="page-subtitle">Create a new product with images, pricing and inventory</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'product_list' %}" class="btn-back">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Products
+                </a>
+            </div>
         </div>
-      {% endfor %}
+    </div>
+
+    <!-- Alert Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} custom-alert">
+            <div class="alert-content">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle alert-icon"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                {% else %}
+                    <i class="fas fa-info-circle alert-icon"></i>
+                {% endif %}
+                <span class="alert-text">{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close custom-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
-    <form method="POST" action="{% url 'add_product' %}" enctype="multipart/form-data">
-      {% csrf_token %}
-
-      <div class="mb-3">
-        <label for="name" class="form-label">Product Name</label>
-        <input type="text" name="name" id="name" class="form-control" required value="{{ form_data.name|default:'' }}">
-       
-        {% if errors.name %}
-            <p style="color: red;">{{ errors.name }}</p>
-          {% endif %}
-      </div>
-
-      <div class="mb-3">
-        <label for="description" class="form-label">Description</label>
-        <textarea name="description" id="description" class="form-control" rows="4" required>{{ form_data.description|default:'' }}</textarea>
-      </div>
-
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label for="category" class="form-label">Category</label>
-          <select name="category" id="category" class="form-select" required>
-            <option value="">-- Select Category --</option>
-            {% for category in categories %}
-              <option value="{{ category.id }}"
-                {% if form_data.category|stringformat:"s" == category.id|stringformat:"s" %} selected {% endif %}>
-                {{ category.name }}
-              </option>
-            {% endfor %}
-          </select>
-          {% if errors.category %}
-            <p style="color: red;">{{ errors.category }}</p>
-          {% endif %}
-        </div>
-
-        <div class="col-md-4 mb-3">
-          <label for="brand" class="form-label">Brand</label>
-          <select name="brand" id="brand" class="form-select" required>
-            <option value="">Select Brand</option>
-            {% for brand in brands %}
-              <option value="{{ brand.id }}"
-                {% if form_data.brand|stringformat:"s" == brand.id|stringformat:"s" %} selected {% endif %}>
-                {{ brand.name }}
-              </option>
-            {% endfor %}
-          </select>
-          {% if errors.brand %}
-            <p style="color: red;">{{ errors.brand }}</p>
-          {% endif %}
-        </div>
-
-        <div class="col-md-4 mb-3">
-          <label for="price" class="form-label">Price ($)</label>
-          <input type="number" name="price" id="price" step="0.01" class="form-control" required value="{{ form_data.price|default:'' }}">
-          {% if errors.price %}
-            <p style="color: red;">{{ errors.price }}</p>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Stock Quantity by Size</label>
-        <div class="row g-2">
-          <div class="col-md-4">
-            <div class="input-group">
-              <span class="input-group-text">6</span>
-              <input type="number" name="stock_6" min="0" class="form-control" placeholder="Qty for 6" value="{{ form_data.stock_S|default:'' }}">
-           {% if errors.stock_sizes %}
-            <p style="color: red;">{{ errors.stock_sizes }}</p>
-          {% endif %}
+    <!-- Form Section -->
+    <div class="form-section">
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-title">
+                    <i class="fas fa-box me-2"></i>
+                    <span>Product Information</span>
+                </div>
+                <div class="form-subtitle">
+                    Fill in all the details below to create a new product
+                </div>
             </div>
-          </div>
+            
+            <div class="form-body">
+                <form method="POST" action="{% url 'add_product' %}" enctype="multipart/form-data" id="productForm">
+                    {% csrf_token %}
+                    
+                    <!-- Product Name -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag me-2"></i>
+                            Product Name
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input
+                                type="text"
+                                name="name"
+                                id="name"
+                                class="form-input {% if errors.name %}error{% endif %}"
+                                placeholder="Enter product name..."
+                                required
+                                value="{{ form_data.name|default:'' }}"
+                            />
+                            <i class="fas fa-tag input-icon"></i>
+                        </div>
+                        {% if errors.name %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.name }}
+                        </div>
+                        {% endif %}
+                    </div>
 
-          <div class="col-md-4">
-            <div class="input-group">
-              <span class="input-group-text">7</span>
-              <input type="number" name="stock_7" min="0" class="form-control" placeholder="Qty for 7" value="{{ form_data.stock_M|default:'' }}">
-            </div>
-          </div>
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>
+                            Description
+                            <span class="required">*</span>
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea
+                                name="description"
+                                id="description"
+                                class="form-textarea"
+                                rows="4"
+                                placeholder="Enter detailed product description..."
+                                required
+                            >{{ form_data.description|default:'' }}</textarea>
+                            <i class="fas fa-align-left textarea-icon"></i>
+                        </div>
+                    </div>
 
-          <div class="col-md-4">
-            <div class="input-group">
-              <span class="input-group-text">8</span>
-              <input type="number" name="stock_8" min="0" class="form-control" placeholder="Qty for 8" value="{{ form_data.stock_L|default:'' }}">
+                    <!-- Category, Brand, Price Row -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-list me-2"></i>
+                                Category
+                                <span class="required">*</span>
+                            </label>
+                            <div class="select-wrapper">
+                                <select name="category" id="category" class="form-select {% if errors.category %}error{% endif %}" required>
+                                    <option value="">-- Select Category --</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}"
+                                        {% if form_data.category|stringformat:"s" == category.id|stringformat:"s" %} selected {% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <i class="fas fa-chevron-down select-icon"></i>
+                            </div>
+                            {% if errors.category %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {{ errors.category }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="brand" class="form-label">
+                                <i class="fas fa-copyright me-2"></i>
+                                Brand
+                                <span class="required">*</span>
+                            </label>
+                            <div class="select-wrapper">
+                                <select name="brand" id="brand" class="form-select {% if errors.brand %}error{% endif %}" required>
+                                    <option value="">-- Select Brand --</option>
+                                    {% for brand in brands %}
+                                    <option value="{{ brand.id }}"
+                                        {% if form_data.brand|stringformat:"s" == brand.id|stringformat:"s" %} selected {% endif %}>
+                                        {{ brand.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <i class="fas fa-chevron-down select-icon"></i>
+                            </div>
+                            {% if errors.brand %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {{ errors.brand }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="price" class="form-label">
+                                <i class="fas fa-rupee-sign me-2"></i>
+                                Price (₹)
+                                <span class="required">*</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <input
+                                    type="number"
+                                    name="price"
+                                    id="price"
+                                    step="0.01"
+                                    class="form-input {% if errors.price %}error{% endif %}"
+                                    placeholder="0.00"
+                                    required
+                                    value="{{ form_data.price|default:'' }}"
+                                />
+                                <i class="fas fa-rupee-sign input-icon"></i>
+                            </div>
+                            {% if errors.price %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {{ errors.price }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Stock Quantity Section -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-warehouse me-2"></i>
+                            Stock Quantity by Size
+                        </label>
+                        <div class="stock-grid">
+                            <div class="stock-item">
+                                <div class="size-label">Size 6</div>
+                                <div class="input-wrapper">
+                                    <input
+                                        type="number"
+                                        name="stock_6"
+                                        min="0"
+                                        class="form-input"
+                                        placeholder="Qty"
+                                        value="{{ form_data.stock_6|default:'' }}"
+                                    />
+                                    <i class="fas fa-boxes input-icon"></i>
+                                </div>
+                            </div>
+                            <div class="stock-item">
+                                <div class="size-label">Size 7</div>
+                                <div class="input-wrapper">
+                                    <input
+                                        type="number"
+                                        name="stock_7"
+                                        min="0"
+                                        class="form-input"
+                                        placeholder="Qty"
+                                        value="{{ form_data.stock_7|default:'' }}"
+                                    />
+                                    <i class="fas fa-boxes input-icon"></i>
+                                </div>
+                            </div>
+                            <div class="stock-item">
+                                <div class="size-label">Size 8</div>
+                                <div class="input-wrapper">
+                                    <input
+                                        type="number"
+                                        name="stock_8"
+                                        min="0"
+                                        class="form-input"
+                                        placeholder="Qty"
+                                        value="{{ form_data.stock_8|default:'' }}"
+                                    />
+                                    <i class="fas fa-boxes input-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% if errors.stock_sizes %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.stock_sizes }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Discount -->
+                    <div class="form-group">
+                        <label for="discount_percentage" class="form-label">
+                            <i class="fas fa-percent me-2"></i>
+                            Discount Percentage
+                        </label>
+                        <div class="input-wrapper">
+                            <input
+                                type="number"
+                                name="discount_percentage"
+                                id="discount_percentage"
+                                min="0"
+                                max="100"
+                                class="form-input"
+                                placeholder="0-100"
+                                value="{{ form_data.discount_percentage|default:0 }}"
+                            />
+                            <i class="fas fa-percent input-icon"></i>
+                        </div>
+                        {% if errors.discount_percentage %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.discount_percentage }}
+                        </div>
+                        {% endif %}
+                        <div class="field-help">
+                            Enter discount percentage (0-100). Leave 0 for no discount.
+                        </div>
+                    </div>
+
+                    <!-- Product Images -->
+                    <div class="form-group">
+                        <label for="images" class="form-label">
+                            <i class="fas fa-images me-2"></i>
+                            Product Images
+                            <span class="required">*</span>
+                            <span class="image-count">(minimum 3 images)</span>
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input
+                                type="file"
+                                id="original-images"
+                                name="images"
+                                accept="image/*"
+                                multiple
+                                class="file-input"
+                                required
+                            />
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <span class="upload-title">Click to upload product images</span>
+                                    <span class="upload-subtitle">or drag and drop multiple files</span>
+                                </div>
+                                <div class="upload-info">
+                                    PNG, JPG, GIF up to 10MB each (minimum 3 images)
+                                </div>
+                            </div>
+                        </div>
+                        <div id="image-preview-area" class="image-preview-grid"></div>
+                        {% if errors.format %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.format }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Product
+                        </button>
+                        <a href="{% url 'product_list' %}" class="btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
-          </div>
         </div>
-        <label for="discount_percentage">Discount (%)</label>
-<input type="number" name="discount_percentage" id="discount_percentage" min="0" max="100"
-       value="{{ form_data.discount_percentage|default:0 }}"
-       class="form-input" placeholder="0-100">
-{% if errors.discount_percentage %}
-    <p style="color: red;">{{ errors.discount_percentage }}</p>
-{% endif %}
-
-      </div>
-
-      <div class="mb-3">
-  <label for="images" class="form-label">Product Images (minimum 3)</label>
-<input type="file" id="original-images" name="images" accept="image/*" multiple class="form-control" required>
-<div id="image-preview-area" class="d-flex flex-wrap gap-3 mt-3"></div>
-
-  {% if errors.format %}
-    <p style="color:red">{{ errors.format }}</p>
-  {% endif %}
-</div>
-
-      <button type="submit" class="btn btn-primary">Add Product</button>
-      <a href="{% url 'product_list' %}" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
-  </div>
-</div>
-
-<!-- Cropper Modal (smaller size) -->
-<div class="modal fade" id="cropperModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" style="max-width: 700px;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Crop Image</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img id="cropperImage" style="max-width: 100%; max-height: 400px;" />
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" id="skipCrop">Skip</button>
-        <button class="btn btn-primary" type="button" id="cropConfirm">Crop</button>
-      </div>
     </div>
-  </div>
 </div>
 
+<!-- Cropper Modal -->
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modern-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-crop me-2"></i>
+                    Crop Product Image
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="cropperImage" style="max-width: 100%; max-height: 400px;" />
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" id="skipCrop">
+                    <i class="fas fa-forward me-1"></i>
+                    Skip Crop
+                </button>
+                <button class="btn btn-primary" type="button" id="cropConfirm">
+                    <i class="fas fa-crop me-1"></i>
+                    Apply Crop
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<style>
+    .product-form-container {
+        padding: 0;
+        max-width: 100%;
+        min-height: 100vh;
+        background: #f8fafc;
+    }
 
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 20px 30px;
+        margin: -30px -30px 30px -30px;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
 
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.4rem;
+    }
+
+    .page-subtitle {
+        margin: 4px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+    }
+
+    .btn-back {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-back:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    /* Messages */
+    .messages-container {
+        max-width: 900px;
+        margin: 0 auto 20px auto;
+        padding: 0 20px;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        font-size: 0.9rem;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .alert-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .alert-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .custom-close {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        padding: 4px;
+        margin-left: 10px;
+        flex-shrink: 0;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    .custom-close:hover {
+        opacity: 1;
+    }
+
+    /* Alert Colors */
+    .alert-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .alert-danger, .alert-error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    /* Form Section */
+    .form-section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .form-title i {
+        font-size: 1.1rem;
+        color: #059669;
+    }
+
+    .form-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .form-body {
+        padding: 30px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .required {
+        color: #dc2626;
+        margin-left: 4px;
+    }
+
+    .image-count {
+        color: #6b7280;
+        font-weight: 400;
+        font-size: 0.85rem;
+        margin-left: 8px;
+    }
+
+    /* Form Row */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    /* Input Styling */
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.1);
+        background: white;
+    }
+
+    .form-input.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    /* Textarea Styling */
+    .textarea-wrapper {
+        position: relative;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.1);
+        background: white;
+    }
+
+    .textarea-icon {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    /* Select Styling */
+    .select-wrapper {
+        position: relative;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 12px 45px 12px 45px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.1);
+        background: white;
+    }
+
+    .form-select.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .select-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 0.8rem;
+        pointer-events: none;
+    }
+
+    /* Stock Grid */
+    .stock-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .stock-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .size-label {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .size-label::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: #059669;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    /* File Upload Styling */
+    .file-upload-wrapper {
+        position: relative;
+        margin-bottom: 15px;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+        border-color: #059669;
+        background: #f0fdf4;
+    }
+
+    .file-upload-area.dragover {
+        border-color: #059669;
+        background: #f0fdf4;
+        transform: scale(1.02);
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: #9ca3af;
+        margin-bottom: 12px;
+    }
+
+    .upload-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .upload-title {
+        font-weight: 600;
+        color: #374151;
+        font-size: 1rem;
+    }
+
+    .upload-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .upload-info {
+        color: #9ca3af;
+        font-size: 0.8rem;
+    }
+
+    /* Image Preview Grid */
+    .image-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .image-preview-grid img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .image-preview-grid img:hover {
+        transform: scale(1.05);
+        border-color: #059669;
+    }
+
+    /* Error Messages */
+    .error-message {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        background: #fef2f2;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #dc2626;
+    }
+
+    /* Field Help */
+    .field-help {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    /* Modal Styles */
+    .modern-modal {
+        border: none;
+        border-radius: 14px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-modal .modal-header {
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 20px 12px;
+    }
+
+    .modern-modal .modal-title {
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+    }
+
+    .modern-modal .modal-title i {
+        font-size: 0.9rem;
+        color: #059669;
+    }
+
+    /* Loading State */
+    .btn-primary.loading {
+        opacity: 0.8;
+        cursor: not-allowed;
+    }
+
+    .btn-primary.loading i {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 16px 20px;
+            margin: -30px -30px 20px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            justify-content: center;
+        }
+
+        .form-section {
+            padding: 0 15px;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .stock-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            justify-content: center;
+        }
+
+        .file-upload-area {
+            padding: 30px 15px;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+        }
+
+        .image-preview-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-input,
+        .form-textarea,
+        .form-select {
+            padding-left: 16px;
+        }
+
+        .input-icon,
+        .textarea-icon {
+            display: none;
+        }
+
+        .select-icon {
+            left: auto;
+            right: 15px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const fileInput = document.getElementById("original-images");
-  const previewArea = document.getElementById("image-preview-area");
-  const cropperImage = document.getElementById("cropperImage");
-  const cropModalEl = document.getElementById("cropperModal");
-  const cropModal = new bootstrap.Modal(cropModalEl);
-  const cropConfirmBtn = document.getElementById("cropConfirm");
-  const skipBtn = document.getElementById("skipCrop");
+    const fileInput = document.getElementById("original-images");
+    const previewArea = document.getElementById("image-preview-area");
+    const cropperImage = document.getElementById("cropperImage");
+    const cropModalEl = document.getElementById("cropperModal");
+    const cropModal = new bootstrap.Modal(cropModalEl);
+    const cropConfirmBtn = document.getElementById("cropConfirm");
+    const skipBtn = document.getElementById("skipCrop");
+    const submitBtn = document.getElementById("submitBtn");
+    const productForm = document.getElementById("productForm");
+    const fileUploadArea = document.getElementById("fileUploadArea");
+    
+    let cropper;
+    let croppedImages = [];
+    let imageQueue = [];
+    let currentIndex = 0;
 
-  let cropper;
-  let croppedImages = [];
-  let imageQueue = [];
-  let currentIndex = 0;
-
-  fileInput.addEventListener("change", function () {
-    previewArea.innerHTML = '';
-    croppedImages = [];
-    imageQueue = Array.from(this.files);
-    currentIndex = 0;
-
-    if (imageQueue.length > 0) {
-      loadImageForCropping(imageQueue[currentIndex]);
-    }
-  });
-
-  function loadImageForCropping(file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      cropperImage.src = e.target.result;
-
-      cropperImage.onload = function () {
-        cropModal.show();
-        setTimeout(() => {
-          if (cropper) cropper.destroy();
-          cropper = new Cropper(cropperImage, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 1,
-          });
-        }, 100);
-      };
-    };
-    reader.readAsDataURL(file);
-  }
-
-  cropConfirmBtn.addEventListener("click", () => {
-    if (!cropper) return;
-
-    const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
-
-    canvas.toBlob(blob => {
-      const originalFile = imageQueue[currentIndex];
-      const croppedFile = new File([blob], originalFile.name, {
-        type: 'image/jpeg',
-        lastModified: Date.now()
-      });
-
-      croppedImages.push(croppedFile);
-
-      const imgPreview = document.createElement('img');
-      imgPreview.src = URL.createObjectURL(blob);
-      imgPreview.classList.add('me-2', 'mb-2', 'rounded');
-      imgPreview.style.maxWidth = '200px';
-      previewArea.appendChild(imgPreview);
-
-      cropper.destroy();
-      cropper = null;
-
-      currentIndex++;
-      if (currentIndex < imageQueue.length) {
-        loadImageForCropping(imageQueue[currentIndex]);
-      } else {
-        cropModal.hide();
-      }
-    }, 'image/jpeg');
-  });
-
-  skipBtn.addEventListener("click", () => {
-    const originalFile = imageQueue[currentIndex];
-    croppedImages.push(originalFile);
-
-    const imgPreview = document.createElement('img');
-    imgPreview.src = URL.createObjectURL(originalFile);
-    imgPreview.classList.add('me-2', 'mb-2', 'rounded');
-    imgPreview.style.maxWidth = '200px';
-    previewArea.appendChild(imgPreview);
-
-    if (cropper) {
-      cropper.destroy();
-      cropper = null;
-    }
-
-    currentIndex++;
-    if (currentIndex < imageQueue.length) {
-      loadImageForCropping(imageQueue[currentIndex]);
-    } else {
-      cropModal.hide();
-    }
-  });
-
-  // ✅ Submit form with cropped images using native POST
-  document.querySelector("form").addEventListener("submit", function (e) {
-    if (croppedImages.length < 3) {
-      alert("Please crop or skip at least 3 images.");
-      e.preventDefault();
-      return;
-    }
-
-    e.preventDefault(); // prevent default for now
-
-    const originalForm = this;
-    const formData = new FormData(originalForm);
-
-    // Remove default file input
-    formData.delete("images");
-
-    // Append cropped images
-    croppedImages.forEach(file => {
-      formData.append("images", file);
+    // File input change handler
+    fileInput.addEventListener("change", function () {
+        previewArea.innerHTML = '';
+        croppedImages = [];
+        imageQueue = Array.from(this.files);
+        currentIndex = 0;
+        if (imageQueue.length > 0) {
+            loadImageForCropping(imageQueue[currentIndex]);
+        }
     });
 
-    // Create temporary form to submit
-    const tempForm = document.createElement("form");
-    tempForm.method = "POST";
-    tempForm.action = originalForm.action;
-    tempForm.enctype = "multipart/form-data";
+    // Drag and drop handlers
+    fileUploadArea.addEventListener('dragover', handleDragOver);
+    fileUploadArea.addEventListener('dragleave', handleDragLeave);
+    fileUploadArea.addEventListener('drop', handleDrop);
 
-    // CSRF token
-    const csrfToken = document.querySelector("input[name=csrfmiddlewaretoken]").value;
-    const csrfInput = document.createElement("input");
-    csrfInput.type = "hidden";
-    csrfInput.name = "csrfmiddlewaretoken";
-    csrfInput.value = csrfToken;
-    tempForm.appendChild(csrfInput);
-
-    // Append other inputs
-    for (const [name, value] of formData.entries()) {
-      if (name === "images") continue;
-
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = value;
-      tempForm.appendChild(input);
+    function handleDragOver(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
     }
 
-    // Append cropped images
-    croppedImages.forEach(file => {
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.name = "images";
-      // Cannot append File directly to DOM input, so skip this. Instead:
-      formData.append("images", file); // use fetch fallback below if needed
+    function handleDragLeave(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            if (imageFiles.length > 0) {
+                fileInput.files = files;
+                previewArea.innerHTML = '';
+                croppedImages = [];
+                imageQueue = imageFiles;
+                currentIndex = 0;
+                loadImageForCropping(imageQueue[currentIndex]);
+            }
+        }
+    }
+
+    function loadImageForCropping(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            cropperImage.src = e.target.result;
+            cropperImage.onload = function () {
+                cropModal.show();
+                setTimeout(() => {
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(cropperImage, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                    });
+                }, 100);
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+
+    cropConfirmBtn.addEventListener("click", () => {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+        canvas.toBlob(blob => {
+            const originalFile = imageQueue[currentIndex];
+            const croppedFile = new File([blob], originalFile.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+            });
+            croppedImages.push(croppedFile);
+            
+            const imgPreview = document.createElement('img');
+            imgPreview.src = URL.createObjectURL(blob);
+            previewArea.appendChild(imgPreview);
+            
+            cropper.destroy();
+            cropper = null;
+            currentIndex++;
+            
+            if (currentIndex < imageQueue.length) {
+                loadImageForCropping(imageQueue[currentIndex]);
+            } else {
+                cropModal.hide();
+            }
+        }, 'image/jpeg');
     });
 
-    // Because browser can't insert File into hidden input directly, fallback:
-    // 🛠️ Just send via fetch if you want to avoid page building
-    const uploadForm = new FormData(tempForm);
-    croppedImages.forEach(file => uploadForm.append("images", file));
+    skipBtn.addEventListener("click", () => {
+        const originalFile = imageQueue[currentIndex];
+        croppedImages.push(originalFile);
+        
+        const imgPreview = document.createElement('img');
+        imgPreview.src = URL.createObjectURL(originalFile);
+        previewArea.appendChild(imgPreview);
+        
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        currentIndex++;
+        
+        if (currentIndex < imageQueue.length) {
+            loadImageForCropping(imageQueue[currentIndex]);
+        } else {
+            cropModal.hide();
+        }
+    });
 
-    fetch(originalForm.action, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken
-      },
-      body: uploadForm
-    }).then(res => {
-      if (res.redirected) {
-        window.location.href = res.url;
-      } else {
-        return res.text().then(html => {
-          document.open();
-          document.write(html);
-          document.close();
+    // Form submission handler
+    productForm.addEventListener("submit", function (e) {
+        if (croppedImages.length < 3) {
+            alert("Please upload and process at least 3 images.");
+            e.preventDefault();
+            return;
+        }
+        
+        e.preventDefault();
+        
+        // Add loading state
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner me-1"></i>Adding Product...';
+        
+        const originalForm = this;
+        const formData = new FormData(originalForm);
+        
+        // Remove default file input
+        formData.delete("images");
+        
+        // Append cropped images
+        croppedImages.forEach(file => {
+            formData.append("images", file);
         });
-      }
-    }).catch(err => {
-      console.error("Upload failed:", err);
-      alert("Failed to upload product. Try again.");
+        
+        const csrfToken = document.querySelector("input[name=csrfmiddlewaretoken]").value;
+        
+        fetch(originalForm.action, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken
+            },
+            body: formData
+        }).then(res => {
+            if (res.redirected) {
+                window.location.href = res.url;
+            } else {
+                return res.text().then(html => {
+                    document.open();
+                    document.write(html);
+                    document.close();
+                });
+            }
+        }).catch(err => {
+            console.error("Upload failed:", err);
+            alert("Failed to upload product. Please try again.");
+            
+            // Reset button state
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-plus me-1"></i>Add Product';
+        });
     });
-  });
+
+    // Auto dismiss alert messages after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll(".custom-alert");
+        alerts.forEach((alert) => {
+            alert.classList.remove("show");
+            alert.classList.add("fade");
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+
+    // Input focus effects
+    const inputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
 });
 </script>
-
 {% endblock %}

@@ -66,10 +66,3 @@ class ProductForm(forms.ModelForm):
         model=Product
         fields=['name','description','price','stock','category','brand']
         
-class UserSignupForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'email', 'password1', 'password2')
-

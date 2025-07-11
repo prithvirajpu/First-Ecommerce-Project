@@ -1,19 +1,20 @@
-from datetime import date
 from decimal import Decimal
 import uuid
-from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from requests import delete
+from django.utils.crypto import get_random_string
+
 
 
 
 class CustomUser(AbstractUser):
     is_email_verified = models.BooleanField(default=True)
+    is_active=models.BooleanField(default=True)
     is_blocked=models.BooleanField(default=False)
+    is_deleted=models.BooleanField(default=False)
     profile_image=models.ImageField(upload_to='profiles/',default='profiles/default.png',null=True,blank=True)
     otp_code=models.CharField(max_length=6,blank=True,null=True)
     otp_created_at=models.DateTimeField(blank=True,null=True)
@@ -64,6 +65,7 @@ class Brand(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     is_active=models.BooleanField(default=True)
     status = models.BooleanField(default=True)
+    is_deleted=models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -85,6 +87,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
+    is_active=models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -302,6 +305,19 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.order_id} by {self.user.email}"
 
+    @property
+    def final_total(self):
+        total = Decimal(0)
+
+        for item in self.order_items.all():
+            # Use stored item.price if you've saved product.final_price at order time
+            # Otherwise use product.final_price dynamically
+            total += item.product.final_price * item.quantity
+
+        total -= self.coupon_discount
+        total += self.shipping_charge
+
+        return max(total, Decimal(0))  # never negative
 
 class OrderItem(models.Model):
     STATUS_CHOICES = [
@@ -309,33 +325,34 @@ class OrderItem(models.Model):
         ('CANCELLED', 'Cancelled'),
         ('RETURN_REQUESTED', 'Return Requested'),
         ('RETURN_ACCEPTED', 'Return Accepted'),
-        ]
+        ('RETURN_REJECTED', 'Return Rejected'),
+    ]
     
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     size = models.CharField(max_length=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Status tracking
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ORDERED')
-
+    
+    # Redundant but convenient flags
     is_return_requested = models.BooleanField(default=False)
     is_return_approved = models.BooleanField(default=False)
-    return_reason = models.TextField(blank=True, null=True)
-    is_cancelled = models.BooleanField(default=False)
-    cancel_reason = models.TextField(blank=True, null=True)
-    return_requested_at = models.DateTimeField(blank=True, null=True)
     is_return_rejected = models.BooleanField(default=False)
+    is_cancelled = models.BooleanField(default=False)
+
+    # Reason fields
+    return_reason = models.TextField(blank=True, null=True)
+    cancel_reason = models.TextField(blank=True, null=True)
     return_rejected_reason = models.TextField(blank=True, null=True)
+
+    # Timestamp for return request
+    return_requested_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.product.name} (x{self.quantity})"
-
-class Wallet(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-
-    def __str__(self):
-        return f"{self.user.email} - ₹{self.balance}"
 
 
 class ProductOffer(models.Model):
@@ -345,6 +362,7 @@ class ProductOffer(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)
+    is_delete = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} ({self.discount_percentage}%)"
@@ -359,6 +377,8 @@ class CategoryOffer(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)
+    is_delete = models.BooleanField(default=False)
+
 
     def __str__(self):
         return f"{self.discount_percentage}% for {', '.join(c.name for c in self.categories.all())}"
@@ -367,7 +387,15 @@ class CategoryOffer(models.Model):
         now = timezone.now()
         return self.is_active and self.start_date <= now <= self.end_date
 
+class Wallet(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
 
+    def __str__(self):
+        return f"{self.user.email} - ₹{self.balance}"
+
+def generate_transaction_id():
+    return get_random_string(12).upper()
 
 class WalletTransaction(models.Model):
     TRANSACTION_TYPES = [
@@ -376,10 +404,17 @@ class WalletTransaction(models.Model):
     ]
 
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    transaction_id = models.CharField(max_length=50, unique=True, editable=False,default=generate_transaction_id)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     description = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_id:
+            self.transaction_id = get_random_string(12).upper()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.wallet.user.email} - {self.transaction_type} ₹{self.amount} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
@@ -392,6 +427,8 @@ class Coupon(models.Model):
     valid_from=models.DateTimeField()
     valid_to=models.DateTimeField()
     active=models.BooleanField(default=True)
+    is_delete = models.BooleanField(default=False)
+
 
     def is_valid(self):
         now=timezone.now()

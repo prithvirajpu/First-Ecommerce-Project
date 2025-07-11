@@ -1,0 +1,43 @@
+{% extends "user_app/base_admin.html" %}
+
+{% block content %}
+<h2 class="mb-4">Wallet Transactions</h2>
+
+{% if transactions %}
+<table class="table table-bordered table-striped">
+  <thead class="table-dark">
+    <tr>
+      <th>Txn ID</th>
+      <th>Date</th>
+      <th>User</th>
+      <th>Type</th>
+      <th>Amount (₹)</th>
+      <th>View</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for txn in transactions %}
+    <tr>
+      <td>{{ txn.transaction_id }}</td>
+      <td>{{ txn.created_at|date:"Y-m-d H:i" }}</td>
+      <td>{{ txn.wallet.user.email }}</td>
+      <td>
+        {% if txn.transaction_type == 'CREDIT' %}
+          <span class="text-success">{{ txn.transaction_type }}</span>
+        {% else %}
+          <span class="text-danger">{{ txn.transaction_type }}</span>
+        {% endif %}
+      </td>
+      <td>{{ txn.amount }}</td>
+      <td>
+        <a href="{% url 'wallet_transaction_detail' txn.transaction_id %}" class="btn btn-sm btn-info">Details</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="alert alert-warning">No wallet transactions found.</div>
+{% endif %}
+
+{% endblock %}

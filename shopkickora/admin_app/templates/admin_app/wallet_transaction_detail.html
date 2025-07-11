@@ -1,0 +1,21 @@
+{% extends "user_app/base_admin.html" %}
+{% block content %}
+<h2>Transaction Details</h2>
+
+<ul class="list-group">
+  <li class="list-group-item"><strong>User:</strong> {{ transaction.wallet.user.email }}</li>
+  <li class="list-group-item"><strong>Transaction ID:</strong> {{ transaction.transaction_id }}</li>
+  <li class="list-group-item"><strong>Date:</strong> {{ transaction.created_at }}</li>
+  <li class="list-group-item"><strong>Type:</strong> {{ transaction.transaction_type }}</li>
+  <li class="list-group-item"><strong>Amount:</strong> ₹{{ transaction.amount }}</li>
+  <li class="list-group-item"><strong>Description:</strong> {{ transaction.description }}</li>
+  {% if transaction.order %}
+  <li class="list-group-item">
+    <strong>Related Order:</strong>
+    <a href="{% url 'admin_order_detail' transaction.order.id %}" class="btn btn-sm btn-primary">View Order</a>
+  </li>
+  {% endif %}
+</ul>
+
+<a href="{% url 'wallet_transaction_list' %}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %}

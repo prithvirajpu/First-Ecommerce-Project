@@ -74,25 +74,43 @@
                     <th>Product</th>
                     <th>Size</th>
                     <th>Quantity</th>
-                    <th>Price (₹)</th>
-                    <th>Total (₹)</th>
+                    <th>Price Rs.</th>
+                    <th>Total Rs.</th>
                 </tr>
             </thead>
-            <tbody>
-    {% for item in order.order_items.all %}
+         <tbody>
+  {% for item in order.order_items.all %}
     <tr>
-        <td>{{ item.product.name }}</td>
-        <td>{{ item.size }}</td>
-        <td>{{ item.quantity }}</td>
-        <td class="right">{{ item.price }}</td>
-        <td class="right">{{ item.price|multiply:item.quantity }}</td>
+      <td>{{ item.product.name }}</td>
+      <td>{{ item.size }}</td>
+      <td>{{ item.quantity }}</td>
+      <td class="right">{{ item.price }}</td>
+      <td class="right">{{ item.price|multiply:item.quantity }}</td>
     </tr>
-    {% endfor %}
+  {% endfor %}
+
+  {% if order.coupon_discount > 0 %}
     <tr>
-        <td colspan="4" class="right bold">Total Amount (₹)</td>
-        <td class="right bold">{{ order.total_amount }}</td>
+      <td colspan="4" class="right">Coupon Discount ({{ order.coupon_code }})</td>
+      <td class="right">-{{ order.coupon_discount|floatformat:2 }}</td>
     </tr>
+  {% endif %}
+
+  {# Optional: Show shipping charge if any #}
+  {% if order.shipping_charge > 0 %}
+    <tr>
+      <td colspan="4" class="right">Shipping Charge</td>
+      <td class="right">{{ order.shipping_charge|floatformat:2 }}</td>
+    </tr>
+  {% endif %}
+
+  <tr>
+    <td colspan="4" class="right bold">Total Amount Rs.</td>
+    <td class="right bold">{{ order.final_total|floatformat:2 }}</td>
+  </tr>
 </tbody>
+
+
 
         </table>
     </div>

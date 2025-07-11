@@ -1,161 +1,1178 @@
 {% extends "user_app/base_admin.html" %}
 
 {% block content %}
-<h2 class="mb-4">Offers</h2>
-
-<!-- Flash Messages -->
-{% if messages %}
-  {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="offers-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-tags me-2"></i>
+                    Offers Management
+                </h1>
+                <p class="page-subtitle">Manage product and category offers, discounts and promotions</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'add_product_offer' %}" class="btn-add-offer product-offer">
+                    <i class="fas fa-plus me-1"></i>
+                    Add Product Offer
+                </a>
+                <a href="{% url 'add_category_offer' %}" class="btn-add-offer category-offer">
+                    <i class="fas fa-plus me-1"></i>
+                    Add Category Offer
+                </a>
+            </div>
+        </div>
     </div>
-  {% endfor %}
-{% endif %}
 
-<!-- Offer Action Buttons -->
-<div class="mb-4">
-  <a href="{% url 'add_product_offer' %}" class="btn btn-success me-2">Add Product Offer</a>
-  <a href="{% url 'add_category_offer' %}" class="btn btn-primary">Add Category Offer</a>
+    <!-- Alert Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} custom-alert">
+            <div class="alert-content">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle alert-icon"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                {% else %}
+                    <i class="fas fa-info-circle alert-icon"></i>
+                {% endif %}
+                <span class="alert-text">{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Product Offers Section -->
+    <div class="offers-section">
+        <div class="offers-card">
+            <div class="offers-header">
+                <div class="offers-title">
+                    <i class="fas fa-box me-2"></i>
+                    <span>Product Offers</span>
+                </div>
+                <div class="offers-stats">
+                    <span class="stat-number">{{ product_offers|length }}</span>
+                    <span class="stat-label">Total Offers</span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th class="th-name">
+                                <i class="fas fa-tag me-1"></i>
+                                Offer Name
+                            </th>
+                            <th class="th-products">
+                                <i class="fas fa-box me-1"></i>
+                                Products
+                            </th>
+                            <th class="th-discount">
+                                <i class="fas fa-percent me-1"></i>
+                                Discount
+                            </th>
+                            <th class="th-dates">
+                                <i class="fas fa-calendar me-1"></i>
+                                Duration
+                            </th>
+                            <th class="th-status">
+                                <i class="fas fa-toggle-on me-1"></i>
+                                Status
+                            </th>
+                            <th class="th-actions">
+                                <i class="fas fa-cogs me-1"></i>
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for offer in product_offers %}
+                        <tr class="table-row">
+                            <td class="td-name">
+                                <div class="offer-info">
+                                    <div class="offer-avatar">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
+                                    <div class="offer-details">
+                                        <div class="offer-name">{{ offer.name }}</div>
+                                        <div class="offer-meta">Product Offer</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="td-products">
+                                <div class="products-list">
+                                    {% for product in offer.products.all %}
+                                    <span class="product-tag">{{ product.name }}</span>
+                                    {% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="td-discount">
+                                <div class="discount-badge">
+                                    <i class="fas fa-percent me-1"></i>
+                                    {{ offer.discount_percentage }}%
+                                </div>
+                            </td>
+                            <td class="td-dates">
+                                <div class="date-info">
+                                    <div class="date-item">
+                                        <i class="fas fa-play me-1"></i>
+                                        <span class="date-label">Start:</span>
+                                        <span class="date-value">{{ offer.start_date|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                    <div class="date-item">
+                                        <i class="fas fa-stop me-1"></i>
+                                        <span class="date-label">End:</span>
+                                        <span class="date-value">{{ offer.end_date|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="td-status">
+                                {% if offer.is_active and offer.is_valid %}
+                                <span class="status-badge status-active">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Active
+                                </span>
+                                {% elif not offer.is_active %}
+                                <span class="status-badge status-disabled">
+                                    <i class="fas fa-ban me-1"></i>
+                                    Disabled
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-expired">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Expired
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="td-actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'edit_product_offer' offer.id %}" class="action-btn btn-edit" title="Edit Offer">
+                                        <i class="fas fa-edit me-1"></i>
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'toggle_product_offer_status' offer.id %}" 
+                                       class="action-btn {% if offer.is_active %}btn-disable{% else %}btn-enable{% endif %}"
+                                       title="{% if offer.is_active %}Disable{% else %}Enable{% endif %} Offer">
+                                        {% if offer.is_active %}
+                                        <i class="fas fa-ban me-1"></i>
+                                        Disable
+                                        {% else %}
+                                        <i class="fas fa-check me-1"></i>
+                                        Enable
+                                        {% endif %}
+                                    </a>
+                                    <form method="post" action="{% url 'soft_product_offer_delete' offer.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn btn-delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteOfferModal"
+                                                data-offer-id="{{ offer.id }}" data-offer-name="{{ offer.name }}" data-offer-type="product"
+                                                title="Delete Offer">
+                                            <i class="fas fa-trash me-1"></i>
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="no-data">
+                                <div class="no-data-content">
+                                    <i class="fas fa-tags"></i>
+                                    <h4>No Product Offers Found</h4>
+                                    <p>Create your first product offer to get started</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Offers Section -->
+    <div class="offers-section">
+        <div class="offers-card">
+            <div class="offers-header">
+                <div class="offers-title">
+                    <i class="fas fa-list me-2"></i>
+                    <span>Category Offers</span>
+                </div>
+                <div class="offers-stats">
+                    <span class="stat-number">{{ category_offers|length }}</span>
+                    <span class="stat-label">Total Offers</span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th class="th-categories">
+                                <i class="fas fa-list me-1"></i>
+                                Categories
+                            </th>
+                            <th class="th-discount">
+                                <i class="fas fa-percent me-1"></i>
+                                Discount
+                            </th>
+                            <th class="th-dates">
+                                <i class="fas fa-calendar me-1"></i>
+                                Duration
+                            </th>
+                            <th class="th-status">
+                                <i class="fas fa-toggle-on me-1"></i>
+                                Status
+                            </th>
+                            <th class="th-actions">
+                                <i class="fas fa-cogs me-1"></i>
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for offer in category_offers %}
+                        <tr class="table-row">
+                            <td class="td-categories">
+                                <div class="categories-list">
+                                    {% for category in offer.categories.all %}
+                                    <span class="category-tag">
+                                        <i class="fas fa-tag me-1"></i>
+                                        {{ category.name }}
+                                    </span>
+                                    {% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="td-discount">
+                                <div class="discount-badge">
+                                    <i class="fas fa-percent me-1"></i>
+                                    {{ offer.discount_percentage }}%
+                                </div>
+                            </td>
+                            <td class="td-dates">
+                                <div class="date-info">
+                                    <div class="date-item">
+                                        <i class="fas fa-play me-1"></i>
+                                        <span class="date-label">Start:</span>
+                                        <span class="date-value">{{ offer.start_date|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                    <div class="date-item">
+                                        <i class="fas fa-stop me-1"></i>
+                                        <span class="date-label">End:</span>
+                                        <span class="date-value">{{ offer.end_date|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="td-status">
+                                {% if offer.is_active and offer.is_valid %}
+                                <span class="status-badge status-active">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Active
+                                </span>
+                                {% elif not offer.is_active %}
+                                <span class="status-badge status-disabled">
+                                    <i class="fas fa-ban me-1"></i>
+                                    Disabled
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-expired">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Expired
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="td-actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'edit_category_offer' offer.id %}" class="action-btn btn-edit" title="Edit Offer">
+                                        <i class="fas fa-edit me-1"></i>
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'toggle_category_offer_status' offer.id %}" 
+                                       class="action-btn {% if offer.is_active %}btn-disable{% else %}btn-enable{% endif %}"
+                                       title="{% if offer.is_active %}Disable{% else %}Enable{% endif %} Offer">
+                                        {% if offer.is_active %}
+                                        <i class="fas fa-ban me-1"></i>
+                                        Disable
+                                        {% else %}
+                                        <i class="fas fa-check me-1"></i>
+                                        Enable
+                                        {% endif %}
+                                    </a>
+                                    <form method="post" action="{% url 'soft_category_offer_delete' offer.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn btn-delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteOfferModal"
+                                                data-offer-id="{{ offer.id }}" data-offer-name="Category Offer for {% for category in offer.categories.all %}{{ category.name }}{% if not forloop.last %}, {% endif %}{% endfor %}" data-offer-type="category"
+                                                title="Delete Offer">
+                                            <i class="fas fa-trash me-1"></i>
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="no-data">
+                                <div class="no-data-content">
+                                    <i class="fas fa-list"></i>
+                                    <h4>No Category Offers Found</h4>
+                                    <p>Create your first category offer to get started</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Product Offers -->
-<h4>Product Offers</h4>
-<table class="table table-bordered table-hover mt-2 mb-5">
-  <thead>
-    <tr>
-      <th>Offer Name</th>
-      <th>Products</th>
-      <th>Discount (%)</th>
-      <th>Start</th>
-      <th>End</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for offer in product_offers %}
-    <tr>
-      <td>{{ offer.name }}</td>
-      <td>
-        {% for product in offer.products.all %}
-          {{ product.name }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-      </td>
-      <td>{{ offer.discount_percentage }}</td>
-      <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
-      <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
-      <td>
-        {% if offer.is_active and offer.is_valid %}
-          <span class="badge bg-success">Active</span>
-        {% elif not offer.is_active %}
-          <span class="badge bg-danger">Disabled</span>
-        {% else %}
-          <span class="badge bg-secondary">Expired</span>
-        {% endif %}
-      </td>
-      <td>
-        <a href="{% url 'edit_product_offer' offer.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-        <a href="#"
-           class="btn btn-sm {% if offer.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} toggle-offer-status-btn"
-           data-url="{% url 'delete_category_offer' offer.id %}"
-           data-action="{% if offer.is_active %}deactivate{% else %}activate{% endif %}">
-           {% if offer.is_active %}Disable{% else %}Enable{% endif %}
-        </a>
-      </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="7" class="text-center">No product offers available.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<!-- Category Offers -->
-<h4>Category Offers</h4>
-<table class="table table-bordered table-hover mt-2">
-  <thead>
-    <tr>
-      <th>Categories</th>
-      <th>Discount (%)</th>
-      <th>Start</th>
-      <th>End</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for offer in category_offers %}
-    <tr>
-      <td>
-        {% for category in offer.categories.all %}
-          {{ category.name }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-      </td>
-      <td>{{ offer.discount_percentage }}</td>
-      <td>{{ offer.start_date|date:"M d, Y H:i" }}</td>
-      <td>{{ offer.end_date|date:"M d, Y H:i" }}</td>
-      <td>
-        {% if offer.is_active and offer.is_valid %}
-          <span class="badge bg-success">Active</span>
-        {% elif not offer.is_active %}
-          <span class="badge bg-danger">Disabled</span>
-        {% else %}
-          <span class="badge bg-secondary">Expired</span>
-        {% endif %}
-      </td>
-      <td>
-        <a href="{% url 'edit_category_offer' offer.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-        <a href="#"
-           class="btn btn-sm {% if offer.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} toggle-offer-status-btn"
-           data-url="{% url 'delete_category_offer' offer.id %}"
-           data-action="{% if offer.is_active %}deactivate{% else %}activate{% endif %}">
-           {% if offer.is_active %}Disable{% else %}Enable{% endif %}
-        </a>
-      </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="7" class="text-center">No category offers available.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<!-- Confirmation Modal -->
-<div class="modal fade" id="offerConfirmModal" tabindex="-1" aria-labelledby="offerConfirmModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="offerConfirmModalLabel">Confirm Action</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to <span id="offerActionText"></span> this offer?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <a href="#" id="offerConfirmBtn" class="btn btn-primary">Yes, proceed</a>
-      </div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteOfferModal" tabindex="-1" aria-labelledby="deleteOfferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal delete-modal">
+            <div class="modal-header delete-header">
+                <h5 class="modal-title" id="deleteOfferModalLabel">
+                    <i class="fas fa-trash me-2"></i>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-content">
+                    <div class="confirmation-icon delete-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="confirmation-text">
+                        <p>Are you sure you want to <strong>permanently delete</strong> <span id="offerTypeInModal"></span>:</p>
+                        <div class="product-highlight delete-highlight">
+                            <i class="fas fa-tag me-2"></i>
+                            <span id="deleteOfferName"></span>
+                        </div>
+                        <div class="warning-text">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            This action cannot be undone!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cancel
+                </button>
+                <form id="deleteOfferForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
-{% endblock %}
+
+<style>
+    .offers-container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 20px 30px;
+        margin: -30px -30px 30px -30px;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.4rem;
+    }
+
+    .page-subtitle {
+        margin: 4px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn-add-offer {
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-add-offer.product-offer {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .btn-add-offer.category-offer {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    .btn-add-offer:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+
+    /* Messages */
+    .messages-container {
+        margin-bottom: 20px;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        font-size: 0.9rem;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .alert-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .alert-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .custom-close {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        padding: 4px;
+        margin-left: 10px;
+        flex-shrink: 0;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    .custom-close:hover {
+        opacity: 1;
+    }
+
+    /* Alert Colors */
+    .alert-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .alert-danger, .alert-error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    /* Offers Section */
+    .offers-section {
+        margin-bottom: 30px;
+    }
+
+    .offers-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .offers-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 16px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .offers-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+    }
+
+    .offers-title i {
+        font-size: 1rem;
+        color: #059669;
+    }
+
+    .offers-stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(71, 85, 105, 0.1);
+        padding: 6px 12px;
+        border-radius: 8px;
+    }
+
+    .stat-number {
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.9rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .modern-table th {
+        background: #f8fafc;
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+
+    .modern-table th i {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .modern-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .table-row {
+        transition: all 0.3s ease;
+    }
+
+    .table-row:hover {
+        background: #f8fafc;
+    }
+
+    /* Offer Info */
+    .offer-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .offer-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #059669, #047857);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .offer-name {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 2px;
+        font-size: 0.95rem;
+    }
+
+    .offer-meta {
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+
+    /* Products and Categories Lists */
+    .products-list, .categories-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .product-tag, .category-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border: 1px solid #e2e8f0;
+        max-width: fit-content;
+    }
+
+    .category-tag {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fde68a;
+    }
+
+    .category-tag i {
+        font-size: 0.7rem;
+    }
+
+    /* Discount Badge */
+    .discount-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Date Info */
+    .date-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .date-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+    }
+
+    .date-item i {
+        font-size: 0.7rem;
+        color: #6b7280;
+    }
+
+    .date-label {
+        font-weight: 600;
+        color: #374151;
+        min-width: 35px;
+    }
+
+    .date-value {
+        color: #6b7280;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .status-badge i {
+        font-size: 0.7rem;
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .status-disabled {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .status-expired {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75rem;
+        text-decoration: none;
+        white-space: nowrap;
+        min-width: auto;
+        height: 32px;
+    }
+
+    .action-btn i {
+        font-size: 0.7rem;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+        color: white;
+    }
+
+    .btn-disable {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .btn-disable:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2);
+        color: white;
+    }
+
+    .btn-enable {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .btn-enable:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+        color: white;
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);
+    }
+
+    /* No Data Styling */
+    .no-data {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .no-data-content i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 12px;
+    }
+
+    .no-data-content h4 {
+        color: #64748b;
+        margin-bottom: 6px;
+        font-size: 1rem;
+    }
+
+    .no-data-content p {
+        color: #94a3b8;
+        margin: 0;
+        font-size: 0.85rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 16px 20px;
+            margin: -30px -30px 20px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            justify-content: center;
+        }
+
+        .header-actions {
+            justify-content: center;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-wrapper {
+            overflow-x: scroll;
+        }
+
+        .modern-table {
+            min-width: 800px;
+        }
+
+        .offers-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .offers-stats {
+            justify-content: center;
+        }
+
+        .products-list, .categories-list {
+            max-height: 100px;
+            overflow-y: auto;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .btn-add-offer {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-info {
+            font-size: 0.75rem;
+        }
+
+        .discount-badge {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+        }
+    }
+
+    /* Modal Styles */
+    .modern-modal {
+        border-radius: 12px;
+        box-shadow: 0 5px 30px rgba(0, 0, 0, 0.15);
+        border: none;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+    }
+
+    .modal-title i {
+        font-size: 1rem;
+        color: #dc2626;
+    }
+
+    .btn-close {
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }
+
+    .btn-close:hover {
+        opacity: 1;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    .btn-secondary {
+        background-color: #64748b;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background-color: #475569;
+    }
+
+    .btn-danger {
+        background-color: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-danger:hover {
+        background-color: #b91c1c;
+    }
+
+    /* Delete Modal Specific Styles */
+    .delete-header {
+        background-color: rgba(220, 38, 38, 0.1);
+        border-bottom: 1px solid rgba(220, 38, 38, 0.3);
+    }
+
+    .delete-header .modal-title {
+        color: #dc2626;
+    }
+
+    .delete-header .btn-close {
+        color: white;
+    }
+
+    .confirmation-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.2rem;
+    }
+
+    .confirmation-icon {
+        font-size: 2.5rem;
+        color: #dc2626;
+        margin-top: 0.3rem;
+    }
+
+    .confirmation-text p {
+        font-size: 1rem;
+        color: #475569;
+        margin-bottom: 0.8rem;
+        line-height: 1.5;
+    }
+
+    .product-highlight {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #b91c1c;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .warning-text {
+        background-color: rgba(253, 224, 71, 0.2);
+        color: #9a3412;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .delete-icon {
+        color: #dc2626;
+    }
+
+    .delete-highlight {
+        background-color: rgba(254, 242, 242, 1);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll(".custom-alert");
+            alerts.forEach((alert) => {
+                alert.classList.remove("show");
+                alert.classList.add("fade");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Add loading states to action buttons
+        document.querySelectorAll(".action-btn").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                if (!this.onclick && this.tagName === 'A') {
+                    var originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+                    this.style.pointerEvents = 'none';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.style.pointerEvents = 'auto';
+                    }, 1000);
+                }
+            });
+        });
+
+        // Smooth scrolling for better UX
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // JavaScript to handle the delete modal
+        var deleteOfferModal = document.getElementById('deleteOfferModal');
+        deleteOfferModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Button that triggered the modal
+            var offerId = button.getAttribute('data-offer-id');
+            var offerName = button.getAttribute('data-offer-name');
+            var offerType = button.getAttribute('data-offer-type');
+
+            // Update modal's content
+            var modalTitle = deleteOfferModal.querySelector('.modal-title');
+            var modalBodyInput = deleteOfferModal.querySelector('#deleteOfferName');
+            var offerTypeInModal = deleteOfferModal.querySelector('#offerTypeInModal');
+            var deleteOfferForm = document.getElementById('deleteOfferForm');
+
+            offerTypeInModal.textContent = offerType === 'product' ? 'Product Offer' : 'Category Offer';
+            modalBodyInput.textContent = offerName;
+
+            // Update the form action with the offer ID
+            let url = '';
+            if (offerType === 'product') {
+                url = `/soft_product_offer_delete/${offerId}/`;
+            } else if (offerType === 'category') {
+                url = `/soft_category_offer_delete/${offerId}/`;
+            }
+            deleteOfferForm.action = url;
+        });
+    });
+</script>
 
 {% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const modal = new bootstrap.Modal(document.getElementById("offerConfirmModal"));
-    const actionTextSpan = document.getElementById("offerActionText");
-    const confirmBtn = document.getElementById("offerConfirmBtn");
+// Delete Modal
+var deleteOfferModal = new bootstrap.Modal(document.getElementById('deleteOfferModal'));
+var deleteOfferForm = document.getElementById('deleteOfferForm');
+var deleteOfferNameSpan = document.getElementById('deleteOfferName');
+var offerTypeInModalSpan = document.getElementById('offerTypeInModal');
 
-    document.querySelectorAll(".toggle-offer-status-btn").forEach(function (button) {
-      button.addEventListener("click", function (event) {
-        event.preventDefault();
-        const url = this.getAttribute("data-url");
-        const action = this.getAttribute("data-action");
-        actionTextSpan.textContent = action;
-        confirmBtn.setAttribute("href", url);
-        modal.show();
-      });
+document.querySelectorAll('.action-btn.btn-delete').forEach(function(button) {
+    button.addEventListener('click', function(event) {
+        event.preventDefault(); // Prevent default form submission or confirm dialog
+        var offerId = this.getAttribute('data-offer-id');
+        var offerName = this.getAttribute('data-offer-name');
+        var offerType = this.getAttribute('data-offer-type'); // 'product' or 'category'
+
+        deleteOfferNameSpan.textContent = offerName;
+        offerTypeInModalSpan.textContent = offerType === 'product' ? 'product offer' : 'category offer';
+
+        let deleteUrl;
+        if (offerType === 'product') {
+            deleteUrl = '{% url "soft_product_offer_delete" 0 %}'.replace('0', offerId);
+        } else if (offerType === 'category') {
+            deleteUrl = '{% url "soft_category_offer_delete" 0 %}'.replace('0', offerId);
+        }
+        deleteOfferForm.setAttribute('action', deleteUrl);
+
+        deleteOfferModal.show();
     });
-  });
+});
+
+// Remove loading states from delete buttons as modal handles confirmation
+document.querySelectorAll(".action-btn.btn-delete").forEach(function(btn) {
+    btn.removeEventListener("click", function() {
+        // This listener was added in the previous turn, now it's replaced by modal logic
+    });
+});
 </script>
+{% endblock %}
 {% endblock %}
