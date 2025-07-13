@@ -64,7 +64,7 @@ def signup_view(request):
             errors['username'] = "Username is required."
         elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', username):
             errors['username'] = "Name must contain at least one letter and only use letters, numbers, spaces, hyphens, or underscores."
-        elif username == "_" * len(username):
+        elif re.fullmatch(r'_+',username):
             errors['username']= "Username cannot be only underscores."
         elif CustomUser.objects.filter(username=username).exists():
             errors['username'] = "Username already taken."
@@ -75,7 +75,6 @@ def signup_view(request):
             errors['email'] = 'Enter a valid Gmail address.'
         elif CustomUser.objects.filter(email=email).exists():
             errors['email'] = "Email already in use."
-
         if not password1:
             errors['password1'] = "Password is required."
         elif password1 != password2:
@@ -243,9 +242,13 @@ def reset_password_view(request, uidb64, token):
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('user_dashboard')
+
     storage = get_messages(request)
     for _ in storage:
         pass
+
+    next_url = request.GET.get('next')  
+
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -257,22 +260,21 @@ def login_view(request):
                     messages.error(request, "Your account is currently suspended.")
                     return redirect('login')
                 elif not user.is_active:
-                    messages.error(request,'Your account is inactive.')
+                    messages.error(request, 'Your account is inactive.')
                     return render(request, 'user_app/login.html', {'form': form})
                 else:
                     login(request, user)
-                    return redirect('user_dashboard')
+                    return redirect(next_url or 'user_dashboard') 
             else:
                 form.add_error(None, "Invalid username or password.")
     else:
         form = LoginForm()
 
-    return render(request, 'user_app/login.html', {'form': form})
+    return render(request, 'user_app/login.html', {'form': form, 'next': next_url})
 
 @never_cache
-@login_required(login_url='login')
 def user_dashboard(request):
-    if request.user.is_blocked:
+    if request.user.is_authenticated and request.user.is_blocked:
         logout(request)
         return redirect('login')
     
@@ -295,14 +297,15 @@ def user_dashboard(request):
     context = {
         'best_selling_products': best_selling_products,
         'featured_products': featured_products,
-        'wishlist_products': list(wishlist_products),  
+        'wishlist_products': list(wishlist_products),
     }
     return render(request, 'user_app/dashboard.html', context)
 
-
+@never_cache
+def about_page(request):
+    return render(request,'user_app/about.html')
 
 @never_cache
-@login_required(login_url='login')
 def user_product_list(request):
     query = request.GET.get('q', '').strip()
     category = request.GET.get('category', 'all')
@@ -390,13 +393,13 @@ def user_product_list(request):
 
 
 @never_cache
-@login_required(login_url='login')
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
 
     related_products = Product.objects.filter(
-        category=product.category
-    ).exclude(id=product.id)[:4]
+        brand=product.brand,is_deleted=False,
+    is_active=True
+    ).exclude(id=product.id).order_by('-id')[:4]
 
     sizes = ProductSizeStock.objects.filter(
         product=product, quantity__gt=0
@@ -1030,6 +1033,7 @@ def checkout(request):
 
 
 
+
 @login_required
 @transaction.atomic
 def place_order(request):
@@ -1055,7 +1059,7 @@ def place_order(request):
         except ProductSizeStock.DoesNotExist:
             return redirect('/checkout/?stock_error=true')
 
-    # Address handling
+    # Handle address
     if selected_address != 'new':
         try:
             address = Address.objects.get(id=int(selected_address), user=request.user)
@@ -1089,7 +1093,7 @@ def place_order(request):
     grand_total = sum(item.product.final_price * item.quantity for item in cart_items)
     coupon_code = request.session.get('applied_coupon_code')
     coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
-    shipping_charge = Decimal('0.00')  # You can update this later
+    shipping_charge = Decimal('0.00')  # Update if needed
 
     final_total = (grand_total + shipping_charge) - coupon_discount
 
@@ -1098,8 +1102,8 @@ def place_order(request):
 
     # Wallet balance check
     if payment_method == "wallet":
-        wallet = request.user.wallet
-        if wallet.balance < final_total:
+        user_wallet = request.user.wallet
+        if user_wallet.balance < final_total:
             return redirect('/checkout/?error=wallet_insufficient')
 
     # Create order
@@ -1123,10 +1127,9 @@ def place_order(request):
         shipping_charge=shipping_charge
     )
 
-    # Handle wallet payment
+    # Handle wallet transaction
     if payment_method == "wallet":
-        # 1. Deduct from user's wallet
-        user_wallet = request.user.wallet
+        # Deduct from user
         user_wallet.balance -= final_total
         user_wallet.save()
 
@@ -1138,10 +1141,10 @@ def place_order(request):
             order=order
         )
 
-        # 2. Credit to admin wallet
+        # Credit to admin
         admin_user = CustomUser.objects.filter(is_superuser=True).first()
         if admin_user:
-            admin_wallet = Wallet.objects.get(user=admin_user)
+            admin_wallet, _ = Wallet.objects.get_or_create(user=admin_user)
             admin_wallet.balance += final_total
             admin_wallet.save()
 
@@ -1173,11 +1176,11 @@ def place_order(request):
     if payment_method in ["cod", "wallet"]:
         cart_items.delete()
 
-    # Clear session coupon
+    # Clear coupon session
     request.session.pop('applied_coupon_code', None)
     request.session.pop('coupon_discount', None)
 
-    # Handle Razorpay
+    # Razorpay payment process
     if payment_method == "razorpay":
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         razorpay_order = client.order.create({

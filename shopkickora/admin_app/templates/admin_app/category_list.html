@@ -137,17 +137,18 @@
                                 </div>
                             </td>
                             <td class="td-status">
-                                {% if not category.is_active %}
+                                {% if category.is_active %}
                                 <span class="status-badge status-active">
                                     <i class="fas fa-check-circle me-1"></i>
                                     Active
                                 </span>
-                                {% else %}
+                            {% else %}
                                 <span class="status-badge status-disabled">
                                     <i class="fas fa-ban me-1"></i>
                                     Disabled
                                 </span>
-                                {% endif %}
+                            {% endif %}
+
                             </td>
                             <td class="td-actions">
                                 <div class="action-buttons">
@@ -158,31 +159,32 @@
                                     </a>
 
                                     <!-- Enable/Disable Button -->
-                                    {% if not category.is_active%}
-                                    <button
-                                        type="button"
-                                        class="action-btn btn-disable toggle-status-btn"
-                                        data-url="{% url 'toggle_category_status' category.id %}"
-                                        data-action="disable"
-                                        data-category="{{ category.name }}"
-                                        title="Disable Category"
-                                    >
-                                        <i class="fas fa-ban me-1"></i>
-                                        Disable
-                                    </button>
+                                    {% if category.is_active %}
+                                        <button
+                                            type="button"
+                                            class="action-btn btn-disable toggle-status-btn"
+                                            data-url="{% url 'toggle_category_status' category.id %}"
+                                            data-action="disable"
+                                            data-category="{{ category.name }}"
+                                            title="Disable Category"
+                                        >
+                                            <i class="fas fa-ban me-1"></i>
+                                            Disable
+                                        </button>
                                     {% else %}
-                                    <button
-                                        type="button"
-                                        class="action-btn btn-enable toggle-status-btn"
-                                        data-url="{% url 'toggle_category_status' category.id %}"
-                                        data-action="enable"
-                                        data-category="{{ category.name }}"
-                                        title="Enable Category"
-                                    >
-                                        <i class="fas fa-check me-1"></i>
-                                        Enable
-                                    </button>
+                                        <button
+                                            type="button"
+                                            class="action-btn btn-enable toggle-status-btn"
+                                            data-url="{% url 'toggle_category_status' category.id %}"
+                                            data-action="enable"
+                                            data-category="{{ category.name }}"
+                                            title="Enable Category"
+                                        >
+                                            <i class="fas fa-check me-1"></i>
+                                            Enable
+                                        </button>
                                     {% endif %}
+
 
                                     <!-- Delete Button -->
                                     <button

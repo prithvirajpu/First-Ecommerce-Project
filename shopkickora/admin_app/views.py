@@ -186,14 +186,18 @@ def edit_category(request, category_id):
 
 
 @never_cache
-@user_passes_test(lambda x:x.is_superuser,login_url='admin_login')
-def toggle_category_status(request,category_id):
-    category=get_object_or_404(Category,id=category_id)
-    category.is_active=not category.is_active 
+@user_passes_test(lambda x:x.is_superuser, login_url='admin_login')
+def toggle_category_status(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+
+    category.is_active = not category.is_active
     category.save()
-    status= "disabled" if category.is_active else "enabled"
-    messages.success(request,f"Category {status} successfully")
+
+    status = "enabled" if category.is_active else "disabled"
+    messages.success(request, f"Category '{category.name}' {status} successfully.")
+
     return redirect('category_list')
+
 
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
@@ -229,8 +233,8 @@ def product_list(request):
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def add_product(request):
-    categories = Category.objects.filter(is_deleted=False)
-    brands = Brand.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_deleted=False,is_active=True)
+    brands = Brand.objects.filter(is_deleted=False,is_active=True)
     errors = {}
 
     if request.method == 'POST':
@@ -520,10 +524,10 @@ def edit_product(request, product_id):
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
 def toggle_product_status(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    product.is_deleted = not product.is_deleted
+    product.is_active = not product.is_active
     product.save()
     
-    status = "disabled" if product.is_deleted else "enabled"
+    status = "disabled" if product.is_active else "enabled"
     messages.success(request, f"Product {status} successfully.")
     
     return redirect('product_list')
@@ -689,7 +693,7 @@ def admin_order_list(request):
         )
     if status_filter:
         orders=orders.filter(status=status_filter)
-    paginator=Paginator(orders,10)
+    paginator=Paginator(orders,6)
     page=request.GET.get('page')
     order_page=paginator.get_page(page)
     context={'orders':order_page,
@@ -761,20 +765,37 @@ def approve_return(request, order_item_id):
 
     refund_amount = item_total - proportional_discount
 
-    # Update wallet
-    wallet, _ = Wallet.objects.get_or_create(user=item.order.user)
-    wallet.balance += refund_amount
-    wallet.save()
+    # CREDIT to user's wallet
+    user_wallet, _ = Wallet.objects.get_or_create(user=item.order.user)
+    user_wallet.balance += refund_amount
+    user_wallet.save()
 
     WalletTransaction.objects.create(
-        wallet=wallet,
+        wallet=user_wallet,
         amount=refund_amount,
         transaction_type='CREDIT',
-        description=f"Refund for return: {item.product.name} (Size {item.size})"
+        description=f"Refund for return: {item.product.name} (Size {item.size})",
+        order=item.order
     )
+
+    # DEBIT from admin's wallet
+    admin_user = CustomUser.objects.filter(is_superuser=True).first()
+    if admin_user:
+        admin_wallet, _ = Wallet.objects.get_or_create(user=admin_user)
+        admin_wallet.balance -= refund_amount
+        admin_wallet.save()
+
+        WalletTransaction.objects.create(
+            wallet=admin_wallet,
+            amount=refund_amount,
+            transaction_type='DEBIT',
+            description=f"Refund to {item.order.user.email} for {item.product.name} (Size {item.size})",
+            order=item.order
+        )
 
     messages.success(request, f"Return approved and ₹{refund_amount:.2f} refunded to user's wallet (after applying coupon share).")
     return redirect('admin_order_detail', order_id=item.order.id)
+
 
 
 @user_passes_test(lambda x: x.is_superuser)
@@ -1260,10 +1281,17 @@ def download_sales_report_pdf(request):
 
 @staff_member_required
 def wallet_transaction_list(request):
-    transactions = WalletTransaction.objects.select_related('wallet__user').order_by('-created_at')
+    admin_user = request.user  
+
+    transactions = WalletTransaction.objects.filter(
+        wallet__user=admin_user  
+    ).select_related('wallet__user').order_by('-created_at')
+
     return render(request, 'admin_app/wallet_transaction_list.html', {
         'transactions': transactions
     })
+
+
 
 
 @staff_member_required

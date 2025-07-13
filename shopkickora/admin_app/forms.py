@@ -26,9 +26,8 @@ class ProductOfferForm(forms.ModelForm):
 
         all_products = Product.objects.filter(
             is_deleted=False,
-            category__is_deleted=False,
-            category__is_active=True,
-            brand__is_active=True
+         category__is_deleted=False,
+    category__is_active=True
         )
 
         # Retain selected products in edit view
@@ -40,8 +39,10 @@ class ProductOfferForm(forms.ModelForm):
         self.unselected_products = unselected_products
 
         # Set filtered queryset
-        self.fields['products'].queryset = all_products | selected_products  # to avoid removing selected deleted ones
+        self.fields['products'].queryset = (all_products | selected_products).distinct()
         self.fields['products'].required = False
+      
+
 
     def clean(self):
         cleaned_data = super().clean()

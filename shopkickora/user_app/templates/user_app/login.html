@@ -125,7 +125,7 @@
             <div class="mb-6">
               {% provider_login_url 'google' process='login' as google_login_url %}
               <a
-                href="{{ google_login_url }}{% if '?' in google_login_url %}&{% else %}?{% endif %}next=/user_dashboard/"
+                href="{{ google_login_url }}{% if '?' in google_login_url %}&{% else %}?{% endif %}next={% url 'user_dashboard' %}"
                 class="w-full flex justify-center items-center gap-3 bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all duration-300 shadow-sm"
               >
                 <svg
@@ -176,8 +176,12 @@
             </div>
 
             <!-- Login Form -->
-            <form method="POST" novalidate class="space-y-6" autocomplete="off">
-              {% csrf_token %} {% if form.non_field_errors %}
+          <form method="POST" novalidate class="space-y-6" autocomplete="off" action="{% url 'login' %}{% if next %}?next={{ next }}{% endif %}">
+              {% csrf_token %}
+            {% if next %}
+              <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            {% if form.non_field_errors %}
               <div class="text-red-600 text-sm mb-4">
                 {% for error in form.non_field_errors %}
                 <p>{{ error }}</p>

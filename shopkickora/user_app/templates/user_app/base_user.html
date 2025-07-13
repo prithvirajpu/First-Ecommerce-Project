@@ -40,81 +40,114 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="min-h-screen flex flex-col">
-    <header class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between py-4">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <i data-lucide="zap" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
-                </div>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
-                </nav>
-                <div class="flex items-center space-x-4">
-                    <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
-                        <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
-                        <input type="text" name="q" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
-                        <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
-                            <i data-lucide="search" class="w-4 h-4"></i>
-                        </button>
-                    </form>
-                    <!-- Wishlist Icon with Badge -->
-<a href="{% url 'wishlist_view' %}" class="relative">
-    <i class="fas fa-hand-holding-heart text-gray-700 hover:text-rose-600 text-xl"></i>
-    {% if wishlist_count > 0 %}
-        <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
-            {{ wishlist_count }}
-        </span>
-    {% endif %}
-</a>
-
-<!-- Cart Icon with Badge -->
-<a href="{% url 'cart_view' %}" class="relative">
-    <button>
-        <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
-        {% if cart_count > 0 %}
-            <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                {{ cart_count }}
-            </span>
-        {% endif %}
-    </button>
-</a>
-
-                    <a href="{% url 'user_profile' %}" class="text-gray-700 hover:text-blue-600 transition-colors">
-                        <i data-lucide="user" class="w-6 h-6"></i>
-                    </a>
-                    <button id="logoutBtn" class="text-gray-700 hover:text-blue-600 transition-colors">
-                        <i data-lucide="log-out" class="w-6 h-6"></i>
-                    </button>
-                    <button class="md:hidden" id="mobileMenuBtn">
-                        <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
-                    </button>
-  <!-- Referral Modal Trigger Icon -->
-{% if request.resolver_match.url_name == "user_dashboard" %}
-  <button onclick="openReferralModal()" title="Referral Gift">
-    <i class="fas fa-gift text-amber-500 text-xl hover:scale-110 transition-transform"></i>
-  </button>
-{% endif %}
-
-
-                </div>
-            </div>
-            <nav class="md:hidden hidden pb-4" id="mobile-menu">
-                <div class="flex flex-col space-y-2">
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
-                    <a href="#" class="text-blue-600 font-medium py-2">Categories</a>
-                    <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
-                    <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contact</a>
-                </div>
-            </nav>
+<header class="bg-white shadow-md sticky top-0 z-50">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-4">
+      <!-- Logo & Name -->
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <i data-lucide="zap" class="w-5 h-5 text-white"></i>
         </div>
-    </header>
+        <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="hidden md:flex space-x-6">
+        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
+        <!-- <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a> -->
+        <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
+        <a href="{% url 'about_page' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+      </nav>
+
+      <!-- Right Icons: Search, Wishlist, Cart, Profile/Login -->
+      <div class="flex items-center space-x-4">
+        <!-- Search Form -->
+        <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
+          <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
+          <input type="text" name="q" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
+          <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        {% if user.is_authenticated %}
+          <!-- Wishlist -->
+          <a href="{% url 'wishlist_view' %}" class="relative">
+            <i class="fas fa-hand-holding-heart text-gray-700 hover:text-rose-600 text-xl"></i>
+            {% if wishlist_count > 0 %}
+              <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                {{ wishlist_count }}
+              </span>
+            {% endif %}
+          </a>
+
+          <!-- Cart -->
+          <a href="{% url 'cart_view' %}" class="relative">
+            <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+            {% if cart_count > 0 %}
+              <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                {{ cart_count }}
+              </span>
+            {% endif %}
+          </a>
+
+          <!-- Profile -->
+          <a href="{% url 'user_profile' %}" class="text-gray-700 hover:text-blue-600 transition-colors">
+            <i data-lucide="user" class="w-6 h-6"></i>
+          </a>
+
+          <!-- Logout -->
+          <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+           <button type="button" id="logoutBtn" class="text-gray-700 hover:text-blue-600">
+  <i data-lucide="log-out" class="w-6 h-6"></i>
+</button>
+
+          </form>
+        {% else %}
+          <!-- Icons redirect to login if unauthenticated -->
+          <a href="{% url 'login' %}" title="Login to view wishlist">
+            <i class="fas fa-hand-holding-heart text-gray-700 text-xl hover:text-blue-500"></i>
+          </a>
+          <a href="{% url 'login' %}" title="Login to view cart">
+            <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700 hover:text-blue-500"></i>
+          </a>
+          <a href="{% url 'login' %}" title="Login to access profile">
+            <i data-lucide="user" class="w-6 h-6 text-gray-700 hover:text-blue-500"></i>
+          </a>
+
+          
+        {% endif %}
+
+        <!-- Mobile Menu Toggle -->
+        <button class="md:hidden" id="mobileMenuBtn">
+          <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
+        </button>
+
+        <!-- Referral Gift Icon only on dashboard -->
+        {% if request.user.is_authenticated %}
+        <button onclick="openReferralModal()" title="Referral Gift">
+          <i class="fas fa-gift text-amber-500 text-xl hover:scale-110 transition-transform"></i>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <nav class="md:hidden hidden pb-4" id="mobile-menu">
+      <div class="flex flex-col space-y-2">
+        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
+        <!-- <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Categories</a> -->
+        <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
+        <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
+        <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contact</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+
+
 
     <main class="flex-grow min-h-screen">
         {% block content %}
@@ -191,6 +224,7 @@
         </div>
     </div>
 <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
+
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {

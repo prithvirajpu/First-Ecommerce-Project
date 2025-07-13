@@ -192,8 +192,7 @@
                                     <div class="stock-list">
                                         {% for stock in product.size_stocks.all %}
                                         <div class="stock-item {% if stock.quantity < 10 %}low-stock{% endif %}">
-                                            <span class="size-label">{{ stock.get_size_display }}</span>
-                                            <span class="stock-separator">:</span>
+                                            <span class="size-label">{{ stock.get_size_display }}:</span>
                                             <span class="quantity">{{ stock.quantity }}</span>
                                         </div>
                                         {% endfor %}
@@ -203,19 +202,20 @@
                                     {% endif %}
                                 </div>
                             </td>
-                            <td class="td-status">
-                                {% if not product.is_deleted %}
-                                <span class="status-badge status-active">
-                                    <i class="fas fa-check-circle me-1"></i>
-                                    Active
-                                </span>
-                                {% else %}
-                                <span class="status-badge status-disabled">
-                                    <i class="fas fa-ban me-1"></i>
-                                    Disabled
-                                </span>
-                                {% endif %}
-                            </td>
+                          <td class="td-status">
+                                        {% if product.is_active %}
+                                            <span class="status-badge status-active">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                Active
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge status-disabled">
+                                                <i class="fas fa-ban me-1"></i>
+                                                Disabled
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
                             <td class="td-actions">
                                 <div class="action-buttons">
                                     <!-- Edit Button -->
@@ -223,23 +223,27 @@
                                         <i class="fas fa-edit me-1"></i>
                                         Edit
                                     </a>
+
                                     <!-- Enable/Disable Button -->
-                                    <button
-                                        type="button"
-                                        class="action-btn {% if product.is_deleted %}btn-enable{% else %}btn-disable{% endif %} toggle-status-btn"
-                                        data-url="{% url 'toggle_product_status' product.id %}"
-                                        data-action="{% if product.is_deleted %}enable{% else %}disable{% endif %}"
-                                        data-product="{{ product.name }}"
-                                        title="{% if product.is_deleted %}Enable{% else %}Disable{% endif %} Product"
-                                    >
-                                        {% if product.is_deleted %}
-                                        <i class="fas fa-check me-1"></i>
-                                        Enable
-                                        {% else %}
+                                   <!-- Enable/Disable Button -->
+                                <button
+                                    type="button"
+                                    class="action-btn {% if product.is_active %}btn-disable{% else %}btn-enable{% endif %} toggle-status-btn"
+                                    data-url="{% url 'toggle_product_status' product.id %}"
+                                    data-action="{% if product.is_active %}disable{% else %}enable{% endif %}"
+                                    data-product="{{ product.name }}"
+                                    title="{% if product.is_active %}Disable{% else %}Enable{% endif %} Product"
+                                >
+                                    {% if product.is_active %}
                                         <i class="fas fa-ban me-1"></i>
                                         Disable
-                                        {% endif %}
-                                    </button>
+                                    {% else %}
+                                        <i class="fas fa-check me-1"></i>
+                                        Enable
+                                    {% endif %}
+                                </button>
+
+
                                     <!-- Delete Button -->
                                     <button
                                         type="button"
@@ -809,7 +813,7 @@
         font-size: 0.8rem;
     }
 
-    /* Enhanced Product Image Styling - Bigger and More Highlighted */
+    /* Product Image Styling */
     .image-container {
         display: flex;
         justify-content: center;
@@ -817,29 +821,21 @@
     }
 
     .product-image {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
         object-fit: contain;
-        border-radius: 12px;
-        border: 3px solid #e2e8f0;
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
         background: #f8fafc;
-        padding: 6px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
-
-    .product-image:hover {
-        transform: scale(1.05);
-        border-color: #475569;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        padding: 4px;
     }
 
     .no-image {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
         background: #f1f5f9;
-        border: 3px dashed #cbd5e1;
-        border-radius: 12px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -847,12 +843,11 @@
         color: #94a3b8;
         font-size: 0.7rem;
         text-align: center;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .no-image i {
-        font-size: 1.4rem;
-        margin-bottom: 4px;
+        font-size: 1.2rem;
+        margin-bottom: 2px;
     }
 
     .product-info {
@@ -926,51 +921,40 @@
         font-size: 0.9rem;
     }
 
-    /* Enhanced Stock Information with Better Spacing */
+    /* Stock Information */
     .stock-info {
-        min-width: 140px;
+        min-width: 120px;
     }
 
     .stock-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
     }
 
     .stock-item {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        padding: 4px 8px;
-        border-radius: 6px;
+        padding: 2px 6px;
+        border-radius: 4px;
         background: #f8fafc;
         font-size: 0.75rem;
-        border: 1px solid #e2e8f0;
     }
 
     .stock-item.low-stock {
         background: #fef2f2;
         color: #dc2626;
         font-weight: 600;
-        border-color: #fecaca;
     }
 
     .size-label {
         font-weight: 600;
         color: #475569;
-        min-width: 60px;
-    }
-
-    /* Enhanced Stock Separator with More Gap */
-    .stock-separator {
-        margin: 0 12px;
-        font-weight: 700;
-        color: #64748b;
-        font-size: 0.8rem;
     }
 
     .quantity {
         font-weight: 700;
-        color: #1e293b;
     }
 
     .no-stock {
@@ -1002,17 +986,15 @@
         color: white;
     }
 
-    /* Enhanced Action Buttons - Perfect Row Alignment */
+    /* Action Buttons */
     .action-buttons {
         display: flex;
-        gap: 6px;
-        align-items: center;
-        justify-content: flex-start;
-        flex-wrap: nowrap;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
     .action-btn {
-        padding: 6px 10px;
+        padding: 6px 12px;
         border: none;
         border-radius: 6px;
         font-weight: 600;
@@ -1020,15 +1002,12 @@
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         text-decoration: none;
-        white-space: nowrap;
-        min-width: auto;
-        height: 32px;
     }
 
     .action-btn i {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 
     .btn-edit {
@@ -1323,12 +1302,6 @@
 
         .action-buttons {
             flex-direction: column;
-            gap: 4px;
-        }
-
-        .action-btn {
-            width: 100%;
-            justify-content: center;
         }
 
         .table-wrapper {
@@ -1336,7 +1309,7 @@
         }
 
         .modern-table {
-            min-width: 1000px;
+            min-width: 900px;
         }
 
         .modern-pagination {
@@ -1355,18 +1328,8 @@
         }
 
         .stock-list {
-            max-height: 100px;
+            max-height: 80px;
             overflow-y: auto;
-        }
-
-        .product-image {
-            width: 60px;
-            height: 60px;
-        }
-
-        .no-image {
-            width: 60px;
-            height: 60px;
         }
     }
 </style>

@@ -1,21 +1,49 @@
 {% extends "user_app/base_admin.html" %}
 {% block content %}
-<h2>Transaction Details</h2>
+<div class="container mt-4">
+  <h2 class="mb-4">Transaction Details</h2>
 
-<ul class="list-group">
-  <li class="list-group-item"><strong>User:</strong> {{ transaction.wallet.user.email }}</li>
-  <li class="list-group-item"><strong>Transaction ID:</strong> {{ transaction.transaction_id }}</li>
-  <li class="list-group-item"><strong>Date:</strong> {{ transaction.created_at }}</li>
-  <li class="list-group-item"><strong>Type:</strong> {{ transaction.transaction_type }}</li>
-  <li class="list-group-item"><strong>Amount:</strong> ₹{{ transaction.amount }}</li>
-  <li class="list-group-item"><strong>Description:</strong> {{ transaction.description }}</li>
-  {% if transaction.order %}
-  <li class="list-group-item">
-    <strong>Related Order:</strong>
-    <a href="{% url 'admin_order_detail' transaction.order.id %}" class="btn btn-sm btn-primary">View Order</a>
-  </li>
-  {% endif %}
-</ul>
+  <ul class="list-group">
+    <li class="list-group-item">
+      <strong>User:</strong>
+      {% if transaction.wallet.user.is_superuser and transaction.order %}
+  {{ transaction.order.user.get_full_name|default:transaction.order.user.email }}
+{% else %}
+  {{ transaction.wallet.user.get_full_name|default:transaction.wallet.user.email }}
+{% endif %}
 
-<a href="{% url 'wallet_transaction_list' %}" class="btn btn-secondary mt-3">Back</a>
+    </li>
+    <li class="list-group-item">
+      <strong>Transaction ID:</strong> {{ transaction.transaction_id }}
+    </li>
+    <li class="list-group-item">
+      <strong>Date:</strong> {{ transaction.created_at|date:"Y-m-d H:i:s" }}
+    </li>
+    <li class="list-group-item">
+      <strong>Type:</strong>
+      {% if transaction.transaction_type == 'CREDIT' %}
+        <span class="text-success fw-semibold">{{ transaction.transaction_type }}</span>
+      {% else %}
+        <span class="text-danger fw-semibold">{{ transaction.transaction_type }}</span>
+      {% endif %}
+    </li>
+    <li class="list-group-item">
+      <strong>Amount:</strong> ₹{{ transaction.amount|floatformat:2 }}
+    </li>
+    <li class="list-group-item">
+      <strong>Description:</strong> {{ transaction.description }}
+    </li>
+
+    {% if transaction.order %}
+    <li class="list-group-item">
+      <strong>Related Order:</strong>
+      <a href="{% url 'admin_order_detail' transaction.order.id %}" class="btn btn-sm btn-primary">
+        View Order #{{ transaction.order.order_id }}
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+
+  <a href="{% url 'wallet_transaction_list' %}" class="btn btn-secondary mt-3">← Back to Transactions</a>
+</div>
 {% endblock %}

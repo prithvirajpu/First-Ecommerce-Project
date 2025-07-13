@@ -20,7 +20,14 @@
     <tr>
       <td>{{ txn.transaction_id }}</td>
       <td>{{ txn.created_at|date:"Y-m-d H:i" }}</td>
-      <td>{{ txn.wallet.user.email }}</td>
+      <td>
+  {% if txn.wallet.user.is_superuser and txn.order %}
+    {{ txn.order.user.get_full_name|default:txn.order.user.email }}
+  {% else %}
+    {{ txn.wallet.user.get_full_name|default:txn.wallet.user.email }}
+  {% endif %}
+</td>
+
       <td>
         {% if txn.transaction_type == 'CREDIT' %}
           <span class="text-success">{{ txn.transaction_type }}</span>
