@@ -21,11 +21,13 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils import timezone
 
-from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash,get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.messages import get_messages
+from django.contrib.auth.hashers import check_password
+
 
 
 from django.views.decorators.cache import never_cache
@@ -238,37 +240,43 @@ def reset_password_view(request, uidb64, token):
         messages.error(request, "Invalid or expired reset link.")
         return redirect('forgot_password')
 
+User = get_user_model()
+
 @never_cache
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('user_dashboard')
 
-    storage = get_messages(request)
-    for _ in storage:
-        pass
+    next_url = request.GET.get('next')
+    form = LoginForm(request.POST or None)
 
-    next_url = request.GET.get('next')  
+    if request.method == "POST" and form.is_valid():
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password')
 
-    if request.method == "POST":
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                if user.is_blocked:
-                    messages.error(request, "Your account is currently suspended.")
-                    return redirect('login')
-                elif not user.is_active:
-                    messages.error(request, 'Your account is inactive.')
-                    return render(request, 'user_app/login.html', {'form': form})
-                else:
-                    login(request, user)
-                    return redirect(next_url or 'user_dashboard') 
-            else:
-                form.add_error(None, "Invalid username or password.")
-    else:
-        form = LoginForm()
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            form.add_error(None, "Invalid username or password.")
+            return render(request, 'user_app/login.html', {'form': form})
+
+        if not check_password(password, user.password):
+            form.add_error(None, "Invalid username or password.")
+            return render(request, 'user_app/login.html', {'form': form})
+
+        if not user.is_active:
+            messages.error(request, "Your account is inactive.")
+            return render(request, 'user_app/login.html', {'form': form})
+
+        if user.is_blocked:
+            messages.error(request, "Your account has been blocked.")
+            return render(request, 'user_app/login.html', {'form': form})
+
+        # ✅ Prevent redirect to /accounts/inactive/
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+        login(request, user)
+        return redirect(next_url or 'user_dashboard')
 
     return render(request, 'user_app/login.html', {'form': form, 'next': next_url})
 

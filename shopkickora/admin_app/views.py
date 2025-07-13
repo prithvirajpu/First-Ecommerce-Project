@@ -85,16 +85,6 @@ def toggle_user_status(request, user_id):
     messages.success(request, f"{user.username} has been {status}.")
     return redirect('user_list')
 
-@never_cache
-@user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
-def soft_delete_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
-    user.is_deleted = True
-    user.is_active = False  
-    user.save()
-    messages.success(request, f"{user.username} has been deleted.")
-    return redirect('user_list')
-
 
 @never_cache
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')

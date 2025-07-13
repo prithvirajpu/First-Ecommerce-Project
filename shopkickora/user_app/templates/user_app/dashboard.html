@@ -236,7 +236,7 @@
             >
               Game Day Ready - Shop Your Favorite Shoes!
             </h2>
-            <a href="" class="inline-block btn-primary"> Shop Now </a>
+            <a href="{% url 'user_product_list' %}" class="inline-block btn-primary"> Shop Now </a>
           </div>
           <div class="lg:w-1/2">
             <img
@@ -248,6 +248,9 @@
         </div>
       </div>
     </section>
+   
+
+
     <!-- Referral Code Modal -->
 <div id="referralModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-40 justify-center items-center">
   <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
@@ -270,11 +273,62 @@
   </div>
 </div>
 
+
+<script>
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container') || createToastContainer();
+
+  const colors = {
+    success: ['green-100', 'green-800'],
+    error: ['red-100', 'red-800'],
+    warning: ['yellow-100', 'yellow-800'],
+    info: ['blue-100', 'blue-800'],
+  };
+
+  const [bgColor, textColor] = colors[type] || colors.success;
+
+  const toast = document.createElement('div');
+  toast.className = `flex items-center justify-between max-w-sm w-full px-4 py-3 rounded shadow bg-${bgColor} text-${textColor} animate-slideInRight`;
+  toast.innerHTML = `
+    <span class="text-sm">${message}</span>
+    <button onclick="this.parentElement.remove()" class="text-lg ml-4 font-bold">&times;</button>
+  `;
+
+  container.appendChild(toast);
+
+  // Remove after 3s
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+function createToastContainer() {
+  const container = document.createElement('div');
+  container.id = 'toast-container';
+  container.className = 'fixed bottom-5 right-5 z-50 space-y-2';
+  document.body.appendChild(container);
+  return container;
+}
+
+// Animation
+const style = document.createElement('style');
+style.textContent = `
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease-out;
+}
+`;
+document.head.appendChild(style);
+</script>
+
     {% endblock %}
 
   
     {% block extra_js %}
-    <script>
+   <script>
   function openReferralModal() {
     const modal = document.getElementById("referralModal");
     modal.classList.remove("hidden");
@@ -287,8 +341,7 @@
     modal.classList.add("hidden");
   }
 
-  // Optional: ESC to close modal
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       closeReferralModal();
     }
@@ -296,39 +349,55 @@
 </script>
 
 
-    <script>
-      const logoutBtn = document.getElementById("logoutBtn");
-      const logoutModal = document.getElementById("logoutModal");
-      const cancelLogout = document.getElementById("cancelLogout");
+<script>
+  
+  // Logout Modal Logic
+  document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+    const logoutModal = document.getElementById("logoutModal");
+    const cancelLogout = document.getElementById("cancelLogout");
 
-      // Check if logoutBtn exists before adding event listener
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-          logoutModal.classList.remove("hidden");
-        });
-      }
+    if (logoutBtn && logoutModal) {
+      logoutBtn.addEventListener("click", () => {
+        logoutModal.classList.remove("hidden");
+      });
+    }
 
+    if (cancelLogout && logoutModal) {
       cancelLogout.addEventListener("click", () => {
         logoutModal.classList.add("hidden");
       });
+    }
 
-      // Optional: close modal on ESC key
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          logoutModal.classList.add("hidden");
-        }
-      });
-    </script>
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && logoutModal) {
+        logoutModal.classList.add("hidden");
+      }
+    });
+  });
+</script>
 
-    <script>
-      // Initialize Lucide icons
+<script>
+  // Lucide icon replacement
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof lucide !== "undefined" && lucide.createIcons) {
       lucide.createIcons();
+    }
+  });
+</script>
 
-      // Mobile menu toggle
-      const mobileMenuBtn = document.getElementById("mobile-menu-btn");
-      const mobileMenu = document.getElementById("mobile-menu");
+<script>
+  // Mobile Menu Toggle
+  document.addEventListener("DOMContentLoaded", () => {
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const mobileMenu = document.getElementById("mobile-menu");
+
+    if (mobileMenuBtn && mobileMenu) {
       mobileMenuBtn.addEventListener("click", () => {
         mobileMenu.classList.toggle("hidden");
       });
-    </script>
+    }
+  });
+</script>
+
         {% endblock %}

@@ -125,9 +125,9 @@
         </button>
 
         <!-- Referral Gift Icon only on dashboard -->
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and request.resolver_match.url_name == 'user_dashboard' %}
         <button onclick="openReferralModal()" title="Referral Gift">
-          <i class="fas fa-gift text-amber-500 text-xl hover:scale-110 transition-transform"></i>
+            <i class="fas fa-gift text-amber-500 text-xl hover:scale-110 transition-transform"></i>
         </button>
         {% endif %}
       </div>
@@ -145,6 +145,21 @@
     </nav>
   </div>
 </header>
+{% if messages %}
+  <div id="global-message-container" class="fixed bottom-5 right-5 z-50 space-y-2">
+    {% for message in messages %}
+      {% if 'change_password' in message.tags %}
+        <div class="fade-message max-w-sm px-4 py-3 rounded shadow-md 
+          {% if 'error' in message.tags %}bg-red-100 text-red-800 border border-red-300
+          {% elif 'success' in message.tags %}bg-green-100 text-green-800 border border-green-300
+          {% else %}bg-gray-100 text-gray-800 border border-gray-300{% endif %}">
+          {{ message }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
 
 
 
@@ -225,84 +240,111 @@
     </div>
 <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
 
+<!-- 
+Floating Referral Button
+<button onclick="openReferralModal()"
+        class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 z-50"
+        title="Apply Referral Code">
+  <i data-lucide="gift" class="w-5 h-5"></i>
+</button> -->
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    if (urlParams.get('error') === 'cod_limit_exceeded') {
-        showToast("Cash on Delivery is not available for orders above ₹1,000", "error");
-    }
 
-    if (urlParams.get('error') === 'wallet_insufficient') {
-        showToast("Insufficient Wallet balance. ", "error");
-    }
-    if (urlParams.get('stock_error') === 'true') {
-      showToast("Some items in your cart are out of stock.", "error");
-    }
-    if (urlParams.get('error') === 'invalid_mobile') {
-      showToast("Please enter a valid 10-digit phone number.", "warning");
-    }
-    if (urlParams.get('error') === 'invalid_address') {
-      showToast("Invalid address selected.", "error");
-    }
-    if (urlParams.get('error') === 'empty_cart') {
-      showToast("Cart is empty!", "warning");
-    }
-     if (urlParams.get('removed') === 'true') {
-        showToast("Item removed from cart", "error");
-    }
+ 
 
-    if (urlParams.get('added') === 'true') {
-        showToast("Item added to cart", "success");
-    }
-    
 
-    // Delayed cleanup
-    if (urlParams.get('stock_error') || urlParams.get('error')) {
-      setTimeout(() => {
-        const newUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-      }, 500);
-    }
-  });
-</script>
+  <script>
 
-<script>
+// Handle URL-based toast triggers
+document.addEventListener("DOMContentLoaded", function () {
+  const urlParams = new URLSearchParams(window.location.search);
+
+  if (urlParams.get('error') === 'own_referral') {
+    showToast("You cannot earn from your own referral code.", "warning");
+  }
+  if (urlParams.get('error') === 'referral_used') {
+    showToast("Referral code already used.", "error");
+  }
+  if (urlParams.get('error') === 'invalid_referral') {
+    showToast("Invalid referral code.", "error");
+  }
+  if (urlParams.get('success') === 'referral_applied') {
+    showToast("Referral applied! ₹100 added to you and your referrer.", "success");
+  }
+
+  if (urlParams.get('error') === 'cod_limit_exceeded') {
+    showToast("Cash on Delivery is not available for orders above ₹1,000", "error");
+  }
+  if (urlParams.get('error') === 'wallet_insufficient') {
+    showToast("Insufficient Wallet balance.", "error");
+  }
+  if (urlParams.get('stock_error') === 'true') {
+    showToast("Some items in your cart are out of stock.", "error");
+  }
+  if (urlParams.get('error') === 'invalid_mobile') {
+    showToast("Please enter a valid 10-digit phone number.", "warning");
+  }
+  if (urlParams.get('error') === 'invalid_address') {
+    showToast("Invalid address selected.", "error");
+  }
+  if (urlParams.get('error') === 'empty_cart') {
+    showToast("Cart is empty!", "warning");
+  }
+  if (urlParams.get('removed') === 'true') {
+    showToast("Item removed from cart", "error");
+  }
+  if (urlParams.get('added') === 'true') {
+    showToast("Item added to cart", "success");
+  }
+
+  // Remove query params after short delay
+  if (urlParams.get('stock_error') || urlParams.get('error') || urlParams.get('success')) {
+    setTimeout(() => {
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }, 500);
+  }
+});
+
+// Toast function
 function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container') || createToastContainer();
+  const container = document.getElementById('toast-container') || createToastContainer();
 
-    const colors = {
-        success: ['green-100', 'green-800'],
-        error: ['red-100', 'red-800'],
-        info: ['blue-100', 'blue-800'],
-        warning: ['yellow-100', 'yellow-800'],
-    };
+  const colors = {
+    success: ['green-100', 'green-800'],
+    error: ['red-100', 'red-800'],
+    info: ['blue-100', 'blue-800'],
+    warning: ['yellow-100', 'yellow-800'],
+  };
 
-    const [bgColor, textColor] = colors[type] || colors.success;
+  const [bgColor, textColor] = colors[type] || colors.success;
 
-    const toast = document.createElement('div');
-    toast.className = `max-w-xs w-full bg-${bgColor} text-${textColor} px-4 py-3 rounded shadow flex items-center justify-between space-x-4 animate-slideInRight`;
-    toast.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()" class="text-xl font-bold leading-none">&times;</button>
-    `;
+  const toast = document.createElement('div');
+  toast.className = `max-w-xs w-full bg-${bgColor} text-${textColor} px-4 py-3 rounded shadow flex items-center justify-between space-x-4 animate-slideInRight`;
+  toast.innerHTML = `
+    <span>${message}</span>
+    <button onclick="this.parentElement.remove()" class="text-xl font-bold leading-none">&times;</button>
+  `;
 
-    container.appendChild(toast);
+  container.appendChild(toast);
 
-    setTimeout(() => toast.remove(), 3000);
+  // Updated fade-out logic
+  setTimeout(() => {
+    toast.classList.remove('animate-slideInRight');
+    toast.classList.add('animate-fadeOut');
+    toast.addEventListener('animationend', () => toast.remove());
+  }, 3000);
 }
+
 
 function createToastContainer() {
-    const container = document.createElement('div');
-    container.id = 'toast-container';
-    container.className = 'fixed bottom-4 right-4 space-y-2 z-50';
-    document.body.appendChild(container);
-    return container;
+  const container = document.createElement('div');
+  container.id = 'toast-container';
+  container.className = 'fixed bottom-4 right-4 space-y-2 z-50';
+  document.body.appendChild(container);
+  return container;
 }
 
-   
-// Optional: slide-in animation
+// Animation style
 const style = document.createElement('style');
 style.textContent = `
 @keyframes slideInRight {
@@ -412,6 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-    {% block extra_js %}{% endblock %}
+    {% block extra_js %}
+  
+{% endblock %}
 </body>
 </html>

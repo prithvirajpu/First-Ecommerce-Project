@@ -68,16 +68,6 @@
         <!-- Main Content -->
         <div class="lg:w-3/4">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <!-- Profile Header -->
-                 {% if messages %}
-                            <div id="message-container" class="mt-4 space-y-2">
-                                {% for message in messages %}
-                                <div class="fade-message {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% endif %} p-3 rounded-md">
-                                    {{ message }}
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
 
                 <div class="profile-card p-8 text-center">
                     

@@ -4,7 +4,6 @@ from . import views
 urlpatterns = [
     path('users/', views.user_list, name='user_list'),
     path('admin/users/toggle-status/<int:user_id>/', views.toggle_user_status, name='toggle_user_status'),
-    path('admin/users/delete/<int:user_id>/', views.soft_delete_user, name='soft_delete_user'),
     path('', views.admin_login, name='admin_login'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-logout/', views.admin_logout, name='admin_logout'),

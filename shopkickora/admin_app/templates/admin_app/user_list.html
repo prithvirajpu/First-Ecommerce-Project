@@ -1,5 +1,5 @@
 {% extends 'user_app/base_admin.html' %}
-
+{% load static %}
 {% block title %}User Management{% endblock %}
 
 {% block content %}
@@ -20,7 +20,6 @@
             </div>
         </div>
     </div>
-
     <!-- Messages - Better Aligned -->
     {% if messages %}
     <div class="messages-container">
@@ -43,7 +42,6 @@
         {% endfor %}
     </div>
     {% endif %}
-
     <!-- Search and Filters -->
     <div class="search-section">
         <div class="search-card">
@@ -75,7 +73,6 @@
             </form>
         </div>
     </div>
-
     <!-- Users Table -->
     <div class="table-section">
         <div class="table-card">
@@ -172,18 +169,6 @@
                                         Unblock
                                     </button>
                                     {% endif %}
-
-                                    <!-- Delete Button -->
-                                    <button
-                                        type="button"
-                                        class="action-btn btn-delete delete-user-btn"
-                                        data-user-id="{{ user.id }}"
-                                        data-username="{{ user.username }}"
-                                        title="Delete User"
-                                    >
-                                        <i class="fas fa-trash me-1"></i>
-                                        Delete
-                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -203,7 +188,6 @@
             </div>
         </div>
     </div>
-
     <!-- Pagination -->
     {% if users.has_other_pages %}
     <div class="pagination-section">
@@ -227,7 +211,6 @@
                     </span>
                 </li>
                 {% endif %}
-
                 {% for num in users.paginator.page_range %}
                     {% if users.number == num %}
                     <li class="page-item active">
@@ -242,7 +225,6 @@
                     </li>
                     {% endif %}
                 {% endfor %}
-
                 {% if users.has_next %}
                 <li class="page-item">
                     <a
@@ -308,59 +290,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modern-modal delete-modal">
-            <div class="modal-header delete-header">
-                <h5 class="modal-title" id="deleteUserModalLabel">
-                    <i class="fas fa-trash me-2"></i>
-                    Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="confirmation-content">
-                    <div class="confirmation-icon delete-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="confirmation-text">
-                        <p>Are you sure you want to <strong>permanently delete</strong> user:</p>
-                        <div class="user-highlight delete-highlight">
-                            <i class="fas fa-user me-2"></i>
-                            <span id="deleteUsername"></span>
-                        </div>
-                        <div class="warning-text">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            This action cannot be undone!
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>
-                    Cancel
-                </button>
-                <form id="deleteUserForm" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-1"></i>
-                        Yes, Delete
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
 <style>
     .user-management-container {
         padding: 0;
         max-width: 100%;
     }
-
     /* Page Header - Much Smaller */
     .page-header {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -370,7 +307,6 @@
         border-radius: 0 0 12px 12px;
         box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
     }
-
     .header-content {
         display: flex;
         justify-content: space-between;
@@ -378,7 +314,6 @@
         flex-wrap: wrap;
         gap: 15px;
     }
-
     .page-title {
         font-size: 1.4rem;
         font-weight: 600;
@@ -386,18 +321,15 @@
         display: flex;
         align-items: center;
     }
-
     .page-title i {
         font-size: 1.2rem;
     }
-
     .page-subtitle {
         margin: 2px 0 0 0;
         opacity: 0.8;
         font-size: 0.85rem;
         color: #cbd5e1;
     }
-
     .header-stats {
         background: rgba(255, 255, 255, 0.08);
         padding: 10px 16px;
@@ -406,24 +338,20 @@
         text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
-
     .stat-number {
         font-size: 1.3rem;
         font-weight: 700;
         margin-bottom: 2px;
     }
-
     .stat-label {
         font-size: 0.75rem;
         opacity: 0.8;
         color: #cbd5e1;
     }
-
     /* Messages - Better Aligned and Smaller */
     .messages-container {
         margin-bottom: 18px;
     }
-
     .custom-alert {
         border: none;
         border-radius: 10px;
@@ -436,24 +364,20 @@
         position: relative;
         font-size: 0.9rem;
     }
-
     .alert-content {
         display: flex;
         align-items: center;
         gap: 10px;
         flex: 1;
     }
-
     .alert-icon {
         font-size: 0.9rem;
         flex-shrink: 0;
     }
-
     .alert-text {
         flex: 1;
         line-height: 1.4;
     }
-
     .custom-close {
         background: none;
         border: none;
@@ -463,37 +387,30 @@
         margin-left: 10px;
         flex-shrink: 0;
     }
-
     .custom-close:hover {
         opacity: 1;
     }
-
     /* Alert Colors */
     .alert-success {
         background: linear-gradient(135deg, #059669, #047857);
         color: white;
     }
-
     .alert-danger, .alert-error {
         background: linear-gradient(135deg, #dc2626, #b91c1c);
         color: white;
     }
-
     .alert-warning {
         background: linear-gradient(135deg, #d97706, #b45309);
         color: white;
     }
-
     .alert-info {
         background: linear-gradient(135deg, #0284c7, #0369a1);
         color: white;
     }
-
     /* Search Section */
     .search-section {
         margin-bottom: 20px;
     }
-
     .search-card {
         background: white;
         border-radius: 14px;
@@ -501,7 +418,6 @@
         overflow: hidden;
         border: 1px solid #e2e8f0;
     }
-
     .search-header {
         background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
         padding: 14px 18px;
@@ -512,28 +428,23 @@
         align-items: center;
         font-size: 0.9rem;
     }
-
     .search-header i {
         font-size: 0.85rem;
     }
-
     .search-form {
         padding: 18px;
     }
-
     .search-input-group {
         display: flex;
         gap: 10px;
         align-items: center;
         flex-wrap: wrap;
     }
-
     .input-wrapper {
         position: relative;
         flex: 1;
         min-width: 280px;
     }
-
     .search-icon {
         position: absolute;
         left: 10px;
@@ -543,7 +454,6 @@
         z-index: 2;
         font-size: 0.85rem;
     }
-
     .search-input {
         width: 100%;
         padding: 10px 10px 10px 32px;
@@ -553,14 +463,12 @@
         transition: all 0.3s ease;
         background: #f8fafc;
     }
-
     .search-input:focus {
         outline: none;
         border-color: #475569;
         box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
         background: white;
     }
-
     .btn-search, .btn-clear {
         padding: 10px 18px;
         border: none;
@@ -573,34 +481,28 @@
         white-space: nowrap;
         font-size: 0.85rem;
     }
-
     .btn-search {
         background: linear-gradient(135deg, #475569, #334155);
         color: white;
     }
-
     .btn-search:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 15px rgba(71, 85, 105, 0.2);
         color: white;
     }
-
     .btn-clear {
         background: #6b7280;
         color: white;
     }
-
     .btn-clear:hover {
         background: #4b5563;
         transform: translateY(-1px);
         color: white;
     }
-
     /* Table Section */
     .table-section {
         margin-bottom: 20px;
     }
-
     .table-card {
         background: white;
         border-radius: 14px;
@@ -608,13 +510,11 @@
         overflow: hidden;
         border: 1px solid #e2e8f0;
     }
-
     .table-header {
         background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
         padding: 14px 20px;
         border-bottom: 1px solid #e2e8f0;
     }
-
     .table-title {
         font-size: 1rem;
         font-weight: 600;
@@ -622,21 +522,17 @@
         display: flex;
         align-items: center;
     }
-
     .table-title i {
         font-size: 0.9rem;
     }
-
     .table-wrapper {
         overflow-x: auto;
     }
-
     .modern-table {
         width: 100%;
         border-collapse: collapse;
         background: white;
     }
-
     .modern-table th {
         background: #f8fafc;
         padding: 14px 16px;
@@ -647,26 +543,21 @@
         white-space: nowrap;
         font-size: 0.85rem;
     }
-
     .modern-table th i {
         font-size: 0.75rem;
         color: #64748b;
     }
-
     .modern-table td {
         padding: 14px 16px;
         border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
     }
-
     .table-row {
         transition: all 0.3s ease;
     }
-
     .table-row:hover {
         background: #f8fafc;
     }
-
     .row-number {
         width: 32px;
         height: 32px;
@@ -679,13 +570,11 @@
         font-weight: 600;
         font-size: 0.8rem;
     }
-
     .user-info {
         display: flex;
         align-items: center;
         gap: 10px;
     }
-
     .user-avatar {
         width: 38px;
         height: 38px;
@@ -697,39 +586,32 @@
         color: white;
         font-size: 0.9rem;
     }
-
     .user-details {
         flex: 1;
     }
-
     .user-name {
         font-weight: 600;
         color: #1e293b;
         margin-bottom: 2px;
         font-size: 0.9rem;
     }
-
     .user-email {
         color: #64748b;
         font-size: 0.8rem;
     }
-
     .date-info {
         text-align: center;
     }
-
     .date-primary {
         font-weight: 600;
         color: #1e293b;
         margin-bottom: 2px;
         font-size: 0.85rem;
     }
-
     .date-secondary {
         color: #64748b;
         font-size: 0.75rem;
     }
-
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -738,28 +620,23 @@
         font-weight: 600;
         font-size: 0.75rem;
     }
-
     .status-badge i {
         font-size: 0.7rem;
     }
-
     .status-active {
         background: linear-gradient(135deg, #059669, #047857);
         color: white;
     }
-
     .status-blocked {
         background: linear-gradient(135deg, #dc2626, #b91c1c);
         color: white;
     }
-
     /* Action Buttons */
     .action-buttons {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
     }
-
     .action-btn {
         padding: 6px 12px;
         border: none;
@@ -772,71 +649,51 @@
         font-size: 0.8rem;
         text-decoration: none;
     }
-
     .action-btn i {
         font-size: 0.75rem;
     }
-
     .btn-block {
         background: linear-gradient(135deg, #d97706, #b45309);
         color: white;
     }
-
     .btn-block:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2);
     }
-
     .btn-unblock {
         background: linear-gradient(135deg, #059669, #047857);
         color: white;
     }
-
     .btn-unblock:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
     }
-
-    .btn-delete {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
-        color: white;
-    }
-
-    .btn-delete:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);
-    }
-
+    /* Removed .btn-delete styles */
     .no-data {
         text-align: center;
         padding: 40px 20px;
     }
-
     .no-data-content i {
         font-size: 3rem;
         color: #cbd5e1;
         margin-bottom: 12px;
     }
-
     .no-data-content h4 {
         color: #64748b;
         margin-bottom: 6px;
         font-size: 1rem;
     }
-
     .no-data-content p {
         color: #94a3b8;
         margin: 0;
         font-size: 0.85rem;
     }
-
     /* Pagination */
     .pagination-section {
         display: flex;
         justify-content: center;
         margin-top: 20px;
     }
-
     .modern-pagination {
         display: flex;
         list-style: none;
@@ -844,11 +701,9 @@
         margin: 0;
         gap: 5px;
     }
-
     .modern-pagination .page-item {
         display: flex;
     }
-
     .modern-pagination .page-link {
         padding: 8px 12px;
         border: 2px solid #e2e8f0;
@@ -863,42 +718,35 @@
         gap: 5px;
         font-size: 0.85rem;
     }
-
     .modern-pagination .page-link i {
         font-size: 0.75rem;
     }
-
     .modern-pagination .page-link:hover {
         background: #475569;
         border-color: #475569;
         color: white;
         transform: translateY(-1px);
     }
-
     .modern-pagination .page-item.active .page-link {
         background: linear-gradient(135deg, #475569, #334155);
         border-color: #475569;
         color: white;
     }
-
     .modern-pagination .page-item.disabled .page-link {
         background: #f8fafc;
         color: #cbd5e1;
         cursor: not-allowed;
     }
-
     /* Modal Styles */
     .modern-modal {
         border: none;
         border-radius: 14px;
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     }
-
     .modern-modal .modal-header {
         border-bottom: 1px solid #e2e8f0;
         padding: 16px 20px 12px;
     }
-
     .modern-modal .modal-title {
         font-weight: 600;
         color: #1e293b;
@@ -906,21 +754,17 @@
         align-items: center;
         font-size: 1rem;
     }
-
     .modern-modal .modal-title i {
         font-size: 0.9rem;
     }
-
     .modern-modal .modal-body {
         padding: 16px 20px;
     }
-
     .confirmation-content {
         display: flex;
         gap: 14px;
         align-items: flex-start;
     }
-
     .confirmation-icon {
         width: 45px;
         height: 45px;
@@ -933,17 +777,14 @@
         font-size: 1.1rem;
         flex-shrink: 0;
     }
-
     .confirmation-text {
         flex: 1;
     }
-
     .confirmation-text p {
         margin-bottom: 10px;
         color: #64748b;
         font-size: 0.9rem;
     }
-
     .user-highlight {
         background: #f8fafc;
         padding: 10px;
@@ -956,16 +797,13 @@
         font-size: 0.85rem;
         margin-bottom: 0;
     }
-
     .user-highlight i {
         font-size: 0.75rem;
     }
-
     .modern-modal .modal-footer {
         border-top: 1px solid #e2e8f0;
         padding: 12px 20px 16px;
     }
-
     .modern-modal .btn {
         padding: 8px 16px;
         border-radius: 6px;
@@ -975,83 +813,42 @@
         gap: 5px;
         font-size: 0.85rem;
     }
-
     .modern-modal .btn i {
         font-size: 0.75rem;
     }
-
-    /* Delete Modal Specific Styles */
-    .delete-modal .delete-header {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
-        color: white;
-        border-bottom: none;
-    }
-
-    .delete-icon {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
-    }
-
-    .delete-highlight {
-        border-left-color: #dc2626;
-        background: #fef2f2;
-    }
-
-    .warning-text {
-        background: #fef3c7;
-        color: #92400e;
-        padding: 8px 10px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-    }
-
-    .warning-text i {
-        font-size: 0.75rem;
-    }
-
+    /* Removed Delete Modal Specific Styles */
     /* Responsive Design */
     @media (max-width: 768px) {
         .page-header {
             padding: 12px 16px;
             margin: -30px -30px 16px -30px;
         }
-
         .header-content {
             flex-direction: column;
             align-items: stretch;
             text-align: center;
             gap: 10px;
         }
-
         .page-title {
             font-size: 1.2rem;
             justify-content: center;
         }
-
         .search-input-group {
             flex-direction: column;
             align-items: stretch;
         }
-
         .input-wrapper {
             min-width: auto;
         }
-
         .action-buttons {
             flex-direction: column;
         }
-
         .table-wrapper {
             overflow-x: scroll;
         }
-
         .modern-table {
             min-width: 650px;
         }
-
         .modern-pagination {
             flex-wrap: wrap;
             justify-content: center;
@@ -1092,38 +889,22 @@
                     confirmBtn.className = "btn btn-success";
                     confirmBtn.innerHTML = '<i class="fas fa-check me-1"></i>Yes, Unblock';
                 }
-
                 confirmModal.show();
             });
         });
 
-        // Delete Modal
-        var deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-        var deleteForm = document.getElementById('deleteUserForm');
-        var deleteUsername = document.getElementById('deleteUsername');
-
-        document.querySelectorAll('.delete-user-btn').forEach(function(button) {
-            button.addEventListener('click', function(event) {
-                event.preventDefault();
-                var userId = this.getAttribute('data-user-id');
-                var username = this.getAttribute('data-username');
-
-                deleteUsername.textContent = username;
-                deleteForm.setAttribute('action', '{% url "soft_delete_user" 0 %}'.replace('0', userId));
-
-                deleteModal.show();
-            });
-        });
-
-        // Add loading states to buttons
+        // Add loading states to buttons (for visual demo)
         document.querySelectorAll(".action-btn").forEach(function(btn) {
             btn.addEventListener("click", function() {
-                if (!this.classList.contains('delete-user-btn') && !this.classList.contains('toggle-status-btn')) {
+                // Only apply loading state to non-modal trigger buttons
+                if (this.classList.contains('toggle-status-btn')) { // Only apply to block/unblock buttons
                     var originalText = this.innerHTML;
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
                     this.disabled = true;
-                    
+
                     setTimeout(() => {
+                        // In a real app, this would be where you handle the response and update UI
+                        // For this demo, we just revert the button state
                         this.innerHTML = originalText;
                         this.disabled = false;
                     }, 1000);
@@ -1137,6 +918,16 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         });
+
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll(".custom-alert");
+            alerts.forEach((alert) => {
+                alert.classList.remove("show"); // Ensure Bootstrap's fade out works
+                alert.classList.add("fade");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
     });
 </script>
 {% endblock %}

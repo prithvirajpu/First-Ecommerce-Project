@@ -427,7 +427,7 @@ class Coupon(models.Model):
     valid_from=models.DateTimeField()
     valid_to=models.DateTimeField()
     active=models.BooleanField(default=True)
-    is_delete = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
 
 
     def is_valid(self):
