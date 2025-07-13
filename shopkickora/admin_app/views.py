@@ -806,7 +806,7 @@ def reject_return(request, order_item_id):
 def list_offers(request):
     # Filter product offers
     product_offers = ProductOffer.objects.filter(
-        is_delete=False,
+        is_deleted=False,
         products__is_deleted=False,
         products__category__is_deleted=False,
         products__category__is_active=True,
@@ -815,7 +815,7 @@ def list_offers(request):
 
     # Filter category offers
     category_offers = CategoryOffer.objects.filter(
-        is_delete=False,
+        is_deleted=False,
         categories__is_deleted=False,
         categories__is_active=True
     ).distinct().prefetch_related('categories')
@@ -874,7 +874,7 @@ def toggle_product_offer_status(request,offer_id):
 @user_passes_test(lambda x: x.is_superuser,login_url='admin_login')
 def soft_product_offer_delete(request,offer_id):
     off=get_object_or_404(ProductOffer,id=offer_id)
-    off.is_delete=True
+    off.is_deleted=True
     off.is_active=False
     off.save()
     messages.success(request,f" The product offer '{off.name}' is deleted successfully .")
@@ -932,7 +932,7 @@ def toggle_category_offer_status(request,offer_id):
 @user_passes_test(lambda x: x.is_superuser,login_url='admin_login')
 def soft_category_offer_delete(request,offer_id):
     off=get_object_or_404(CategoryOffer,id=offer_id)
-    off.is_delete=True
+    off.is_deleted=True
     off.is_active=False
     off.save()
     messages.success(request,f" The product offer '{off.name}' is deleted successfully .")
