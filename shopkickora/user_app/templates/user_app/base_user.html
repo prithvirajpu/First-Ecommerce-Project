@@ -24,7 +24,13 @@
                             700: '#0369a1',
                             800: '#075985',
                             900: '#0c4a6e',
-                        }
+                        },
+                        // Custom colors for shopKickora theme
+                        'shopkickora-green': '#00997a',
+                        'shopkickora-green-light': '#00b894',
+                        // Custom gradient colors for header
+                        'header-start': '#4299e1', // A blue-ish color for the start of the gradient
+                        'header-end': '#6b46c1',   // A purple-ish color for the end of the gradient
                     }
                 }
             }
@@ -34,113 +40,140 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #e6f0fa;        
+        }
+        /* Custom gradient background for header */
+        .header-gradient {
+            background-image: linear-gradient(to right, #30363b, #4e3783); /* Using Tailwind colors directly */
+        }
+        /* Ensure text and icons are white on the gradient background */
+        .header-text-white {
+            color: #ffffff;
+        }
+        .header-text-white:hover {
+            color: rgba(255, 255, 255, 0.8); /* Slightly less opaque white on hover */
+        }
+        .header-icon-white {
+            color: #ffffff;
+        }
+        .header-icon-white:hover {
+            color: rgba(255, 255, 255, 0.8); /* Slightly less opaque white on hover */
+        }
+        /* Search input styling for the header */
+        .header-search-input-bg {
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+        }
+        .header-search-input-bg::placeholder {
+            color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
         }
     </style>
+    <style>
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease-out;
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.animate-fadeOut {
+  animation: fadeOut 0.5s ease forwards;
+}
+</style>
+
     {% block extra_css %}{% endblock %}
 </head>
 <body class="min-h-screen flex flex-col">
-<header class="bg-white shadow-md sticky top-0 z-50">
+<header class="header-gradient shadow-md sticky top-0 z-50">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between py-4">
       <!-- Logo & Name -->
       <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-          <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+        <div class="w-8 h-8 rounded-full flex items-center justify-center "><a href="{% url 'user_dashboard' %}">
+            <img src="{% static 'user_app/Frog.png' %}" alt="shopKickora Logo" class="w-16 h-16"></a>
         </div>
-        <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold text-gray-800">shopKickora</a>
+        <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold header-text-white">shopKickora</a>
       </div>
-
       <!-- Navigation Menu -->
       <nav class="hidden md:flex space-x-6">
-        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
-        <!-- <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Categories</a> -->
-        <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Explore All</a>
-        <a href="{% url 'about_page' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+        <a href="{% url 'user_dashboard' %}" class="header-text-white font-medium transition-colors">Home</a>
+        <a href="{% url 'user_product_list' %}" class="header-text-white font-medium transition-colors">Explore All</a>
+        <a href="{% url 'about_page' %}" class="header-text-white font-medium transition-colors">About</a>
       </nav>
-
       <!-- Right Icons: Search, Wishlist, Cart, Profile/Login -->
       <div class="flex items-center space-x-4">
         <!-- Search Form -->
-        <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full sm:w-auto">
-          <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
-          <input type="text" name="q" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40">
-          <button type="submit" class="ml-2 text-gray-500 hover:text-gray-700">
+        <form action="{% url 'user_product_list' %}" method="GET" class="flex items-center header-search-input-bg rounded-full px-3 py-2 w-full sm:w-auto">
+          <i data-lucide="search" class="w-4 h-4 header-icon-white mr-2"></i>
+          <input type="text" name="q" placeholder="Search products..." class="bg-transparent outline-none text-sm flex-1 sm:w-40 header-text-white header-search-input-bg">
+          <button type="submit" class="ml-2 header-icon-white hover:opacity-80">
             <i data-lucide="search" class="w-4 h-4"></i>
           </button>
         </form>
-
         {% if user.is_authenticated %}
           <!-- Wishlist -->
           <a href="{% url 'wishlist_view' %}" class="relative">
-            <i class="fas fa-hand-holding-heart text-gray-700 hover:text-rose-600 text-xl"></i>
+            <i data-lucide="heart" class="w-6 h-6 header-icon-white wishlist-icon"></i>
             {% if wishlist_count > 0 %}
               <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
                 {{ wishlist_count }}
               </span>
             {% endif %}
           </a>
-
           <!-- Cart -->
           <a href="{% url 'cart_view' %}" class="relative">
-            <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700"></i>
+            <i data-lucide="shopping-bag" class="w-6 h-6 header-icon-white"></i>
             {% if cart_count > 0 %}
               <span class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
                 {{ cart_count }}
               </span>
             {% endif %}
           </a>
-
           <!-- Profile -->
-          <a href="{% url 'user_profile' %}" class="text-gray-700 hover:text-blue-600 transition-colors">
-            <i data-lucide="user" class="w-6 h-6"></i>
+          <a href="{% url 'user_profile' %}" class="header-text-white transition-colors">
+            <i data-lucide="user" class="w-6 h-6 header-icon-white"></i>
           </a>
-
           <!-- Logout -->
           <form method="POST" action="{% url 'logout' %}">
             {% csrf_token %}
-           <button type="button" id="logoutBtn" class="text-gray-700 hover:text-blue-600">
-  <i data-lucide="log-out" class="w-6 h-6"></i>
-</button>
-
+           <button type="button" id="logoutBtn" class="header-text-white">
+             <i data-lucide="log-out" class="w-6 h-6 header-icon-white"></i>
+           </button>
           </form>
         {% else %}
           <!-- Icons redirect to login if unauthenticated -->
           <a href="{% url 'login' %}" title="Login to view wishlist">
-            <i class="fas fa-hand-holding-heart text-gray-700 text-xl hover:text-blue-500"></i>
+            <i data-lucide="heart" class="w-6 h-6 header-icon-white"></i>
           </a>
           <a href="{% url 'login' %}" title="Login to view cart">
-            <i data-lucide="shopping-cart" class="w-6 h-6 text-gray-700 hover:text-blue-500"></i>
+            <i data-lucide="shopping-bag" class="w-6 h-6 header-icon-white"></i>
           </a>
           <a href="{% url 'login' %}" title="Login to access profile">
-            <i data-lucide="user" class="w-6 h-6 text-gray-700 hover:text-blue-500"></i>
+            <i data-lucide="user" class="w-6 h-6 header-icon-white"></i>
           </a>
-
-          
         {% endif %}
-
         <!-- Mobile Menu Toggle -->
         <button class="md:hidden" id="mobileMenuBtn">
-          <i data-lucide="menu" class="w-6 h-6 text-gray-700"></i>
+          <i data-lucide="menu" class="w-6 h-6 header-icon-white"></i>
         </button>
-
         <!-- Referral Gift Icon only on dashboard -->
         {% if request.user.is_authenticated and request.resolver_match.url_name == 'user_dashboard' %}
         <button onclick="openReferralModal()" title="Referral Gift">
-            <i class="fas fa-gift text-amber-500 text-xl hover:scale-110 transition-transform"></i>
+            <i data-lucide="gift" class="w-6 h-6 text-amber-300 hover:scale-110 transition-transform"></i>
         </button>
         {% endif %}
       </div>
     </div>
-
     <!-- Mobile Menu -->
     <nav class="md:hidden hidden pb-4" id="mobile-menu">
       <div class="flex flex-col space-y-2">
-        <a href="{% url 'user_dashboard' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Home</a>
-        <!-- <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Categories</a> -->
-        <a href="{% url 'user_product_list' %}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Explore All</a>
-        <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">About</a>
-        <a href="#" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contact</a>
+        <a href="{% url 'user_dashboard' %}" class="header-text-white font-medium py-2">Home</a>
+        <a href="{% url 'user_product_list' %}" class="header-text-white font-medium py-2">Explore All</a>
+        <a href="{% url 'about_page' %}" class="header-text-white font-medium py-2">About</a>
+        <a href="#" class="header-text-white font-medium py-2">Contact</a>
       </div>
     </nav>
   </div>
@@ -159,23 +192,17 @@
     {% endfor %}
   </div>
 {% endif %}
-
-
-
-
-
     <main class="flex-grow min-h-screen">
         {% block content %}
         {% endblock %}
     </main>
-
     <footer class="bg-gray-800 text-white py-12 mt-16">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        <div class="w-8 h-8  rounded-lg flex items-center justify-center">
+                            <img src="{% static 'user_app/Frog.png' %}" alt="shopKickora Logo" class="w-15 h-15 ">
                         </div>
                         <span class="text-xl font-bold">shopKickora</span>
                     </div>
@@ -227,7 +254,6 @@
             </div>
         </div>
     </footer>
-
     <div id="logoutModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
         <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
             <h2 class="text-lg font-semibold mb-4">Confirm Logout</h2>
@@ -239,25 +265,10 @@
         </div>
     </div>
 <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
-
-<!-- 
-Floating Referral Button
-<button onclick="openReferralModal()"
-        class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 z-50"
-        title="Apply Referral Code">
-  <i data-lucide="gift" class="w-5 h-5"></i>
-</button> -->
-
-
- 
-
-
-  <script>
-
+ <script>
 // Handle URL-based toast triggers
 document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
-
   if (urlParams.get('error') === 'own_referral') {
     showToast("You cannot earn from your own referral code.", "warning");
   }
@@ -270,7 +281,6 @@ document.addEventListener("DOMContentLoaded", function () {
   if (urlParams.get('success') === 'referral_applied') {
     showToast("Referral applied! ₹100 added to you and your referrer.", "success");
   }
-
   if (urlParams.get('error') === 'cod_limit_exceeded') {
     showToast("Cash on Delivery is not available for orders above ₹1,000", "error");
   }
@@ -295,7 +305,6 @@ document.addEventListener("DOMContentLoaded", function () {
   if (urlParams.get('added') === 'true') {
     showToast("Item added to cart", "success");
   }
-
   // Remove query params after short delay
   if (urlParams.get('stock_error') || urlParams.get('error') || urlParams.get('success')) {
     setTimeout(() => {
@@ -304,29 +313,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 500);
   }
 });
-
 // Toast function
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container') || createToastContainer();
-
   const colors = {
     success: ['green-100', 'green-800'],
     error: ['red-100', 'red-800'],
     info: ['blue-100', 'blue-800'],
     warning: ['yellow-100', 'yellow-800'],
   };
-
   const [bgColor, textColor] = colors[type] || colors.success;
-
   const toast = document.createElement('div');
   toast.className = `max-w-xs w-full bg-${bgColor} text-${textColor} px-4 py-3 rounded shadow flex items-center justify-between space-x-4 animate-slideInRight`;
   toast.innerHTML = `
     <span>${message}</span>
     <button onclick="this.parentElement.remove()" class="text-xl font-bold leading-none">&times;</button>
   `;
-
   container.appendChild(toast);
-
   // Updated fade-out logic
   setTimeout(() => {
     toast.classList.remove('animate-slideInRight');
@@ -334,8 +337,6 @@ function showToast(message, type = 'success') {
     toast.addEventListener('animationend', () => toast.remove());
   }, 3000);
 }
-
-
 function createToastContainer() {
   const container = document.createElement('div');
   container.id = 'toast-container';
@@ -343,50 +344,42 @@ function createToastContainer() {
   document.body.appendChild(container);
   return container;
 }
-
 // Animation style
 const style = document.createElement('style');
-style.textContent = `
-@keyframes slideInRight {
+style.textContent = `@keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
-}
-.animate-slideInRight {
+}.animate-slideInRight {
   animation: slideInRight 0.3s ease-out;
-}
-`;
+}`;
 document.head.appendChild(style);
 </script>
-
-
     <script>
         lucide.createIcons();
-
         const logoutBtn = document.getElementById('logoutBtn');
         const logoutModal = document.getElementById('logoutModal');
         const cancelLogout = document.getElementById('cancelLogout');
-
         logoutBtn.addEventListener('click', () => {
             logoutModal.classList.remove('hidden');
         });
-
         cancelLogout.addEventListener('click', () => {
             logoutModal.classList.add('hidden');
         });
-
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 logoutModal.classList.add('hidden');
             }
         });
-
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mobileMenu = document.getElementById('mobile-menu');
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
         });
+
     </script>
-    <script>
+
+   <script>
+
 document.addEventListener('DOMContentLoaded', () => {
   const wishlistButtons = document.querySelectorAll('.wishlist-toggle');
 
@@ -405,12 +398,14 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(res => res.json())
       .then(data => {
         if (data.status === 'added') {
-          icon.classList.remove('far', 'text-gray-700');
+          icon.classList.remove('far', 'text-gray-400');
           icon.classList.add('fas', 'text-red-500');
+          icon.classList.add('fa-heart'); // Ensure fa-heart stays
           showToast("Added to wishlist", "success");
         } else if (data.status === 'removed') {
           icon.classList.remove('fas', 'text-red-500');
-          icon.classList.add('far', 'text-gray-700');
+          icon.classList.add('far', 'text-gray-400');
+          icon.classList.add('fa-heart'); // Ensure fa-heart stays
           showToast("Removed from wishlist", "error");
         } else {
           showToast(data.message || "Failed", "error");
@@ -423,14 +418,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
 </script>
+
 <script>
+
 document.addEventListener('DOMContentLoaded', () => {
   const deleteBtns = document.querySelectorAll('.remove-btn');
   const deleteModal = document.getElementById('deleteConfirmModal');
   const cancelDelete = document.getElementById('cancelDelete');
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
   deleteBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const url = btn.dataset.url;
@@ -438,24 +435,18 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteModal.classList.remove('hidden');
     });
   });
-
   cancelDelete.addEventListener('click', () => {
     deleteModal.classList.add('hidden');
     confirmDeleteBtn.setAttribute('href', '#');
   });
-
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       deleteModal.classList.add('hidden');
       confirmDeleteBtn.setAttribute('href', '#');
     }
   });
-});
-</script>
-
-
+});</script>
     {% block extra_js %}
-  
-{% endblock %}
+    {% endblock %}
 </body>
 </html>

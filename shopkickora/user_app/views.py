@@ -401,12 +401,17 @@ def user_product_list(request):
 
 
 @never_cache
+@login_required
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
 
+    # ✅ Check if product is in user's wishlist
+    is_in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
+
     related_products = Product.objects.filter(
-        brand=product.brand,is_deleted=False,
-    is_active=True
+        brand=product.brand,
+        is_deleted=False,
+        is_active=True
     ).exclude(id=product.id).order_by('-id')[:4]
 
     sizes = ProductSizeStock.objects.filter(
@@ -420,8 +425,8 @@ def product_detail(request, slug):
         'related_products': related_products,
         'sizes': sizes,
         'size_choices': size_choices,
+        'is_in_wishlist': is_in_wishlist,  
     })
-
 
 @login_required
 def wishlist_view(request):
