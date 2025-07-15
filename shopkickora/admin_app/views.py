@@ -78,7 +78,7 @@ def user_list(request):
 @user_passes_test(lambda u: u.is_superuser, login_url='admin_login')
 def toggle_user_status(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
-    user.is_active = not user.is_active  # Toggle status
+    user.is_active = not user.is_active
     user.save()
 
     status = "unblocked" if user.is_active else "blocked"
@@ -194,7 +194,7 @@ def toggle_category_status(request, category_id):
 def soft_delete_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
     category.is_deleted = True
-    category.is_active = False  # Optional
+    category.is_active = False 
     category.save()
     messages.success(request, f"Category '{category.name}' deleted successfully.")
     return redirect('category_list')
@@ -737,7 +737,7 @@ def approve_return(request, order_item_id):
     item.status = 'RETURN_ACCEPTED'
     item.save()
 
-    # Restore stock
+    
     try:
         stock_obj = ProductSizeStock.objects.get(product=item.product, size=item.size)
         stock_obj.quantity += item.quantity
@@ -745,7 +745,7 @@ def approve_return(request, order_item_id):
     except ProductSizeStock.DoesNotExist:
         messages.warning(request, f"Stock entry for size {item.size} not found. Please add it manually.")
 
-    # Calculate proportional refund
+    
     item_total = item.price * item.quantity
     order_items = item.order.order_items.all()
     order_total_before_coupon = sum(i.price * i.quantity for i in order_items)
@@ -755,7 +755,6 @@ def approve_return(request, order_item_id):
 
     refund_amount = item_total - proportional_discount
 
-    # CREDIT to user's wallet
     user_wallet, _ = Wallet.objects.get_or_create(user=item.order.user)
     user_wallet.balance += refund_amount
     user_wallet.save()
@@ -1274,11 +1273,16 @@ def wallet_transaction_list(request):
     admin_user = request.user  
 
     transactions = WalletTransaction.objects.filter(
-        wallet__user=admin_user  
+        wallet__user=admin_user
     ).select_related('wallet__user').order_by('-created_at')
 
+    
+    paginator = Paginator(transactions, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'admin_app/wallet_transaction_list.html', {
-        'transactions': transactions
+        'transactions': page_obj 
     })
 
 
@@ -1300,7 +1304,7 @@ def admin_dashboard(request):
         orders = Order.objects.annotate(period=TruncDay('created_at'))
     elif filter_type == 'yearly':
         orders = Order.objects.annotate(period=TruncYear('created_at'))
-    else:  # monthly
+    else:   
         orders = Order.objects.annotate(period=TruncMonth('created_at'))
 
     sales_data = orders.values('period').annotate(total=Sum('total_amount')).order_by('period')

@@ -376,7 +376,7 @@ def user_product_list(request):
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True, is_deleted=False)
 
-    paginator = Paginator(products.distinct(), 9)
+    paginator = Paginator(products.distinct(), 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -405,11 +405,10 @@ def user_product_list(request):
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
 
-    # ✅ Check if product is in user's wishlist
     is_in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
 
     related_products = Product.objects.filter(
-        brand=product.brand,
+        category=product.category,
         is_deleted=False,
         is_active=True
     ).exclude(id=product.id).order_by('-id')[:4]
@@ -991,7 +990,7 @@ def checkout(request):
         original_total += item.product.price * item.quantity
         total_discount += (item.product.price - discounted_price) * item.quantity
 
-    request.session['cart_total'] = str(grand_total)#for later payment verifications
+    request.session['cart_total'] = str(grand_total)
 
     addresses = Address.objects.filter(user=request.user)
     default_address = addresses.filter(is_default=True).first()
@@ -1103,10 +1102,10 @@ def place_order(request):
         )
 
     # Price calculations
-    grand_total = sum(item.product.final_price * item.quantity for item in cart_items)
+    grand_total = sum((item.product.final_price * item.quantity for item in cart_items), Decimal('0.00'))
     coupon_code = request.session.get('applied_coupon_code')
     coupon_discount = Decimal(request.session.get('coupon_discount', '0.00'))
-    shipping_charge = Decimal('0.00')  # Update if needed
+    shipping_charge = Decimal('0.00') 
 
     final_total = (grand_total + shipping_charge) - coupon_discount
 
@@ -1142,8 +1141,7 @@ def place_order(request):
 
     # Handle wallet transaction
     if payment_method == "wallet":
-        # Deduct from user
-        user_wallet.balance -= final_total
+        user_wallet.balance = Decimal(user_wallet.balance) - final_total
         user_wallet.save()
 
         WalletTransaction.objects.create(
@@ -1158,7 +1156,7 @@ def place_order(request):
         admin_user = CustomUser.objects.filter(is_superuser=True).first()
         if admin_user:
             admin_wallet, _ = Wallet.objects.get_or_create(user=admin_user)
-            admin_wallet.balance += final_total
+            admin_wallet.balance = Decimal(admin_wallet.balance) + final_total
             admin_wallet.save()
 
             WalletTransaction.objects.create(
