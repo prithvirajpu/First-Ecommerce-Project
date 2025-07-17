@@ -6,7 +6,7 @@ from django.utils.text import slugify
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.crypto import get_random_string
-
+from django.db.models import Avg, Count
 
 
 
@@ -190,8 +190,6 @@ class Product(models.Model):
         
         return {'percentage': None, 'label': None}
 
-
-
     @property
     def image_url(self):
         try:
@@ -199,6 +197,13 @@ class Product(models.Model):
         except ValueError:
             return None
     
+    @property
+    def average_rating(self):
+        return self.reviews.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
+    
+    @property
+    def reviews_count(self):
+        return self.reviews.count()
 
 class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')
@@ -286,7 +291,7 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
-    razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True, null=True)# for integrity
 
     cancel_reason = models.TextField(blank=True, null=True)
 
@@ -302,6 +307,7 @@ class Order(models.Model):
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+
     def __str__(self):
         return f"Order {self.order_id} by {self.user.email}"
 
@@ -310,8 +316,6 @@ class Order(models.Model):
         total = Decimal(0)
 
         for item in self.order_items.all():
-            # Use stored item.price if you've saved product.final_price at order time
-            # Otherwise use product.final_price dynamically
             total += item.product.final_price * item.quantity
 
         total -= self.coupon_discount
@@ -433,3 +437,25 @@ class Coupon(models.Model):
     def is_valid(self):
         now=timezone.now()
         return self.valid_from<=now<=self.valid_to and self.active
+    
+class UsedCoupon(models.Model):
+    user=models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+    coupon=models.ForeignKey(Coupon,on_delete=models.CASCADE, related_name='used_by')
+    used_at=models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together=('user','coupon')
+
+class Review(models.Model):
+    user=models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='reviews')
+    rating=models.PositiveSmallIntegerField(validators=[MinValueValidator(1),MaxValueValidator(5)])
+    comment=models.TextField(blank=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together=('user','product')
+        ordering=['-created_at']
+    
+    def __str__(self):
+        return f'{self.user} - {self.product} - {self.rating}⭐'

@@ -31,6 +31,7 @@ urlpatterns = [
     path('address/', views.address_view, name='address_view'),
     path('address/add/', views.add_address, name='add_address'),
     path('address/edit/<int:address_id>/', views.edit_address, name='edit_address'),
+    path('address/default/<int:address_id>',views.set_default_address,name='set_default_address'),
     path('address/delete/<int:address_id>/', views.delete_address, name='delete_address'),
     path('cart/', views.cart_view, name='cart_view'),
     path('add-to-cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),

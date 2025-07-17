@@ -67,7 +67,7 @@ def user_list(request):
     if query:
         users=users.filter(Q(username__icontains=query) | Q(email__icontains=query))
 
-    paginator=Paginator(users,10)
+    paginator=Paginator(users,6)
     page_number=request.GET.get('page')
     page_obj=paginator.get_page(page_number)
     context={'users':page_obj,'query':query}
@@ -209,7 +209,7 @@ def product_list(request):
     if query:
         products = products.filter(Q(name__icontains=query))
 
-    paginator = Paginator(products, 10)
+    paginator = Paginator(products, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -702,7 +702,6 @@ def admin_order_detail(request,order_id):
              'items':items}
     return render(request,'admin_app/order_detail.html',context)
 
-
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
 def admin_update_order_status(request, order_id):
@@ -710,16 +709,35 @@ def admin_update_order_status(request, order_id):
         order = get_object_or_404(Order, id=order_id)
         new_status = request.POST.get("status")
 
-        if new_status in dict(Order.STATUS_CHOICES).keys():
-            order.status = new_status
+        ORDER_STATUS_FLOW = {
+            'PENDING': 0,
+            'SHIPPED': 1,
+            'OUT_FOR_DELIVERY': 2,
+            'DELIVERED': 3,
+            'CANCELLED': 4,
+        }
 
+        current_level = ORDER_STATUS_FLOW.get(order.status)
+        new_level = ORDER_STATUS_FLOW.get(new_status)
+
+        if new_status not in ORDER_STATUS_FLOW:
+            messages.error(request, "Invalid status selected.")
+        elif new_status == order.status:
+            messages.info(request, "Order already has this status.")
+        elif new_status == 'CANCELLED' and order.status not in ['DELIVERED', 'CANCELLED']:
+            # Allow cancellation unless already delivered or cancelled
+            order.status = 'CANCELLED'
+            order.save()
+            messages.success(request, "Order has been cancelled.")
+        elif new_level > current_level:
+            # Allow only forward movement
+            order.status = new_status
             if new_status == 'DELIVERED' and order.payment_method in ['cod', 'wallet']:
                 order.payment_status = 'paid'
-
             order.save()
             messages.success(request, f"Order status updated to {order.get_status_display()}.")
         else:
-            messages.error(request, "Invalid status selected.")
+            messages.warning(request, "You cannot revert to a previous status.")
 
     return redirect('admin_order_detail', order_id=order_id)
 
@@ -941,7 +959,10 @@ def soft_category_offer_delete(request,offer_id):
 @user_passes_test(lambda x: x.is_superuser)
 def admin_coupon_list(request):
     coupons=Coupon.objects.all().order_by('-valid_to')
-    return render(request,'admin_app/admin_coupon_list.html',{'coupons':coupons})
+    paginator=Paginator(coupons,6)
+    page_number=request.GET.get('page')
+    page_obj=paginator.get_page(page_number)
+    return render(request,'admin_app/admin_coupon_list.html',{'coupons':page_obj})
 
 @user_passes_test(lambda x: x.is_superuser)
 def add_coupon(request):

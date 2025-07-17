@@ -22,14 +22,14 @@
 
       <p class="text-gray-600 text-sm sm:text-base">
         Your order <strong>#{{ order.order_id }}</strong> has been placed successfully.
-        You will receive a confirmation email shortly.
+        
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 pt-6">
         <a href="{% url 'user_order_detail' order.id %}" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all text-sm font-semibold">
           View Order Details
         </a>
-        <a href="{% url 'user_dashboard' %}" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-all text-sm font-semibold">
+        <a href="{% url 'user_product_list' %}" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-all text-sm font-semibold">
           Continue Shopping
         </a>
       </div>

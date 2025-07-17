@@ -25,7 +25,7 @@
         align-items: center;
         justify-content: center;
         border: 1px solid #e5e7eb;
-        background-color: #ffffff;
+        background-color: #a9a9a95c;
         padding: 1.5rem;
         height: 500px;
         width: 550px;
@@ -155,16 +155,20 @@
         <div class="space-y-6">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <div class="flex text-yellow-400">
-                        {% for i in "12345" %}
-                            <i data-lucide="star" class="w-5 h-5 {% if forloop.counter <= product.rating|default:4 %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
-                        {% endfor %}
-                    </div>
+             <div class="flex text-yellow-400">
+    {% for _ in star_display.full %}
+        <i class="fas fa-star w-5 h-5"></i>
+    {% endfor %}
+    {% if star_display.half %}
+        <i class="fas fa-star-half-alt w-5 h-5"></i>
+    {% endif %}
+    {% for _ in star_display.empty %}
+        <i class="far fa-star text-gray-300 w-5 h-5"></i>
+    {% endfor %}
+</div>
+
                     <span class="text-sm text-gray-500">{{ product.reviews_count|default:"0" }} reviews</span>
                 </div>
-                <!-- <button class="text-gray-500 hover:text-gray-900 transition-colors" title="Share">
-                    <i data-lucide="share-2" class="w-5 h-5"></i>
-                </button> -->
             </div>
 
             <h1 class="text-3xl font-bold text-gray-900">{{ product.name|default:"Product" }}</h1>
@@ -177,9 +181,13 @@
                                 <span class="text-lg text-gray-500 line-through">₹{{ product.price|floatformat:2 }}</span>
                             </div>
                             {% if info.label %}
-                                <span class="inline-block bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                                    {{ info.percentage|floatformat:0 }}% {{ info.label }}
-                                </span>
+                                <div class="relative w-full max-w-[150px] h-6  rounded-full overflow-hidden">
+    <div class="absolute top-0 left-0 h-full bg-red-600 text-white text-xs font-semibold flex items-center justify-center rounded-full"
+         style="width: {{ info.percentage }}%;">
+        {{ info.percentage|floatformat:0 }}% {{ info.label }}
+    </div>
+</div>
+
                             {% endif %}
                         </div>
                     {% else %}
@@ -258,12 +266,79 @@
     </div>
 
     <div class="mt-16 border-t border-gray-200 pt-8">
-        <div class="flex border-b border-gray-200">
-            <span class="text-sm font-semibold text-gray-900 pb-4 border-b-2 border-primary-600 mr-8">Details</span>
+        <div class="flex border-b border-gray-200 mb-4">
+    <button id="detailsTab" class="text-sm font-semibold text-gray-900 pb-4 border-b-2 border-primary-600 mr-8 focus:outline-none">Detail</button>
+    <button id="reviewsTab" class="text-sm text-gray-600 pb-4 hover:text-gray-900 focus:outline-none">Reviews</button>
+</div>
+
+<!-- Tab Contents -->
+<div id="detailsContent">
+    <p class="text-gray-700 text-base">{{ product.description|default:"No description available." }}</p>
+</div>
+
+<div id="reviewsContent" class="hidden">
+    <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-900">Reviews</h3>
+        <p class="text-3xl font-bold mt-2">{{ product.average_rating|floatformat:1|default:"0.0" }}</p>
+        <p class="text-gray-600 text-sm">{{ reviews.count }} Review{{ reviews.count|pluralize }}</p>
+    </div>
+
+    {% for review in reviews %}
+        <div class="border-b py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold text-blue-700">
+                        {{ review.user.first_name|default:review.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-sm">{{ review.user.username }}</p>
+                        <p class="text-xs text-gray-500">{{ review.created_at|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+                <div class="flex text-yellow-400">
+                    {% for i in 1|to:6 %}
+                        <i class="fa-star {% if forloop.counter <= review.rating %}fas{% else %}far text-gray-300{% endif %}"></i>
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="text-gray-700 mt-2 text-sm">{{ review.comment }}</p>
         </div>
-        <div class="py-8">
-            <p class="text-gray-700 text-base">{{ product.description|default:"No description available." }}</p>
+    {% empty %}
+        <p class="text-gray-500">No reviews yet.</p>
+    {% endfor %}
+
+    {% if can_review %}
+        <div class="mt-8">
+            <h4 class="text-md font-semibold mb-2">Leave a Review</h4>
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+               <div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+  <div class="flex space-x-1 text-yellow-500" id="star-container">
+    {% for i in "12345" %}
+      <i class="fa-star text-2xl cursor-pointer {% if form.data.rating|add:'0' >= i %}fas{% else %}far text-gray-300{% endif %}"
+         data-value="{{ i }}"></i>
+    {% endfor %}
+  </div>
+  <input type="hidden" name="rating" id="rating-input" value="{{ form.data.rating|default_if_none:'' }}">
+  {% if form.rating.errors %}
+    <p class="text-red-600 text-sm mt-1">{{ form.rating.errors.0 }}</p>
+  {% endif %}
+</div>
+
+
+
+                <div>
+                    {{ form.comment.label_tag }}
+                    {{ form.comment }}
+                </div>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit Review</button>
+            </form>
         </div>
+    {% endif %}
+</div>
+
     </div>
 
     {% if related_products %}
@@ -287,6 +362,69 @@
 {% endblock %}
 
 {% block extra_js %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const stars = document.querySelectorAll("#star-container i");
+  const ratingInput = document.getElementById("rating-input");
+
+  function updateStars(selectedValue) {
+    stars.forEach(star => {
+      const value = parseInt(star.getAttribute("data-value"));
+      if (value <= selectedValue) {
+        star.classList.add("fas");
+        star.classList.remove("far", "text-gray-300");
+      } else {
+        star.classList.remove("fas");
+        star.classList.add("far", "text-gray-300");
+      }
+    });
+  }
+
+  stars.forEach(star => {
+    star.addEventListener("click", function () {
+      const selected = parseInt(this.getAttribute("data-value"));
+      ratingInput.value = selected;
+      updateStars(selected);
+    });
+
+    star.addEventListener("mouseover", function () {
+      updateStars(parseInt(this.getAttribute("data-value")));
+    });
+
+    star.addEventListener("mouseout", function () {
+      updateStars(parseInt(ratingInput.value || 0));
+    });
+  });
+
+  // Initial fill based on existing form value
+  updateStars(parseInt(ratingInput.value || 0));
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const detailsTab = document.getElementById('detailsTab');
+    const reviewsTab = document.getElementById('reviewsTab');
+    const detailsContent = document.getElementById('detailsContent');
+    const reviewsContent = document.getElementById('reviewsContent');
+
+    detailsTab.addEventListener('click', () => {
+        detailsTab.classList.add('border-b-2', 'border-primary-600', 'text-gray-900');
+        reviewsTab.classList.remove('border-b-2', 'border-primary-600', 'text-gray-900');
+        detailsContent.classList.remove('hidden');
+        reviewsContent.classList.add('hidden');
+    });
+
+    reviewsTab.addEventListener('click', () => {
+        reviewsTab.classList.add('border-b-2', 'border-primary-600', 'text-gray-900');
+        detailsTab.classList.remove('border-b-2', 'border-primary-600', 'text-gray-900');
+        detailsContent.classList.add('hidden');
+        reviewsContent.classList.remove('hidden');
+    });
+});
+</script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

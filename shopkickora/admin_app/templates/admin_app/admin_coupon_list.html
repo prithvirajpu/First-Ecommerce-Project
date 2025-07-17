@@ -87,7 +87,7 @@
                   Coupons List
               </div>
               <div class="table-stats">
-                  <span class="stat-number">{{ coupons|length }}</span>
+                  <span class="stat-number">{{ coupons.paginator.count }}</span>
                   <span class="stat-label">Total Coupons</span>
               </div>
           </div>
@@ -130,7 +130,9 @@
                       {% for coupon in coupons %}
                       <tr class="table-row">
                           <td class="td-number">
-                              <div class="row-number">{{ forloop.counter }}</div>
+                        <div class="row-number">
+                        {{ coupons.start_index|add:forloop.counter0 }}
+                        </div>
                           </td>
                           <td class="td-code">
                               <div class="coupon-info">

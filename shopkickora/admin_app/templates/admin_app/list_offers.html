@@ -111,7 +111,7 @@
                                 <div class="products-list">
                                     {% for product in offer.products.all %}
                                     <span class="product-tag">{{ product.name }}</span>
-                                    {% if not forloop.last %}<br>{% endif %}
+                                    {% if not forloop.last %}{% endif %}
                                     {% endfor %}
                                 </div>
                             </td>
@@ -664,12 +664,11 @@
     .products-list, .categories-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
     }
 
     .product-tag, .category-tag {
-        display: inline-flex;
-        align-items: center;
+        display: inline-block;
         padding: 4px 8px;
         background: #f1f5f9;
         color: #475569;
@@ -677,7 +676,7 @@
         font-size: 0.8rem;
         font-weight: 500;
         border: 1px solid #e2e8f0;
-        max-width: fit-content;
+        margin: 0; /* remove unwanted margin */
     }
 
     .category-tag {

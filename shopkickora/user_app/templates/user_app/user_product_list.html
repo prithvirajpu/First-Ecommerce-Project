@@ -1,5 +1,6 @@
 {% extends 'user_app/base_user.html' %}
 {% load static %}
+{% load cart_extras %}
 
 {% block title %}shopKickora - Product Listing{% endblock %}
 
@@ -247,12 +248,18 @@
                             <h3 class="font-semibold text-gray-800 mb-1">{{ product.name }}</h3>
                         </a>
                         <div class="flex items-center mb-2">
-                            <div class="flex text-yellow-400 text-sm">
-                                {% for i in "12345" %}
-                                    <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= 4 %}fill-current{% endif %}"></i>
-                                {% endfor %}
-                            </div>
-                            <span class="text-gray-500 text-sm ml-1">(4.0)</span>
+<div class="flex text-yellow-400">
+        {% for _ in product.star_display.full %}
+        <i class="fas fa-star w-5 h-5"></i>
+    {% endfor %}
+    {% if product.star_display.half %}
+        <i class="fas fa-star-half-alt w-5 h-5"></i>
+    {% endif %}
+    {% for _ in product.star_display.empty %}
+        <i class="far fa-star text-gray-300 w-5 h-5"></i>
+    {% endfor %}
+</div>
+                            <span class="text-gray-500 text-sm ml-1"> {{ product.average_rating|floatformat:1|default:"0.0" }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <div>

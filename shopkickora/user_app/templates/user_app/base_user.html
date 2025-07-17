@@ -278,6 +278,21 @@
 // Handle URL-based toast triggers
 document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('error') === 'Google_auth') {
+  showToast("Your account was created using Google login. Please use Google to sign in.", "error");
+  }
+  if (urlParams.get('error') === 'coupon_removed') {
+  showToast("Coupon removed successfully", "info");
+  }
+  if (urlParams.get('success') === 'coupon_added') {
+  showToast("Coupon applied successfully", "success");
+  }
+  if (urlParams.get('error') === 'less_amount') {
+  showToast("Total amount is less than Coupon amount", "info");
+  }
+  if (urlParams.get('error') === 'coupon_already_used') {
+  showToast("You've already used this coupon.", "info");
+  }
   if (urlParams.get('error') === 'own_referral') {
     showToast("You cannot earn from your own referral code.", "warning");
   }

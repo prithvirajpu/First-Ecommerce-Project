@@ -36,11 +36,11 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 from .models import (
     Brand, Category, Coupon, CustomUser, Product,
-    ProductSizeStock, Address, WalletTransaction,Wishlist,Cart,
-    Order,OrderItem,Cart,Wallet,
+    ProductSizeStock, Address, UsedCoupon, WalletTransaction,Wishlist,Cart,
+    Order,OrderItem,Cart,Wallet,Review
 )
 
-from user_app.forms import LoginForm, ProfileImageForm 
+from user_app.forms import LoginForm, ProfileImageForm, ReviewForm 
 from django.conf import settings
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -272,7 +272,6 @@ def login_view(request):
             messages.error(request, "Your account has been blocked.")
             return render(request, 'user_app/login.html', {'form': form})
 
-        # ✅ Prevent redirect to /accounts/inactive/
         user.backend = 'django.contrib.auth.backends.ModelBackend'
 
         login(request, user)
@@ -321,22 +320,8 @@ def user_product_list(request):
     brand_ids = request.GET.getlist('brand')
     selected_size = request.GET.get('size')
 
-    min_price_str = request.GET.get('min_price')
-    max_price_str = request.GET.get('max_price')
-
-    min_price = None
-    if min_price_str:
-        try:
-            min_price = float(min_price_str)
-        except ValueError:
-            pass 
-
-    max_price = None
-    if max_price_str:
-        try:
-            max_price = float(max_price_str)
-        except ValueError:
-            pass 
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
 
     products = Product.objects.filter(
         is_deleted=False,
@@ -349,22 +334,28 @@ def user_product_list(request):
         products = products.filter(category__id=category)
 
     if brand_ids:
-        products = products.filter(brand__id__in=brand_ids) 
+        products = products.filter(brand__id__in=brand_ids)
 
     if query:
         products = products.filter(name__icontains=query)
 
-    if min_price is not None:
-        products = products.filter(price__gte=min_price)
+    if min_price:
+        try:
+            products = products.filter(price__gte=float(min_price))
+        except ValueError:
+            pass
 
-    if max_price is not None:
-        products = products.filter(price__lte=max_price)
+    if max_price:
+        try:
+            products = products.filter(price__lte=float(max_price))
+        except ValueError:
+            pass
 
     if selected_size:
         products = products.filter(
-        size_stocks__size=selected_size,
-        size_stocks__quantity__gt=0
-    )
+            size_stocks__size=selected_size,
+            size_stocks__quantity__gt=0
+        )
 
     if sort == 'price_low':
         products = products.order_by('price')
@@ -373,37 +364,53 @@ def user_product_list(request):
     else:
         products = products.order_by('-created_at')
 
-    brands = Brand.objects.filter(is_active=True)
-    categories = Category.objects.filter(is_active=True, is_deleted=False)
-
     paginator = Paginator(products.distinct(), 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    product_count = products.count()
+    # Annotate each product with star_display
+    for product in page_obj:  # Only loop through paginated products
+        avg_rating = product.average_rating or 0
+        full = int(avg_rating)
+        half = 1 if avg_rating - full >= 0.5 else 0
+        empty = 5 - full - half
+        product.star_display = {
+            'full': range(full),
+            'half': half,
+            'empty': range(empty),
+        }
 
     context = {
         'page_obj': page_obj,
         'query': query,
         'category': category,
         'sort': sort,
-        'product_count': product_count,
-        'sizes_list': ['6', '7', '8'], 
-        'selected_size': selected_size,  
-        'categories': categories,
-        'brands': brands,
+        'product_count': products.count(),
+        'sizes_list': ['6', '7', '8'],
+        'selected_size': selected_size,
+        'categories': Category.objects.filter(is_active=True, is_deleted=False),
+        'brands': Brand.objects.filter(is_active=True),
         'selected_brands': brand_ids,
         'min_price': min_price,
         'max_price': max_price,
     }
-
     return render(request, 'user_app/user_product_list.html', context)
-
 
 @never_cache
 @login_required
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
+    avg_rating = product.average_rating or 0
+
+    full_stars = int(avg_rating)
+    half_star = 1 if avg_rating - full_stars >= 0.5 else 0
+    empty_stars = 5 - full_stars - half_star
+
+    star_display = {
+        'full': range(full_stars),
+        'half': half_star,
+        'empty': range(empty_stars)
+    }
 
     is_in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
 
@@ -415,16 +422,41 @@ def product_detail(request, slug):
 
     sizes = ProductSizeStock.objects.filter(
         product=product, quantity__gt=0
-    ).values_list('size', flat=True).distinct()
+    ).order_by('size').values_list('size', flat=True).distinct()
+    selected_size=sizes[0] if sizes else None
+    size_choices = dict(ProductSizeStock.SIZE_CHOICES) 
+    reviews = product.reviews.select_related('user')
+    has_purchased = OrderItem.objects.filter(
+        order__user=request.user, product=product, order__status='DELIVERED'
+    ).exists()
+    already_reviewed = Review.objects.filter(user=request.user, product=product).exists()
+    can_review = has_purchased and not already_reviewed
 
-    size_choices = dict(ProductSizeStock.SIZE_CHOICES)
+    if request.method == 'POST' and can_review:
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.user = request.user
+            review.product = product
+            review.save()
+            messages.success(request, "Thank you for reviewing this product.")
+            return redirect('product_detail', slug=slug)
+    else:
+        form = ReviewForm()
+  
 
     return render(request, 'user_app/product_detail.html', {
         'product': product,
         'related_products': related_products,
         'sizes': sizes,
         'size_choices': size_choices,
-        'is_in_wishlist': is_in_wishlist,  
+        'is_in_wishlist': is_in_wishlist,
+        'reviews': reviews,
+        'form': form,
+        'can_review': can_review,
+        'star_display': star_display,
+        'selected_size':selected_size
+
     })
 
 @login_required
@@ -555,7 +587,7 @@ def add_to_cart(request, product_id):
 
     return JsonResponse({"status": "success", "message": message})
 
-
+ 
 @login_required
 def validate_cart_stock(request):
     cart_items = Cart.objects.filter(user=request.user)
@@ -810,8 +842,7 @@ def edit_profile(request):
 @login_required
 def change_password(request):
     if not request.user.has_usable_password():
-        messages.error(request, "Your account was created using Google login. Please use Google to sign in.", extra_tags='change_password')
-        return redirect('user_profile')
+        return redirect('/profile/?error=Google_auth')
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -955,19 +986,37 @@ def edit_address(request, address_id):
 
     return render(request, 'user_app/edit_address.html', {'address': address})
 
+@login_required
+def set_default_address(request, address_id):
+    address = get_object_or_404(Address, id=address_id, user=request.user)
+
+    Address.objects.filter(user=request.user).update(is_default=False)
+
+    address.is_default = True
+    address.save()
+
+    messages.success(request, "Default address updated.")
+    return redirect('address_view')
+
 
 @login_required
 def delete_address(request, address_id):
     address = get_object_or_404(Address, id=address_id, user=request.user)
+    
+    was_default = address.is_default  
+    address.delete()  
 
-    if address.is_default:
-        next_address = Address.objects.filter(user=request.user).exclude(id=address_id).first()
-        if next_address:
-            next_address.is_default = True
-            next_address.save()
+    if was_default:
+        new_default = Address.objects.filter(user=request.user).order_by('-id').first()
+        if new_default:
+            new_default.is_default = True
+            new_default.save()
+            messages.success(request, "Default address deleted. Another address is now set as default.")
+        else:
+            messages.info(request, "Default address deleted. No other address found.")
+    else:
+        messages.success(request, "Address deleted successfully.")
 
-    address.delete()
-    messages.success(request, "Address deleted successfully.")
     return redirect('address_view')
 
 @login_required
@@ -1005,7 +1054,7 @@ def checkout(request):
     if final_total < Decimal('1.00'):
         request.session.pop('applied_coupon_code', None)
         request.session.pop('coupon_discount', None)
-        return redirect('cart')  
+        return redirect('/checkout/?error=less_amount')  
 
     razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     razorpay_order = razorpay_client.order.create({
@@ -1021,7 +1070,7 @@ def checkout(request):
         valid_from__lte=timezone.now(),
         valid_to__gte=timezone.now(),
         minimum_order_amount__lte=grand_total
-    )
+    ).exclude(used_by__user=request.user)
 
     context = {
         'cart_items': cart_items,
@@ -1044,6 +1093,46 @@ def checkout(request):
     return render(request, 'user_app/checkout.html', context)
 
 
+
+@login_required
+def apply_coupon(request):
+    if request.method == "POST":
+        code = request.POST.get('coupon_code', "").strip()
+        if not code:
+            messages.error(request, 'Please enter a coupon code.')
+            return redirect('checkout')
+
+        if request.session.get('applied_coupon_code') == code:
+            request.session.pop('applied_coupon_code', None)
+            request.session.pop('coupon_discount', None)
+            return redirect('/checkout/?error=coupon_removed')
+
+        try:
+            coupon = Coupon.objects.get(code__iexact=code)
+
+            if not coupon.is_valid():
+                messages.error(request, 'Coupon is not valid.')
+                return redirect('checkout')
+
+            cart_items = Cart.objects.filter(user=request.user).select_related('product')
+            cart_total = Decimal('0.00')
+            for item in cart_items:
+                cart_total += item.product.final_price * item.quantity
+
+            if cart_total < coupon.minimum_order_amount:
+                messages.error(request, f'Minimum order amount for this coupon is ₹{coupon.minimum_order_amount}.')
+                return redirect('checkout')
+
+            best_discount = coupon.discount_amount
+            request.session['applied_coupon_code'] = coupon.code
+            request.session['coupon_discount'] = str(best_discount)
+            return redirect('/checkout/?success=coupon_added')
+
+        except Coupon.DoesNotExist:
+            messages.error(request, "Coupon does not exist.")
+            return redirect('checkout')
+
+    return redirect('checkout')
 
 
 @login_required
@@ -1117,7 +1206,14 @@ def place_order(request):
         user_wallet = request.user.wallet
         if user_wallet.balance < final_total:
             return redirect('/checkout/?error=wallet_insufficient')
-
+    if coupon_code:
+        try:
+            coupon=Coupon.objects.get(code=coupon_code)
+            if UsedCoupon.objects.filter(user=request.user,coupon=coupon).exists():
+                return redirect('/checkout/?error=coupon_already_used')
+        except Coupon.DoesNotExist:
+            return redirect('/checkout/?error=invalid_coupon')
+   
     # Create order
     order = Order.objects.create(
         user=request.user,
@@ -1138,6 +1234,9 @@ def place_order(request):
         coupon_discount=coupon_discount,
         shipping_charge=shipping_charge
     )
+    if coupon_code:
+        UsedCoupon.objects.create(user=request.user,coupon=coupon)
+        
 
     # Handle wallet transaction
     if payment_method == "wallet":
@@ -1210,13 +1309,12 @@ def place_order(request):
 
     return redirect('order_success', order_id=order.id)
 
-
 @login_required
 def order_success(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'user_app/order_success.html', {'order': order})
 
-login_required
+@login_required
 def user_order_detail(request, order_id):
     order = Order.objects.select_related('address').get(id=order_id, user=request.user)
     return render(request, 'user_app/order_detail.html', {'order': order})
@@ -1273,26 +1371,47 @@ def user_order_list(request):
 @login_required
 @transaction.atomic
 def cancel_order(request, order_id):
+    # Fetch the order for the logged-in user
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
+    # Prevent cancellation if already delivered or cancelled
     if order.status in ['DELIVERED', 'CANCELLED']:
         messages.error(request, "You cannot cancel this order.")
         return redirect('user_order_detail', order_id=order.id)
 
+    # Handle POST request (form submitted)
     if request.method == 'POST':
-        reason = request.POST.get('reason', '')
+        reason = request.POST.get('reason', '').strip()
+        
+        # Update order status
         order.status = 'CANCELLED'
         order.cancel_reason = reason
         order.save()
 
+        # Restore stock for each item in the order
         for item in order.order_items.all():
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
             stock.quantity += item.quantity
             stock.save()
 
-        messages.success(request, "Order cancelled successfully.")
+        # Handle wallet refund
+        if order.payment_method == 'wallet':
+            wallet, _ = Wallet.objects.get_or_create(user=request.user)
+            wallet.balance += order.final_total
+            wallet.save()
+
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                amount=order.final_total,
+                transaction_type='CREDIT',
+                description='Refund for cancelled order',
+                order=order
+            )
+        
+        messages.success(request, "Order cancelled and refund processed.")
         return redirect('user_order_list')
 
+    # If GET request, render confirmation page
     return render(request, 'user_app/cancel_order.html', {'order': order})
 
 @login_required
@@ -1500,48 +1619,6 @@ def download_invoice(request, order_id):
     pisa.CreatePDF(html, dest=response)
     return response
 
-
-@login_required
-def apply_coupon(request):
-    if request.method == "POST":
-        code = request.POST.get('coupon_code', "").strip()
-        if not code:
-            messages.error(request, 'Please enter a coupon code.')
-            return redirect('checkout')
-
-        if request.session.get('applied_coupon_code') == code:
-            request.session.pop('applied_coupon_code', None)
-            request.session.pop('coupon_discount', None)
-            messages.info(request, f"Coupon '{code}' removed.")
-            return redirect('checkout')
-
-        try:
-            coupon = Coupon.objects.get(code__iexact=code)
-
-            if not coupon.is_valid():
-                messages.error(request, 'Coupon is not valid.')
-                return redirect('checkout')
-
-            cart_items = Cart.objects.filter(user=request.user).select_related('product')
-            cart_total = Decimal('0.00')
-            for item in cart_items:
-                cart_total += item.product.final_price * item.quantity
-
-            if cart_total < coupon.minimum_order_amount:
-                messages.error(request, f'Minimum order amount for this coupon is ₹{coupon.minimum_order_amount}.')
-                return redirect('checkout')
-
-            best_discount = coupon.discount_amount
-            request.session['applied_coupon_code'] = coupon.code
-            request.session['coupon_discount'] = str(best_discount)
-            messages.success(request, f"Coupon '{coupon.code}' applied! You saved ₹{best_discount:.2f}.")
-            return redirect('checkout')
-
-        except Coupon.DoesNotExist:
-            messages.error(request, "Coupon does not exist.")
-            return redirect('checkout')
-
-    return redirect('checkout')
 
 @login_required
 def referal(request):

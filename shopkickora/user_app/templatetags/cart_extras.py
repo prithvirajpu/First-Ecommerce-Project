@@ -16,3 +16,21 @@ def get_item(dictionary, key):
 @register.filter
 def split(value, delimiter=","):
     return value.split(delimiter)
+
+@register.filter
+def to(value, end):
+    return range(value, end)
+
+@register.filter
+def to_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
+def index_of(value_list, target):
+    try:
+        return value_list.index(target)
+    except ValueError:
+        return -1

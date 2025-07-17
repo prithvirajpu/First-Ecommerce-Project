@@ -89,7 +89,7 @@
                     Products List
                 </div>
                 <div class="table-stats">
-                    <span class="stat-number">{{ products|length }}</span>
+                    <span class="stat-number">{{ products.paginator.count }}</span>
                     <span class="stat-label">Total Products</span>
                 </div>
             </div>
@@ -989,7 +989,6 @@
     .action-buttons {
         display: flex;
         gap: 8px;
-        flex-wrap: wrap;
     }
 
     .action-btn {

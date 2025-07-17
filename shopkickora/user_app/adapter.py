@@ -33,7 +33,6 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     def populate_username(self, request, user):
         user.username = user.email
 
-    # ✅ This is the critical part
     def respond_user_inactive(self, request, user):
         messages.error(request, "Your account is inactive.")
         return redirect(reverse('login'))

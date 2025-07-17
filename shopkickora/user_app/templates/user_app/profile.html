@@ -75,9 +75,29 @@
             </div>
         </div>
 
+        
+
         <!-- Main Content -->
         <div class="lg:w-3/4">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
+{% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+      <div class="fade-message p-3 rounded text-sm
+        {% if message.tags == 'error' %}
+          bg-red-100 text-red-800 border border-red-300
+        {% elif message.tags == 'success' %}
+          bg-green-100 text-green-800 border border-green-300
+        {% else %}
+          bg-blue-100 text-blue-800 border border-blue-300
+        {% endif %}
+      ">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 
                 <div class="profile-card p-8 text-center">
                     
@@ -250,7 +270,7 @@ function closeDeleteModal() {
             msg.style.opacity = '0';
             setTimeout(() => msg.remove(), 1000); // remove from DOM after fade
         });
-    }, 5000); // 5 seconds
+    }, 3000); // 5 seconds
 </script>
 
 {% endblock %}

@@ -1,8 +1,7 @@
 import re
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from user_app.models import CustomUser,Product
-from .models import CustomUser
+from .models import CustomUser,Product,Review
 
 class ProfileImageForm(forms.ModelForm):
     class Meta:
@@ -66,3 +65,10 @@ class ProductForm(forms.ModelForm):
         model=Product
         fields=['name','description','price','stock','category','brand']
         
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model=Review
+        fields=['rating','comment']
+        widgets = {
+                    'comment': forms.Textarea(attrs={'rows': 3}),
+                }
