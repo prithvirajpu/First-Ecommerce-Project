@@ -17,6 +17,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     
     <style>
         :root {
@@ -416,6 +419,12 @@
                     </a>
                 </div>
                 
+                <div class="nav-item">
+                    <a href="{% url 'return_requests_dashboard' %}" class="nav-link {% if request.path == '/myadmin/return-requests/' %}active{% endif %}">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Return Requests</span>
+                    </a>
+                </div>
                 <div class="nav-item">
                     <a href="{% url 'admin_order_list' %}" class="nav-link {% if request.path == '/myadmin/orders/' %}active{% endif %}">
                         <i class="fas fa-shopping-cart"></i>

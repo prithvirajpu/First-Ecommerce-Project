@@ -16,12 +16,15 @@ from user_app.models import (
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
+import csv
 from django.utils import timezone
+from django.utils.timezone import now
+
 
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models.functions import TruncDay, TruncMonth, TruncYear
 
@@ -235,6 +238,7 @@ def add_product(request):
         category_id = request.POST.get('category')
         brand_id = request.POST.get('brand')
         images = request.FILES.getlist('images')
+        print(images)
 
         stock_6 = int(request.POST.get('stock_6') or 0)
         stock_7 = int(request.POST.get('stock_7') or 0)
@@ -266,10 +270,10 @@ def add_product(request):
 
         if not name:
             errors['name'] = 'Must enter the name'
-        elif not re.match(r'^(?=.*[a-zA-Z])[a-zA-Z0-9 _-]+$', name):
-            errors['name'] = "Please enter a product name with at least one letter. Only letters, numbers, spaces, hyphens, and underscores are allowed."
-        elif name == "_" * len(name):
-            errors['name'] = "Product name cannot be only underscores."
+        elif not re.match(r'^[\w\s-]*[a-zA-Z][\w\s-]*$', name):
+            errors['name'] = "Product name must contain at least one letter. Only letters, numbers, spaces, hyphens, and underscores are allowed."
+        elif name.strip("_") == "":
+            errors['name'] = "Product name cannot consist of only underscores."
         elif Product.objects.filter(name__iexact=name).exists():
             errors['name'] = "The product name already exists"
 
@@ -301,14 +305,19 @@ def add_product(request):
             errors['format'] = "Please upload at least 3 images."
         else:
             allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+            max_size = 10 * 1024 * 1024  # 10MB limit
+
             for image in images:
                 ext = image.name.split('.')[-1].lower()
                 if ext not in allowed_extensions:
                     errors['format'] = "Invalid image file format"
                     break
+                if image.size > max_size:
+                    errors['format'] = "Each image must be less than 10MB in size"
+                    break
+
 
         if errors:
-            print("FORM ERRORS:", errors)
             return render(request, 'user_app/add_product.html', {
                 'categories': categories,
                 'brands': brands,
@@ -474,11 +483,17 @@ def edit_product(request, product_id):
 
         if new_images and len(new_images) == 3:
             for img in existing_images:
-                if img.image:
-                    img.image.delete(save=False)
+                try:
+                    if img.image:
+                        from cloudinary.uploader import destroy
+                        destroy(img.image.public_id)
+                except Exception as e:
+                    print(f"Failed to delete image: {e}")
                 img.delete()
+
             for image in new_images:
                 ProductImage.objects.create(product=product, image=image)
+
 
         messages.success(request, "Product updated successfully.")
         return redirect('product_list')
@@ -741,6 +756,24 @@ def admin_update_order_status(request, order_id):
 
     return redirect('admin_order_detail', order_id=order_id)
 
+@user_passes_test(lambda u: u.is_superuser)
+def return_requests_dashboard(request):
+    return_items_list = OrderItem.objects.filter(
+        is_return_requested=True,
+        is_return_approved=False,
+        is_return_rejected=False
+    ).order_by('-id')
+
+    paginator = Paginator(return_items_list, 10)  # 10 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'return_items': page_obj,
+        'page_obj': page_obj,
+    }
+    return render(request, 'admin_app/return_requests_dashboard.html', context)
+
 
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
@@ -818,6 +851,7 @@ def reject_return(request, order_item_id):
         messages.warning(request, "Return request not pending or already handled.")
 
     return redirect('admin_order_detail', order_id=item.order.id)
+
 
 @user_passes_test(lambda x: x.is_superuser)
 def list_offers(request):
@@ -1116,13 +1150,15 @@ def soft_delete_coupon(request, coupon_id):
     messages.success(request, f"Coupon '{coupon.code}'has been deleted  successfully.")
     return redirect('admin_coupon_list')
 
-
 @user_passes_test(lambda x: x.is_superuser)
 def sales_report(request):
+    errors = {}
     today = timezone.now().date()
     filter_type = request.GET.get('filter', 'today')
     from_date = request.GET.get('from_date')
     to_date = request.GET.get('to_date')
+
+    start_date = end_date = today  # default
 
     if filter_type == 'today':
         start_date = end_date = today
@@ -1139,11 +1175,30 @@ def sales_report(request):
         try:
             start_date = datetime.strptime(from_date, '%Y-%m-%d').date()
             end_date = datetime.strptime(to_date, '%Y-%m-%d').date()
-        except ValueError:
-            start_date = end_date = today
-    else:
-        start_date = end_date = today
 
+            if end_date < start_date:
+                errors['date'] = 'End date cannot be earlier than start date.'
+        except ValueError:
+            errors['date'] = 'Invalid date format.'
+
+    # If there's an error, render the template with just the error and filter fields
+    if errors:
+        context = {
+            'errors': errors,
+            'filter_type': filter_type,
+            'from_date': from_date,
+            'to_date': to_date,
+            'orders': [],
+            'page_obj': [],
+            'total_orders': 0,
+            'total_discount': 0,
+            'total_order_amount': 0,
+            'total_quantity': 0,
+            'total_item_sales': 0,
+        }
+        return render(request, 'admin_app/sales_report.html', context)
+
+    # No error, proceed with actual data
     orders_queryset = Order.objects.filter(
         created_at__date__range=(start_date, end_date),
         payment_status='paid',
@@ -1175,13 +1230,14 @@ def sales_report(request):
         'filter_type': filter_type,
         'from_date': from_date,
         'to_date': to_date,
+        'errors': errors
     }
 
     return render(request, 'admin_app/sales_report.html', context)
 
 @user_passes_test(lambda x: x.is_superuser)
-def download_sales_report_pdf(request):
-    today = timezone.now().date()
+def download_sales_report_csv(request):
+    today = now().date()
     filter_type = request.GET.get('filter', 'today')
     from_date = request.GET.get('from_date')
     to_date = request.GET.get('to_date')
@@ -1212,6 +1268,7 @@ def download_sales_report_pdf(request):
         status='DELIVERED'
     ).order_by('-created_at')
 
+    # Calculate summary
     total_orders = orders_queryset.count()
     total_discount = orders_queryset.aggregate(total=Sum('coupon_discount'))['total'] or 0
     total_order_amount = orders_queryset.aggregate(total=Sum('total_amount'))['total'] or 0
@@ -1222,71 +1279,36 @@ def download_sales_report_pdf(request):
         total_price=ExpressionWrapper(F('quantity') * F('price'), output_field=DecimalField())
     ).aggregate(sales=Sum('total_price'))['sales'] or 0
 
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    y = height - 50
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.csv"'
 
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(200, y, "Sales Report")
-    y -= 30
+    writer = csv.writer(response)
+    writer.writerow(['Sales Report'])
+    writer.writerow(['Filter Type', filter_type])
+    writer.writerow(['Date Range', f'{start_date} to {end_date}'])
+    writer.writerow([])
 
-    p.setFont("Helvetica", 12)
-    p.drawString(50, y, f"Filter: {filter_type.capitalize()}")
-    y -= 20
-    p.drawString(50, y, f"Date Range: {start_date} to {end_date}")
-    y -= 30
+    writer.writerow(['Summary'])
+    writer.writerow(['Total Orders', total_orders])
+    writer.writerow(['Total Quantity Sold', total_quantity])
+    writer.writerow(['Total Item Sales', f'Rs.{total_item_sales}'])
+    writer.writerow(['Total Order Amount', f'Rs.{total_order_amount}'])
+    writer.writerow(['Total Discount', f'Rs.{total_discount}'])
+    writer.writerow([])
 
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(50, y, "Summary:")
-    y -= 20
+    writer.writerow(['Order ID', 'Date', 'User', 'Total Amount', 'Discount Amount'])
 
-    p.setFont("Helvetica", 12)
-    p.drawString(60, y, f"Total Orders: {total_orders}")
-    y -= 20
-    p.drawString(60, y, f"Total Quantity Sold: {total_quantity}")
-    y -= 20
-    p.drawString(60, y, f"Total Item Sales (price × qty): Rs.{total_item_sales}")
-    y -= 20
-    p.drawString(60, y, f"Total Order Amount: Rs.{total_order_amount}")
-    y -= 20
-    p.drawString(60, y, f"Total Discount: Rs.{total_discount}")
-    y -= 30
-
-    p.setFont("Helvetica-Bold", 11)
-    p.drawString(50, y, "Order ID")
-    p.drawString(120, y, "Date")
-    p.drawString(200, y, "User")
-    p.drawString(330, y, "Total Amount")
-    p.drawString(420, y, "Discount Amount")
-    y -= 20
-
-    p.setFont("Helvetica", 10)
     for order in orders_queryset:
-        if y < 80:
-            p.showPage()
-            y = height - 50
+        writer.writerow([
+            order.id,
+            order.created_at.strftime('%Y-%m-%d'),
+            order.user.first_name,
+            f'Rs.{order.total_amount}',
+            f'Rs.{order.coupon_discount}'
+        ])
 
-            p.setFont("Helvetica-Bold", 11)
-            p.drawString(50, y, "Order ID")
-            p.drawString(120, y, "Date")
-            p.drawString(200, y, "User")
-            p.drawString(330, y, "Total Amount")
-            p.drawString(420, y, "Discount Amount")
-            y -= 20
-            p.setFont("Helvetica", 10)
-
-        p.drawString(50, y, str(order.id))
-        p.drawString(120, y, order.created_at.strftime('%Y-%m-%d'))
-        p.drawString(200, y, str(order.user.first_name))
-        p.drawString(330, y, f"Rs.{order.total_amount}")
-        p.drawString(420, y, f"Rs.{order.coupon_discount}")
-        y -= 18
-
-    p.showPage()
-    p.save()
-    buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename="sales_report.pdf")
+    return response
 
 
 @staff_member_required

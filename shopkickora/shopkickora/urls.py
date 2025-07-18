@@ -27,6 +27,6 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')), 
     path('',include('user_app.urls')),
 ]
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-handler404 = 'user_app.views.custom_404'
+# if settings.DEBUG:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# handler404 = 'user_app.views.custom_404'

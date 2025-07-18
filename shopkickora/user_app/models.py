@@ -7,6 +7,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.crypto import get_random_string
 from django.db.models import Avg, Count
+from cloudinary.models import CloudinaryField
 
 
 
@@ -15,7 +16,7 @@ class CustomUser(AbstractUser):
     is_active=models.BooleanField(default=True)
     is_blocked=models.BooleanField(default=False)
     is_deleted=models.BooleanField(default=False)
-    profile_image=models.ImageField(upload_to='profiles/',default='profiles/default.png',null=True,blank=True)
+    profile_image=CloudinaryField('images',folder='profile_images',default='https://res.cloudinary.com/dlfyesjsd/image/upload/v1752843790/default.png_unu5k8.png',null=True,blank=True)
     otp_code=models.CharField(max_length=6,blank=True,null=True)
     otp_created_at=models.DateTimeField(blank=True,null=True)
     referral_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
@@ -27,6 +28,13 @@ class CustomUser(AbstractUser):
                 self.referral_code = str(uuid.uuid4()).split('-')[0].upper()
             super().save(*args, **kwargs)
             
+    @property
+    def profile_image_url(self):
+        if self.profile_image:
+            return self.profile_image.url
+        return 'https://res.cloudinary.com/dlfyesjsd/image/upload/v1752843790/default.png_unu5k8.png'
+
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
@@ -61,7 +69,7 @@ class Category(models.Model):
 class Brand(models.Model):
     name=models.CharField(max_length=100,unique=True)
     description=models.TextField(blank=True)
-    logo=models.ImageField(upload_to='brand_logos/',blank=True,null=True)
+    logo=CloudinaryField('images',folder='brand_logos',blank=True,null=True)
     created_at=models.DateTimeField(auto_now_add=True)
     is_active=models.BooleanField(default=True)
     status = models.BooleanField(default=True)
@@ -75,7 +83,7 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, blank=True, null=True)  
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='products/', blank=True, null=True)
+    image = CloudinaryField('images',folder='products', blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percentage = models.PositiveIntegerField(
         default=0,
@@ -207,7 +215,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE,related_name='images')
-    image=models.ImageField(upload_to='product_images/')
+    image=CloudinaryField('images',folder='product_images')
 
     
     def __str__(self):

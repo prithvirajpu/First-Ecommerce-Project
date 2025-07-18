@@ -44,6 +44,7 @@ from user_app.forms import LoginForm, ProfileImageForm, ReviewForm
 from django.conf import settings
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+import cloudinary.uploader
 
 
 
@@ -753,14 +754,15 @@ def user_profile(request):
 def remove_profile_image(request):
     user = request.user
     if request.method == 'POST':
-        if user.profile_image and user.profile_image.name != 'profiles/default.png':
-            user.profile_image.delete(save=False)
-        user.profile_image = 'profiles/default.png'
+        # Only delete if the current image is NOT the default one
+        if user.profile_image and 'default.png_unu5k8' not in str(user.profile_image):
+            cloudinary.uploader.destroy(user.profile_image.public_id)
+
+        # Set the image back to default
+        user.profile_image = 'https://res.cloudinary.com/dlfyesjsd/image/upload/v1752843790/default.png_unu5k8.png'
         user.save()
         messages.success(request, "Profile image removed.")
     return redirect('user_profile')
-
-
 
 @login_required
 def edit_profile(request):

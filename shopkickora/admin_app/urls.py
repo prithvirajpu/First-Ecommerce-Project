@@ -42,10 +42,12 @@ urlpatterns = [
     path('coupon/delete-coupon/<int:coupon_id>',views.toggle_coupon,name='toggle_coupon'),
     path('coupons/delete/<int:coupon_id>/', views.soft_delete_coupon, name='soft_delete_coupon'),
     path('sales-report/', views.sales_report, name='sales_report'),
-    path('admin/sales-report/pdf/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
+    path('admin/download_sales_report_csv/', views.download_sales_report_csv, name='download_sales_report_csv'),
     path('wallet/transactions/', views.wallet_transaction_list, name='wallet_transaction_list'),
     path('wallet/transactions/<str:transaction_id>/', views.wallet_transaction_detail, name='wallet_transaction_detail'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('myadmin/return-requests/', views.return_requests_dashboard, name='return_requests_dashboard'),
+
 
 ]
 
