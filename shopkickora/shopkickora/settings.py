@@ -5,9 +5,9 @@ import cloudinary
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['52.62.160.53', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['shopkickora.shop', 'www.shopkickora.shop', '52.62.160.53']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
