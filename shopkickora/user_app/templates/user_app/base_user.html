@@ -8,6 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752907198/favicon_spwxfr.jpg" type="image/x-icon">
+
+    {% block head %}
+    {% endblock %}
     <script>
         tailwind.config = {
             theme: {
@@ -37,6 +41,32 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    
+    h1, h2 {
+        font-family: 'Playfair Display', serif;
+    }
+    .btn-gradient {
+        background: linear-gradient(to right, #10B981, #059669);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+    .section-bg {
+        background: linear-gradient(to bottom, #f9fafb, #ffffff);
+    }
+    .input-focus:focus {
+        border-color: #10B981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .social-icon:hover {
+        transform: scale(1.2);
+        transition: transform 0.3s ease;
+    }
+</style>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -93,7 +123,7 @@
       <!-- Logo & Name -->
       <div class="flex items-center space-x-2">
         <div class="w-8 h-8 rounded-full flex items-center justify-center "><a href="{% url 'user_dashboard' %}">
-            <img src="{% static 'user_app/Frog.png' %}" alt="shopKickora Logo" class="w-16 h-16"></a>
+            <img src="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752845857/Frog_vzz1cx.png" alt="shopKickora Logo" class="w-16 h-16"></a>
         </div>
         <a href="{% url 'user_dashboard' %}" class="text-2xl font-bold header-text-white">shopKickora</a>
       </div>

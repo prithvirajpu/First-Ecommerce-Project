@@ -57,6 +57,8 @@ urlpatterns = [
     path('refer/', views.referal, name='referal'),
     path('wallet/create-order/', views.create_wallet_order, name='create_wallet_order'),
     path('wallet/verify-payment/', views.verify_wallet_payment, name='verify_wallet_payment'),
+    path('contact/', views.contact_view, name='contact'),
+
 
 
 

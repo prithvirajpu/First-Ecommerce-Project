@@ -1682,6 +1682,44 @@ def custom_404(request, exception):
         'request_path': request.path,
     }, status=404)
 
+def contact_view(request):
+    context = {}
+    
+    if request.method == "POST":
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+
+        # Save values to pre-fill form in case of error
+        context['form_data'] = {
+            'name': name,
+            'email': email,
+            'subject': subject,
+            'message': message,
+        }
+
+        # Validate email format
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Please enter a valid email address.")
+            return render(request, 'user_app/about.html', context)
+
+        # All validations passed, send email
+        send_mail(
+            subject=subject,
+            message=f"From: {name} <{email}>\n\n{message}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.ADMIN_EMAIL],
+            fail_silently=False
+        )
+
+        messages.success(request, "Your message has been sent successfully.")
+        return redirect('contact')
+
+    return render(request, 'user_app/about.html', context)
+
 @never_cache
 def logout_view(request):
     logout(request)
