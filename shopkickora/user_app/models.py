@@ -16,7 +16,7 @@ class CustomUser(AbstractUser):
     is_active=models.BooleanField(default=True)
     is_blocked=models.BooleanField(default=False)
     is_deleted=models.BooleanField(default=False)
-    profile_image=CloudinaryField('images',folder='profile_images',default='default.png_unu5k8',null=True,blank=True)
+    profile_image=CloudinaryField('images',folder='profile_images',default='https://res.cloudinary.com/dlfyesjsd/image/upload/v1752843790/default.png_unu5k8.png',null=True,blank=True)
     otp_code=models.CharField(max_length=6,blank=True,null=True)
     otp_created_at=models.DateTimeField(blank=True,null=True)
     referral_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
@@ -270,11 +270,13 @@ class Wishlist(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
+        ('CONFIRMED', 'Confirmed'), 
         ('SHIPPED', 'Shipped'),
         ('OUT_FOR_DELIVERY', 'Out for Delivery'),
         ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
     ]
+
 
     PAYMENT_METHOD_CHOICES = [
         ('cod', 'Cash on Delivery'),

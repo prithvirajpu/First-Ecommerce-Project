@@ -1,0 +1,192 @@
+{% extends 'user_app/base_user.html' %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+    .hero-section {
+        background: linear-gradient(to right, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.4)), url('https://res.cloudinary.com/dlfyesjsd/image/upload/v1752857156/pexels-julespalmer7-6258910_zvff9r.jpg') no-repeat center center/cover;
+        color: white;
+    }
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    .contact-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+    }
+    .icon-hover {
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+    .icon-hover:hover {
+        transform: scale(1.2);
+        color: #10B981;
+    }
+    .section-divider {
+        border-top: 1px solid #e5e7eb;
+        margin: 3rem 0;
+    }
+    .message-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10B981;
+    }
+    .message-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block title %}About Us - shopKickora{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section py-24 px-6 sm:px-10 lg:px-20">
+    <div class="max-w-6xl mx-auto text-center">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">Discover shopKickora</h1>
+        <p class="text-lg sm:text-xl leading-relaxed max-w-3xl mx-auto">
+            At <strong class="font-semibold">shopKickora</strong>, we craft footwear experiences that inspire. From bold adventures to everyday moments, our curated shoes blend style, comfort, and quality to elevate every step you take.
+        </p>
+    </div>
+</section>
+
+<!-- Story Section -->
+<section class="section-bg py-20 px-6 sm:px-10 lg:px-20">
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">Our Journey</h2>
+        <div class="max-w-4xl mx-auto text-gray-600 text-lg leading-relaxed space-y-6">
+            <p>
+                In 2018, shopKickora was born from a simple yet powerful vision: to make every step a statement. Our founders, a team of passionate shoe lovers, set out to create more than just a store—a community where quality meets affordability, and style meets purpose. From our first online collection to becoming a trusted name worldwide, we’ve stayed true to our roots, sourcing premium footwear from artisans and renowned brands who share our love for craftsmanship.
+            </p>
+            <p>
+                At shopKickora, every pair tells a story. Whether it’s the confidence of striding into a new opportunity or the joy of a spontaneous adventure, we’re here to empower your journey with shoes that feel like an extension of you. Join us as we continue to redefine footwear, one step at a time.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Mission and Why Choose Us Section -->
+<section class="py-20 px-6 sm:px-10 lg:px-20 bg-white">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
+        <div class="card bg-gray-50 p-8 rounded-xl">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
+            <p class="text-gray-600 text-lg leading-relaxed">
+                We’re dedicated to transforming the footwear experience with premium quality at accessible prices. By partnering with trusted brands, we bring you shoes that fuse innovative design with lasting comfort, ensuring every step feels effortless and stylish.
+            </p>
+        </div>
+        <div class="card bg-gray-50 p-8 rounded-xl">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Why Choose Us?</h2>
+            <ul class="list-none space-y-4 text-gray-600 text-lg">
+                <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Curated footwear for every occasion, blending style and functionality.</span>
+                </li>
+                <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Seamless returns and exchanges for a worry-free shopping experience.</span>
+                </li>
+                <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Secure payments and fast, reliable shipping to your door.</span>
+                </li>
+                <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Responsive support team available for all your questions.</span>
+                </li>
+                <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Exclusive loyalty rewards and seasonal offers for our community.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Connect Section -->
+<section class="section-bg py-20 px-6 sm:px-10 lg:px-20">
+    <div class="max-w-6xl mx-auto text-center">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-8">Connect With Us</h2>
+        <p class="text-gray-600 text-lg mb-10 max-w-2xl mx-auto">
+            Be part of our community! Follow us for the latest trends, exclusive offers, and new arrivals. Step into the shopKickora experience today.
+        </p>
+        <div class="flex justify-center space-x-10">
+            <a href="#" class="text-gray-600 icon-hover" aria-label="Facebook">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+            <a href="#" class="text-gray-600 icon-hover" aria-label="Twitter">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-twitter"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17-18 11.6 2.2.1 4.4-.6 6-2 1.1-.9 1.8-2.2 2.1-3.7C3.2 15.2 2 13.2 2 11.2c0-.2 0-.4.1-.5.5.2 1.1.3 1.7.3 1.2-1.2 1.9-2.9 1.9-4.7 0-1.2-.3-2.3-.9-3.3C7.2 6.5 10.3 8.5 13.5 9c-.6-1.2-1-2.6-1-4.1 0-2.8 2.3-5 5-5 1.3 0 2.5.5 3.4 1.3.9-.2 1.8-.5 2.6-.8-.3.9-.9 1.7-1.6 2.3z"/></svg>
+            </a>
+            <a href="#" class="text-gray-600 icon-hover" aria-label="Instagram">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.5" y1="6.5" y2="6.5"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="py-20 px-6 sm:px-10 lg:px-20 bg-white">
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">Get in Touch</h2>
+        <div class="section-divider"></div>
+        <!-- Messages Display -->
+        {% if messages %}
+        <div class="max-w-2xl mx-auto mb-8">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg text-center {% if message.tags == 'success' %}message-success{% else %}message-error{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="grid md:grid-cols-2 gap-12">
+            <div class="flex items-center justify-center">
+                <img src="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752907796/Giant_shoes_pgovey.jpg" alt="shopKickora Team" class="w-full h-auto max-w-md rounded-xl shadow-md object-cover">
+            </div>
+            <div class="contact-card p-8 rounded-xl">
+                <p class="text-gray-600 text-lg mb-8">
+                    Have a question or need assistance? Reach out, and our team will respond promptly to help you find your perfect pair!
+                </p>
+                <form method="POST" action="{% url 'contact' %}" class="space-y-6">
+                    {% csrf_token %}
+                    <div>
+                        <label for="name" class="block text-left text-gray-700 font-semibold mb-2" value="{{ form_data.name|default_if_none:'' }}">Name</label>
+                        <input type="text" id="name" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none" placeholder="Your Name" required>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-left text-gray-700 font-semibold mb-2" value="{{ form_data.email|default_if_none:'' }}">Email</label>
+                        <input type="email" id="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none" placeholder="Your Email" required>
+                    </div>
+                    <div>
+                        <label for="subject" class="block text-left text-gray-700 font-semibold mb-2" value="{{ form_data.subject|default_if_none:'' }}">Subject</label>
+                        <input type="text" id="subject" name="subject" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none" placeholder="Subject" required>
+                    </div>
+                    <div>
+                        <label for="message" class="block text-left text-gray-700 font-semibold mb-2">Message</label>
+                        <textarea id="message" name="message" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none" placeholder="Your Message" required>
+                            {{ form_data.message|default_if_none:'' }}
+                        </textarea>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full btn-gradient text-white font-semibold py-3 rounded-lg">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

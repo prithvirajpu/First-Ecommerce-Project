@@ -726,26 +726,30 @@ def admin_update_order_status(request, order_id):
 
         ORDER_STATUS_FLOW = {
             'PENDING': 0,
-            'SHIPPED': 1,
-            'OUT_FOR_DELIVERY': 2,
-            'DELIVERED': 3,
-            'CANCELLED': 4,
+            'CONFIRMED': 1,
+            'SHIPPED': 2,
+            'OUT_FOR_DELIVERY': 3,
+            'DELIVERED': 4,
+            'CANCELLED': 5,
         }
+
 
         current_level = ORDER_STATUS_FLOW.get(order.status)
         new_level = ORDER_STATUS_FLOW.get(new_status)
+        print("DEBUG:", order.status, "->", new_status)
+        print("DEBUG: current_level =", current_level, "new_level =", new_level)
 
-        if new_status not in ORDER_STATUS_FLOW:
-            messages.error(request, "Invalid status selected.")
-        elif new_status == order.status:
+        if current_level is None or new_level is None:
+            messages.error(request, "Invalid status flow. Please check the status values.")
+            return redirect("admin_order_list")
+
+        if new_status == order.status:
             messages.info(request, "Order already has this status.")
         elif new_status == 'CANCELLED' and order.status not in ['DELIVERED', 'CANCELLED']:
-            # Allow cancellation unless already delivered or cancelled
             order.status = 'CANCELLED'
             order.save()
             messages.success(request, "Order has been cancelled.")
         elif new_level > current_level:
-            # Allow only forward movement
             order.status = new_status
             if new_status == 'DELIVERED' and order.payment_method in ['cod', 'wallet']:
                 order.payment_status = 'paid'
@@ -753,6 +757,7 @@ def admin_update_order_status(request, order_id):
             messages.success(request, f"Order status updated to {order.get_status_display()}.")
         else:
             messages.warning(request, "You cannot revert to a previous status.")
+
 
     return redirect('admin_order_detail', order_id=order_id)
 

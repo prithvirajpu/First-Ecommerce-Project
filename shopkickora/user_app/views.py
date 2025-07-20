@@ -48,6 +48,7 @@ import cloudinary.uploader
 
 
 
+DEFAULT_PROFILE_IMAGE = 'https://res.cloudinary.com/dlfyesjsd/image/upload/v1752843790/default.png_unu5k8.png'
 
 OTP_EXPIRY_SECONDS = 600
 
@@ -134,7 +135,9 @@ def verify_otp_view(request):
             user = CustomUser.objects.create_user(
                 username=signup_data['username'],
                 email=signup_data['email'],
-                password=signup_data['password']
+                password=signup_data['password'],
+                profile_image=DEFAULT_PROFILE_IMAGE
+
             )
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
@@ -188,7 +191,6 @@ def forgot_password_view(request):
             reset_url = request.build_absolute_uri(
                 reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
             )
-            print("Password reset URL:", reset_url)
 
             send_mail(
                 'ShopKickora Password Reset',
@@ -324,53 +326,59 @@ def user_product_list(request):
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
 
+    # Initial filtering
     products = Product.objects.filter(
         is_deleted=False,
+        is_active=True,
         category__is_deleted=False,
         category__is_active=True,
         brand__is_active=True,
-    )
+    ).prefetch_related('product_offers', 'category__category_offers', 'size_stocks')
 
+    # Filter by category
     if category != 'all':
         products = products.filter(category__id=category)
 
+    # Filter by brands
     if brand_ids:
         products = products.filter(brand__id__in=brand_ids)
 
+    # Filter by query
     if query:
         products = products.filter(name__icontains=query)
 
+    # Filter by price range
     if min_price:
         try:
-            products = products.filter(price__gte=float(min_price))
-        except ValueError:
+            products = [p for p in products if p.final_price >= Decimal(min_price)]
+        except:
             pass
 
     if max_price:
         try:
-            products = products.filter(price__lte=float(max_price))
-        except ValueError:
+            products = [p for p in products if p.final_price <= Decimal(max_price)]
+        except:
             pass
 
+    # Filter by size availability
     if selected_size:
-        products = products.filter(
-            size_stocks__size=selected_size,
-            size_stocks__quantity__gt=0
-        )
+        products = [p for p in products if p.size_stocks.filter(size=selected_size, quantity__gt=0).exists()]
 
+    # Sorting
     if sort == 'price_low':
-        products = products.order_by('price')
+        products = sorted(products, key=lambda p: p.final_price)
     elif sort == 'price_high':
-        products = products.order_by('-price')
+        products = sorted(products, key=lambda p: p.final_price, reverse=True)
     else:
-        products = products.order_by('-created_at')
+        products = sorted(products, key=lambda p: p.created_at, reverse=True)
 
-    paginator = Paginator(products.distinct(), 6)
+    # Pagination
+    paginator = Paginator(products, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Annotate each product with star_display
-    for product in page_obj:  # Only loop through paginated products
+    # Prepare star ratings
+    for product in page_obj:
         avg_rating = product.average_rating or 0
         full = int(avg_rating)
         half = 1 if avg_rating - full >= 0.5 else 0
@@ -386,7 +394,7 @@ def user_product_list(request):
         'query': query,
         'category': category,
         'sort': sort,
-        'product_count': products.count(),
+        'product_count': len(products),
         'sizes_list': ['6', '7', '8'],
         'selected_size': selected_size,
         'categories': Category.objects.filter(is_active=True, is_deleted=False),
@@ -395,6 +403,7 @@ def user_product_list(request):
         'min_price': min_price,
         'max_price': max_price,
     }
+
     return render(request, 'user_app/user_product_list.html', context)
 
 @never_cache
@@ -728,7 +737,15 @@ def remove_from_cart(request, item_id):
 @login_required
 def user_profile(request):
     user = request.user
+    
+    # First, try default address
     address = Address.objects.filter(user=user, is_default=True).first()
+    
+    # If no default, get the address from latest order
+    if not address:
+        latest_order = Order.objects.filter(user=user, address__isnull=False).order_by('-created_at').first()
+        if latest_order:
+            address = latest_order.address
 
     if request.method == 'POST':
         form = ProfileImageForm(request.POST, request.FILES, instance=user)
@@ -746,9 +763,10 @@ def user_profile(request):
     context = {
         'user': user,
         'address': address,
-        'form': form  
+        'form': form
     }
     return render(request, 'user_app/profile.html', context)
+
 
 @login_required
 def remove_profile_image(request):
@@ -1373,31 +1391,28 @@ def user_order_list(request):
 @login_required
 @transaction.atomic
 def cancel_order(request, order_id):
-    # Fetch the order for the logged-in user
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # Prevent cancellation if already delivered or cancelled
     if order.status in ['DELIVERED', 'CANCELLED']:
         messages.error(request, "You cannot cancel this order.")
         return redirect('user_order_detail', order_id=order.id)
 
-    # Handle POST request (form submitted)
     if request.method == 'POST':
         reason = request.POST.get('reason', '').strip()
-        
-        # Update order status
+
+        # Cancel the order
         order.status = 'CANCELLED'
         order.cancel_reason = reason
         order.save()
 
-        # Restore stock for each item in the order
+        # Restore product stock
         for item in order.order_items.all():
             stock = ProductSizeStock.objects.get(product=item.product, size=item.size)
             stock.quantity += item.quantity
             stock.save()
 
-        # Handle wallet refund
-        if order.payment_method == 'wallet':
+        # Refund logic: refund to wallet for both 'wallet' and 'online' payments
+        if order.payment_method in ['wallet', 'razorpay']:
             wallet, _ = Wallet.objects.get_or_create(user=request.user)
             wallet.balance += order.final_total
             wallet.save()
@@ -1406,14 +1421,13 @@ def cancel_order(request, order_id):
                 wallet=wallet,
                 amount=order.final_total,
                 transaction_type='CREDIT',
-                description='Refund for cancelled order',
+                description=f'Refund for cancelled order (#{order.id})',
                 order=order
             )
-        
+
         messages.success(request, "Order cancelled and refund processed.")
         return redirect('user_order_list')
 
-    # If GET request, render confirmation page
     return render(request, 'user_app/cancel_order.html', {'order': order})
 
 @login_required
