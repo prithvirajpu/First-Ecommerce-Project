@@ -45,6 +45,7 @@ from django.conf import settings
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import cloudinary.uploader
+from decimal import Decimal, InvalidOperation
 
 
 
@@ -315,6 +316,7 @@ def user_dashboard(request):
 def about_page(request):
     return render(request,'user_app/about.html')
 
+
 @never_cache
 def user_product_list(request):
     query = request.GET.get('q', '').strip()
@@ -326,58 +328,61 @@ def user_product_list(request):
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
 
-    # Initial filtering
     products = Product.objects.filter(
         is_deleted=False,
         is_active=True,
         category__is_deleted=False,
         category__is_active=True,
         brand__is_active=True,
-    ).prefetch_related('product_offers', 'category__category_offers', 'size_stocks')
+    ).prefetch_related(
+        'product_offers',
+        'category__category_offers',
+        'size_stocks'
+    )
 
-    # Filter by category
     if category != 'all':
         products = products.filter(category__id=category)
 
-    # Filter by brands
     if brand_ids:
         products = products.filter(brand__id__in=brand_ids)
 
-    # Filter by query
     if query:
         products = products.filter(name__icontains=query)
 
-    # Filter by price range
+    # Convert to list to allow filtering on Python-side property `final_price`
+    products = list(products)
+
     if min_price:
         try:
-            products = [p for p in products if p.final_price >= Decimal(min_price)]
-        except:
+            min_price = Decimal(min_price)
+            products = [p for p in products if p.final_price >= min_price]
+        except InvalidOperation:
             pass
 
     if max_price:
         try:
-            products = [p for p in products if p.final_price <= Decimal(max_price)]
-        except:
+            max_price = Decimal(max_price)
+            products = [p for p in products if p.final_price <= max_price]
+        except InvalidOperation:
             pass
 
-    # Filter by size availability
     if selected_size:
         products = [p for p in products if p.size_stocks.filter(size=selected_size, quantity__gt=0).exists()]
 
-    # Sorting
+    # Sort
     if sort == 'price_low':
-        products = sorted(products, key=lambda p: p.final_price)
+        products.sort(key=lambda p: p.final_price)
     elif sort == 'price_high':
-        products = sorted(products, key=lambda p: p.final_price, reverse=True)
+        products.sort(key=lambda p: p.final_price, reverse=True)
     else:
-        products = sorted(products, key=lambda p: p.created_at, reverse=True)
+        products.sort(key=lambda p: p.created_at, reverse=True)
 
     # Pagination
     paginator = Paginator(products, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Prepare star ratings
+    # Add star rating display
     for product in page_obj:
         avg_rating = product.average_rating or 0
         full = int(avg_rating)
