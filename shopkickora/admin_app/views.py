@@ -12,7 +12,7 @@ from user_app.models import (
     Brand, ProductSizeStock, Order, OrderItem, Wallet,
     ProductOffer, CategoryOffer, WalletTransaction
 )
-
+from cloudinary.uploader import destroy
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 import re
@@ -27,6 +27,7 @@ from reportlab.lib.pagesizes import A4
 from django.http import FileResponse, HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models.functions import TruncDay, TruncMonth, TruncYear
+from cloudinary.exceptions import Error as CloudinaryError
 
 
 
@@ -481,17 +482,33 @@ def edit_product(request, product_id):
             )
 
         if new_images and len(new_images) == 3:
+            # Delete existing images
             for img in existing_images:
                 try:
                     if img.image:
-                        from cloudinary.uploader import destroy
                         destroy(img.image.public_id)
-                except Exception as e:
-                    pass
+                except CloudinaryError as e:
+                    print(f"Error deleting image from Cloudinary: {e}")
                 img.delete()
-
             for image in new_images:
-                ProductImage.objects.create(product=product, image=image)
+                try:
+                    ProductImage.objects.create(product=product, image=image)
+                except CloudinaryError as e:
+                    print(f"Error uploading image to Cloudinary: {e}")
+                    errors['image'] = "Image upload failed. Please try again."
+                    return render(request, 'user_app/edit_product.html', {
+                        'product': product,
+                        'categories': categories,
+                        'brands': brands,
+                        'errors': errors,
+                        'form_data': form_data,
+                        'images': existing_images,
+                        'stock': {
+                            'stock_6': stock_6,
+                            'stock_7': stock_7,
+                            'stock_8': stock_8,
+                        }
+                    })
 
 
         messages.success(request, "Product updated successfully.")
