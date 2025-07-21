@@ -201,8 +201,9 @@ class Product(models.Model):
     @property
     def image_url(self):
         try:
-            return self.image.url if self.image else None
-        except ValueError:
+            first_image = self.images.first()  # uses related_name='images'
+            return first_image.image.url if first_image else None
+        except Exception:
             return None
     
     @property
