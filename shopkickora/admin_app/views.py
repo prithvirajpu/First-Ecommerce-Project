@@ -732,57 +732,46 @@ def admin_order_detail(request,order_id):
     context={'order':order,
              'items':items}
     return render(request,'admin_app/order_detail.html',context)
-import logging
-logger = logging.getLogger(__name__)
 
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
 def admin_update_order_status(request, order_id):
     if request.method == "POST":
-        try:
-            order = get_object_or_404(Order, id=order_id)
-            new_status = request.POST.get("status")
+        order = get_object_or_404(Order, id=order_id)
+        new_status = request.POST.get("status")
 
-            ORDER_STATUS_FLOW = {
-                'PENDING': 0,
-                'CONFIRMED': 1,
-                'SHIPPED': 2,
-                'OUT_FOR_DELIVERY': 3,
-                'DELIVERED': 4,
-                'CANCELLED': 5,
-            }
+        ORDER_STATUS_FLOW = {
+            'PENDING': 0,
+            'CONFIRMED': 1,
+            'SHIPPED': 2,
+            'OUT_FOR_DELIVERY': 3,
+            'DELIVERED': 4,
+            'CANCELLED': 5,
+        }
 
-            current_level = ORDER_STATUS_FLOW.get(order.status)
-            new_level = ORDER_STATUS_FLOW.get(new_status)
 
-            if current_level is None or new_level is None:
-                messages.error(request, "Invalid status flow. Please check the status values.")
-                return redirect("admin_order_list")
+        current_level = ORDER_STATUS_FLOW.get(order.status)
+        new_level = ORDER_STATUS_FLOW.get(new_status)
+     
+        if current_level is None or new_level is None:
+            messages.error(request, "Invalid status flow. Please check the status values.")
+            return redirect("admin_order_list")
 
-            if new_status == order.status:
-                messages.info(request, "Order already has this status.")
-            elif new_status == 'CANCELLED' and order.status not in ['DELIVERED', 'CANCELLED']:
-                order.status = 'CANCELLED'
-                order.save()
-                logger.info("Order cancelled and saved successfully.")
-                messages.success(request, "Order has been cancelled.")
-            elif new_level > current_level:
-                order.status = new_status
-                if new_status == 'DELIVERED' and order.payment_method in ['cod', 'wallet']:
-                    order.payment_status = 'paid'
-                order.save()
-                logger.info(f"Order status updated to {new_status}. Saved successfully.")
-                messages.success(request, f"Order status updated to {order.get_status_display()}.")
-            else:
-                messages.warning(request, "You cannot revert to a previous status.")
-        except OSError as e:
-            logger.error(f"OSError while updating order status: {e}", exc_info=True)
-            messages.error(request, "Internal server error occurred while updating status.")
-            return redirect("admin_order_detail", order_id=order_id)
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}", exc_info=True)
-            messages.error(request, "Unexpected error occurred.")
-            return redirect("admin_order_detail", order_id=order_id)
+        if new_status == order.status:
+            messages.info(request, "Order already has this status.")
+        elif new_status == 'CANCELLED' and order.status not in ['DELIVERED', 'CANCELLED']:
+            order.status = 'CANCELLED'
+            order.save()
+            messages.success(request, "Order has been cancelled.")
+        elif new_level > current_level:
+            order.status = new_status
+            if new_status == 'DELIVERED' and order.payment_method in ['cod', 'wallet']:
+                order.payment_status = 'paid'
+            order.save()
+            messages.success(request, f"Order status updated to {order.get_status_display()}.")
+        else:
+            messages.warning(request, "You cannot revert to a previous status.")
+
 
     return redirect('admin_order_detail', order_id=order_id)
 
