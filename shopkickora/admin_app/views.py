@@ -238,7 +238,6 @@ def add_product(request):
         category_id = request.POST.get('category')
         brand_id = request.POST.get('brand')
         images = request.FILES.getlist('images')
-        print(images)
 
         stock_6 = int(request.POST.get('stock_6') or 0)
         stock_7 = int(request.POST.get('stock_7') or 0)
@@ -488,7 +487,7 @@ def edit_product(request, product_id):
                         from cloudinary.uploader import destroy
                         destroy(img.image.public_id)
                 except Exception as e:
-                    print(f"Failed to delete image: {e}")
+                    pass
                 img.delete()
 
             for image in new_images:
@@ -736,9 +735,7 @@ def admin_update_order_status(request, order_id):
 
         current_level = ORDER_STATUS_FLOW.get(order.status)
         new_level = ORDER_STATUS_FLOW.get(new_status)
-        print("DEBUG:", order.status, "->", new_status)
-        print("DEBUG: current_level =", current_level, "new_level =", new_level)
-
+     
         if current_level is None or new_level is None:
             messages.error(request, "Invalid status flow. Please check the status values.")
             return redirect("admin_order_list")
