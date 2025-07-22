@@ -1,0 +1,929 @@
+{% extends "user_app/base_admin.html" %}
+{% block title %}Order Management{% endblock %}
+
+{% block content %}
+<div class="orders-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-receipt me-2"></i>
+                    Order Management
+                </h1>
+                <p class="page-subtitle">View and manage customer orders</p>
+            </div>
+            <div class="header-actions">
+                <!-- No specific add button for orders, but keeping the structure -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        {% if 'order' in message.extra_tags %}
+            {% with tags=message.extra_tags|cut:"order"|cut:" " %}
+            <div class="alert alert-{{ tags|default:"info" }} custom-alert">
+                <div class="alert-content">
+                    {% if tags == 'success' %}
+                        <i class="fas fa-check-circle alert-icon"></i>
+                    {% elif tags == 'error' or tags == 'danger' %}
+                        <i class="fas fa-exclamation-circle alert-icon"></i>
+                    {% elif tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle alert-icon"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle alert-icon"></i>
+                    {% endif %}
+                    <span class="alert-text">{{ message }}</span>
+                </div>
+                <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endwith %}
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Search & Filter -->
+    <div class="orders-section">
+        <div class="orders-card">
+            <div class="orders-header">
+                <div class="orders-title">
+                    <i class="fas fa-filter me-2"></i>
+                    <span>Filter Orders</span>
+                </div>
+            </div>
+            <div class="card-body-content">
+                <form method="get" class="filter-form">
+                    <div class="form-group">
+                        <label for="search-query" class="form-label-custom">
+                            <i class="fas fa-search me-1"></i>
+                            Search Order
+                        </label>
+                        <input type="text" id="search-query" name="q" value="{{ query }}" placeholder="Order ID or User Email" class="form-control-custom" />
+                    </div>
+                    <div class="form-group">
+                        <label for="status-filter" class="form-label-custom">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Order Status
+                        </label>
+                        <select id="status-filter" name="status" class="form-control-custom">
+                            <option value="">All Status</option>
+                            {% for key, value in orders.paginator.object_list.model.STATUS_CHOICES %}
+                                <option value="{{ key }}" {% if key == status_filter %}selected{% endif %}>{{ value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-search me-1"></i>
+                            Search
+                        </button>
+                        <a href="{% url 'admin_order_list' %}" class="btn-clear">
+                            <i class="fas fa-redo me-1"></i>
+                            Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Table -->
+    <div class="orders-section">
+        <div class="orders-card">
+            <div class="orders-header">
+                <div class="orders-title">
+                    <i class="fas fa-list-alt me-2"></i>
+                    <span>All Orders</span>
+                </div>
+                <div class="orders-stats">
+                    <span class="stat-number">{{ orders.paginator.count }}</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th class="th-id">
+                                <i class="fas fa-hashtag me-1"></i>
+                                
+                            </th>
+                            <th class="th-order-id">
+                                <i class="fas fa-receipt me-1"></i>
+                                Order ID
+                            </th>
+                            <th class="th-user">
+                                <i class="fas fa-user me-1"></i>
+                                User
+                            </th>
+                            <th class="th-date">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Date
+                            </th>
+                            <th class="th-status">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Status
+                            </th>
+                            <th class="th-amount">
+                                <i class="fas fa-dollar-sign me-1"></i>
+                                Amount
+                            </th>
+                            <th class="th-actions">
+                                <i class="fas fa-cogs me-1"></i>
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="table-row">
+                    <td class="td-id">
+                        <div class="row-number">
+                            {{ forloop.counter0|add:orders.start_index }}
+                        </div>
+                    </td>
+                            <td class="td-order-id">
+                                <div class="order-info">
+                                    <div class="order-avatar">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div class="order-details">
+                                        <div class="order-name">{{ order.order_id }}</div>
+                                        <div class="order-meta">#{{ order.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="td-user">{{ order.user.email }}</td>
+                            <td class="td-date">{{ order.created_at|date:"M d, Y H:i" }}</td>
+                            <td class="td-status">
+                                {% if order.status == 'pending' %}
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-hourglass-half me-1"></i>
+                                        Pending
+                                    </span>
+                                {% elif order.status == 'processing' %}
+                                    <span class="status-badge status-processing">
+                                        <i class="fas fa-sync-alt me-1"></i>
+                                        Processing
+                                    </span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="status-badge status-shipped">
+                                        <i class="fas fa-truck me-1"></i>
+                                        Shipped
+                                    </span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="status-badge status-delivered">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Delivered
+                                    </span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="status-badge status-cancelled">
+                                        <i class="fas fa-times-circle me-1"></i>
+                                        Cancelled
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-unknown">
+                                        <i class="fas fa-question-circle me-1"></i>
+                                        {{ order.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="td-amount">
+                                <div class="amount-display">
+                                    <span class="currency">₹</span>{{ order.total_amount }}
+                                </div>
+                            </td>
+                            <td class="td-actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'admin_order_detail' order.id %}" class="action-btn btn-view" title="View Order Details">
+                                        <i class="fas fa-eye me-1"></i>
+                                        View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="no-data">
+                                <div class="no-data-content">
+                                    <i class="fas fa-receipt"></i>
+                                    <h4>No Orders Found</h4>
+                                    <p>There are no orders matching your criteria.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination-list">
+                        {% if orders.has_previous %}
+                            <li class="pagination-item">
+                                <a class="pagination-link" href="?page={{ orders.previous_page_number }}&q={{ query }}&status={{ status_filter }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                    Previous
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="pagination-item disabled">
+                                <span class="pagination-link">
+                                    <i class="fas fa-chevron-left"></i>
+                                    Previous
+                                </span>
+                            </li>
+                        {% endif %}
+                        <li class="pagination-item current">
+                            <span class="pagination-link">Page {{ orders.number }} of {{ orders.paginator.num_pages }}</span>
+                        </li>
+                        {% if orders.has_next %}
+                            <li class="pagination-item">
+                                <a class="pagination-link" href="?page={{ orders.next_page_number }}&q={{ query }}&status={{ status_filter }}">
+                                    Next
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="pagination-item disabled">
+                                <span class="pagination-link">
+                                    Next
+                                    <i class="fas fa-chevron-right"></i>
+                                </span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .orders-container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 20px 30px;
+        margin: -30px -30px 30px -30px;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.4rem;
+    }
+
+    .page-subtitle {
+        margin: 4px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+    }
+
+    /* Messages */
+    .messages-container {
+        margin-bottom: 20px;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        font-size: 0.9rem;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .alert-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .alert-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .custom-close {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        padding: 4px;
+        margin-left: 10px;
+        flex-shrink: 0;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    .custom-close:hover {
+        opacity: 1;
+    }
+
+    /* Alert Colors */
+    .alert-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .alert-danger, .alert-error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    /* Orders Section (Card) */
+    .orders-section {
+        margin-bottom: 30px;
+    }
+
+    .orders-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .orders-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 16px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .orders-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+    }
+
+    .orders-title i {
+        font-size: 1rem;
+        color: #059669; /* Green for general titles */
+    }
+
+    .orders-stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(71, 85, 105, 0.1);
+        padding: 6px 12px;
+        border-radius: 8px;
+    }
+
+    .stat-number {
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.9rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .card-body-content {
+        padding: 24px;
+    }
+
+    /* Filter Form */
+    .filter-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label-custom {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-label-custom i {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-right: 6px;
+    }
+
+    .form-control-custom {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #334155;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-control-custom:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+        outline: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        grid-column: 1 / -1; /* Span across all columns */
+        margin-top: 10px;
+    }
+
+    .btn-submit, .btn-clear {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+    }
+
+    .btn-clear {
+        background: #e2e8f0;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+
+    .btn-clear:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(100, 116, 139, 0.1);
+    }
+
+    /* Table Styling */
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .modern-table th {
+        background: #f8fafc;
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+
+    .modern-table th i {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .modern-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: #475569;
+        font-size: 0.9rem;
+    }
+
+   .row-number {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #475569, #334155);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+     }
+
+    .table-row:hover {
+        background: #f8fafc;
+    }
+    .row-number {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #475569, #334155);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+
+    /* Order Info */
+    .order-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .order-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #0284c7, #0369a1); /* Blue for orders */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .order-name {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 2px;
+        font-size: 0.95rem;
+    }
+
+    .order-meta {
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+
+    /* Amount Display */
+    .amount-display {
+        font-weight: 600;
+        color: #059669; /* Green for amounts */
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+
+    .amount-display .currency {
+        font-size: 0.8em;
+        margin-right: 2px;
+        opacity: 0.8;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .status-badge i {
+        font-size: 0.7rem;
+        margin-right: 5px;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #d97706, #b45309); /* Orange */
+        color: white;
+    }
+    .status-processing {
+        background: linear-gradient(135deg, #0284c7, #0369a1); /* Blue */
+        color: white;
+    }
+    .status-shipped {
+        background: linear-gradient(135deg, #10b981, #059669); /* Teal */
+        color: white;
+    }
+    .status-delivered {
+        background: linear-gradient(135deg, #059669, #047857); /* Green */
+        color: white;
+    }
+    .status-cancelled {
+        background: linear-gradient(135deg, #dc2626, #b91c1c); /* Red */
+        color: white;
+    }
+    .status-unknown {
+        background: linear-gradient(135deg, #64748b, #475569); /* Gray */
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75rem;
+        text-decoration: none;
+        white-space: nowrap;
+        min-width: auto;
+        height: 32px;
+    }
+
+    .action-btn i {
+        font-size: 0.7rem;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    .btn-view:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+        color: white;
+    }
+
+    /* No Data Styling */
+    .no-data {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .no-data-content i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 12px;
+    }
+
+    .no-data-content h4 {
+        color: #64748b;
+        margin-bottom: 6px;
+        font-size: 1rem;
+    }
+
+    .no-data-content p {
+        color: #94a3b8;
+        margin: 0;
+        font-size: 0.85rem;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        padding: 20px 24px;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .pagination-list {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 8px;
+    }
+
+    .pagination-item {
+        display: inline-block;
+    }
+
+    .pagination-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #475569;
+        background-color: white;
+        border: 1px solid #cbd5e1;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .pagination-link i {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .pagination-item.disabled .pagination-link {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f1f5f9;
+        color: #94a3b8;
+    }
+
+    .pagination-item.current .pagination-link {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+        border-color: #0369a1;
+        font-weight: 600;
+    }
+
+    .pagination-item.current .pagination-link i {
+        color: white;
+    }
+
+    .pagination-link:hover:not(.disabled):not(.current) {
+        background-color: #e2e8f0;
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 16px 20px;
+            margin: -30px -30px 20px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            justify-content: center;
+        }
+
+        .filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .btn-submit, .btn-clear {
+            width: 100%;
+        }
+
+        .table-wrapper {
+            overflow-x: scroll;
+        }
+
+        .modern-table {
+            min-width: 900px; /* Ensure table is wide enough to prevent squishing */
+        }
+
+        .orders-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .orders-stats {
+            justify-content: center;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .pagination-list {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .pagination-item {
+            flex-basis: 48%; /* Two items per row */
+            text-align: center;
+        }
+        .pagination-item.current {
+            flex-basis: 100%; /* Current page spans full width */
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll(".custom-alert");
+            alerts.forEach((alert) => {
+                alert.classList.remove("show");
+                alert.classList.add("fade");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Add loading states to action buttons (if applicable, for view/edit actions)
+        document.querySelectorAll(".action-btn").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                if (!this.onclick && this.tagName === 'A') { // Only apply to anchor tags without custom click handlers
+                    var originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+                    this.style.pointerEvents = 'none'; // Disable clicks during loading
+                    
+                    // Revert after a short delay (or when navigation completes)
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.style.pointerEvents = 'auto';
+                    }, 1000); // Adjust delay as needed
+                }
+            });
+        });
+
+        // Smooth scrolling for better UX (if any internal links are added)
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

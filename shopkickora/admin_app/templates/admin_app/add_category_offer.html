@@ -1,0 +1,779 @@
+{% extends 'user_app/base_admin.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Add Category Offer - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="offer-form-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add Category Offer
+                </h1>
+                <p class="page-subtitle">Create a new category offer with discount and duration</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'list_offers' %}" class="btn-back">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Offers
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} custom-alert">
+            <div class="alert-content">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle alert-icon"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                {% else %}
+                    <i class="fas fa-info-circle alert-icon"></i>
+                {% endif %}
+                <span class="alert-text">{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close custom-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Form Section -->
+    <div class="form-section">
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-title">
+                    <i class="fas fa-list me-2"></i>
+                    <span>Offer Details</span>
+                </div>
+                <div class="form-subtitle">
+                    Fill in the details below to create a new category offer
+                </div>
+            </div>
+            
+            <div class="form-body">
+                <form method="post" novalidate id="offerForm">
+                    {% csrf_token %}
+                    
+                    <!-- Offer Name Field -->
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            <i class="fas fa-tag me-2"></i>
+                            {{ form.name.label }}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            {{ form.name|add_class:"form-input"|attr:"placeholder=Enter offer name..." }}
+                            <i class="fas fa-tag input-icon"></i>
+                        </div>
+                        {% for error in form.name.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Categories Multi-select Field -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-list-alt me-2"></i>
+                            {{ form.categories.label }}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="checkbox-scroll-wrapper {% if form.categories.errors %}error-border{% endif %}">
+                            {% for checkbox in form.categories %}
+                                <div class="form-check-item">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                        {{ checkbox.choice_label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.categories.help_text %}
+                            <div class="field-help">{{ form.categories.help_text }}</div>
+                        {% endif %}
+                        {% for error in form.categories.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Discount Percentage Field -->
+                    <div class="form-group">
+                        <label for="{{ form.discount_percentage.id_for_label }}" class="form-label">
+                            <i class="fas fa-percent me-2"></i>
+                            {{ form.discount_percentage.label }}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            {{ form.discount_percentage|add_class:"form-input"|attr:"placeholder=0-100" }}
+                            <i class="fas fa-percent input-icon"></i>
+                        </div>
+                        {% for error in form.discount_percentage.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% if form.discount_percentage.help_text %}
+                            <div class="field-help">{{ form.discount_percentage.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Start Date Field -->
+                    <div class="form-group">
+                        <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ form.start_date.label }}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            {{ form.start_date|add_class:"form-input"|attr:"type=datetime-local" }}
+                            <i class="fas fa-calendar-alt input-icon"></i>
+                        </div>
+                        {% for error in form.start_date.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- End Date Field -->
+                    <div class="form-group">
+                        <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ form.end_date.label }}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            {{ form.end_date|add_class:"form-input"|attr:"type=datetime-local" }}
+                            <i class="fas fa-calendar-alt input-icon"></i>
+                        </div>
+                        {% for error in form.end_date.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Is Active Checkbox -->
+                    <div class="form-group form-check-group">
+                        <div class="form-check-wrapper">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                {{ form.is_active.label }}
+                            </label>
+                        </div>
+                        {% for error in form.is_active.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                        {% if form.is_active.help_text %}
+                            <div class="field-help">{{ form.is_active.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="error-message non-field-errors">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Offer
+                        </button>
+                        <a href="{% url 'list_offers' %}" class="btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .offer-form-container {
+        padding: 0;
+        max-width: 100%;
+        min-height: 100vh;
+        background: #f8fafc;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 20px 30px;
+        margin: -30px -30px 30px -30px;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.4rem;
+    }
+
+    .page-subtitle {
+        margin: 4px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+    }
+
+    .btn-back {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-back:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    /* Messages */
+    .messages-container {
+        max-width: 900px;
+        margin: 0 auto 20px auto;
+        padding: 0 20px;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        font-size: 0.9rem;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .alert-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .alert-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .custom-close {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        padding: 4px;
+        margin-left: 10px;
+        flex-shrink: 0;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    .custom-close:hover {
+        opacity: 1;
+    }
+
+    /* Alert Colors */
+    .alert-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .alert-danger, .alert-error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    /* Form Section */
+    .form-section {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .form-title i {
+        font-size: 1.1rem;
+        color: #0284c7; /* Blue for category offer */
+    }
+
+    .form-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .form-body {
+        padding: 30px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .required {
+        color: #dc2626;
+        margin-left: 4px;
+    }
+
+    /* Input Styling */
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #0284c7; /* Blue focus for category offer */
+        box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.1);
+        background: white;
+    }
+
+    .form-input.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    /* Checkbox Scroll Wrapper for Multi-select */
+    .checkbox-scroll-wrapper {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 15px;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+    }
+
+    .checkbox-scroll-wrapper:focus-within {
+        border-color: #0284c7; /* Blue focus */
+        box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.1);
+        background: white;
+    }
+
+    .checkbox-scroll-wrapper.error-border {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .form-check-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .form-check-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-check-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 10px;
+        border: 2px solid #9ca3af;
+        border-radius: 4px;
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        position: relative;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .form-check-item input[type="checkbox"]:checked {
+        background-color: #0284c7; /* Blue checked */
+        border-color: #0284c7;
+    }
+
+    .form-check-item input[type="checkbox"]:checked::before {
+        content: '\f00c'; /* FontAwesome check icon */
+        font-family: 'Font Awesome 5 Pro'; /* Or 'Font Awesome 5 Free' */
+        font-weight: 900;
+        color: white;
+        font-size: 12px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .form-check-item label {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-bottom: 0; /* Override default Bootstrap margin */
+    }
+
+    /* Custom Checkbox for is_active */
+    .form-check-group {
+        margin-top: 30px;
+        margin-bottom: 25px;
+    }
+
+    .form-check-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+    }
+
+    .form-check-wrapper:focus-within {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.1);
+        background: white;
+    }
+
+    .form-check-wrapper input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #9ca3af;
+        border-radius: 6px;
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        position: relative;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .form-check-wrapper input[type="checkbox"]:checked {
+        background-color: #0284c7;
+        border-color: #0284c7;
+    }
+
+    .form-check-wrapper input[type="checkbox"]:checked::before {
+        content: '\f00c';
+        font-family: 'Font Awesome 5 Pro';
+        font-weight: 900;
+        color: white;
+        font-size: 14px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .form-check-wrapper .form-check-label {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-bottom: 0;
+    }
+
+    /* Error Messages */
+    .error-message {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        background: #fef2f2;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #dc2626;
+    }
+
+    .error-message.non-field-errors {
+        margin-bottom: 25px;
+    }
+
+    /* Field Help */
+    .field-help {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #0284c7, #0369a1); /* Blue for category offer */
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    /* Loading State */
+    .btn-primary.loading {
+        opacity: 0.8;
+        cursor: not-allowed;
+    }
+
+    .btn-primary.loading i {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 16px 20px;
+            margin: -30px -30px 20px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            justify-content: center;
+        }
+
+        .form-section {
+            padding: 0 15px;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-input {
+            padding-left: 16px;
+        }
+
+        .input-icon {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitBtn = document.getElementById('submitBtn');
+        const offerForm = document.getElementById('offerForm');
+
+        // Form submission handling
+        offerForm.addEventListener('submit', function() {
+            // Add loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding Offer...';
+        });
+
+        // Input focus effects
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll(".custom-alert");
+            alerts.forEach((alert) => {
+                alert.classList.remove("show");
+                alert.classList.add("fade");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'user_app/base_user.html' %}
+{% load static %}
+
+{% block title %}Edit Address - ShopKickora{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar-item {
+        transition: all 0.2s ease;
+    }
+    .sidebar-item:hover {
+        background-color: #f0f9ff;
+    }
+    .sidebar-item.active {
+        background-color: #dbeafe;
+        border-right: 3px solid #3b82f6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar -->
+        <div class="lg:w-1/4">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                  <nav class="space-y-2">
+                    <a href="{% url 'user_profile' %}" class="sidebar-item  flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <span class="font-medium">Profile</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="font-medium">Orders</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                        <span class="font-medium">Wallet</span>
+                    </a>
+                    <a href="{% url 'address_view' %}" class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <span class="font-medium">Address</span>
+                    </a>
+                    <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <span class="font-medium">Password</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="gift" class="w-5 h-5"></i>
+                        <span class="font-medium">Refer & Earn</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-8">
+        <h1 class="text-2xl font-bold mb-6">Edit Address</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Full Name</label>
+                    <input type="text" name="full_name" value="{{ address.full_name }}" class="w-full px-4 py-2 border rounded-lg" required>
+                    {% if errors.full_name %}
+                            <p style="color:red">{{errors.full_name}}</p>
+                            {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Mobile</label>
+                    <input type="tel" name="mobile" value="{{ address.mobile }}" class="w-full px-4 py-2 border rounded-lg" required>
+                    {% if errors.mobile %}
+                            <p style="color:red">{{errors.mobile}}</p>
+                            {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Street Address</label>
+                    <input type="text" name="street" value="{{ address.street_address }}" class="w-full px-4 py-2 border rounded-lg" required>
+                    {% if errors.street %}
+                            <p style="color:red">{{errors.street}}</p>
+                            {% endif %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">District</label>
+                        <input type="text" name="district" value="{{ address.district }}" class="w-full px-4 py-2 border rounded-lg" required>
+                        {% if errors.district %}
+                            <p style="color:red">{{errors.district}}</p>
+                            {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">State</label>
+                        <input type="text" name="state" value="{{ address.state }}" class="w-full px-4 py-2 border rounded-lg" required>
+                        {% if errors.state %}
+                            <p style="color:red">{{errors.state}}</p>
+                            {% endif %}
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Pincode</label>
+                        <input type="text" name="pincode" value="{{ address.pincode }}" class="w-full px-4 py-2 border rounded-lg" required>
+                        {% if errors.pincode %}
+                            <p style="color:red">{{errors.pincode}}</p>
+                            {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Country</label>
+                        <input type="text" name="country" value="{{ address.country }}" class="w-full px-4 py-2 border rounded-lg" required>
+                        {% if errors.country %}
+                            <p style="color:red">{{errors.country}}</p>
+                            {% endif %}
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                        Update Address
+                    </button>
+                    <a href="{% url 'address_view' %}" class="ml-4 text-gray-600 underline">Cancel</a>
+                </div>
+            </div>
+        </form>
+
+        
+    </div>
+</div>
+{% endblock %}

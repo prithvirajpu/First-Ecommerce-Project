@@ -1,0 +1,735 @@
+{% extends "user_app/base_admin.html" %}
+
+{% block title %}Add New Category{% endblock %}
+
+{% block content %}
+<div class="add-category-container">
+    <!-- Page Header - Compact -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="page-title">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add New Category
+                </h1>
+                <p class="page-subtitle">Create a new product category</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'category_list' %}" class="btn-back">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Categories
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages - Better Aligned -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} custom-alert">
+            <div class="alert-content">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle alert-icon"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle alert-icon"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                {% else %}
+                    <i class="fas fa-info-circle alert-icon"></i>
+                {% endif %}
+                <span class="alert-text">{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Form Section -->
+    <div class="form-section">
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-title">
+                    <i class="fas fa-edit me-2"></i>
+                    Category Information
+                </div>
+                <div class="form-subtitle">
+                    Fill in the details below to create a new category
+                </div>
+            </div>
+            <div class="form-body">
+                <form method="POST" action="" class="category-form">
+                    {% csrf_token %}
+                    
+                    <!-- Category Name Field -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag me-2"></i>
+                            Category Name
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                name="name" 
+                                id="name" 
+                                class="form-input {% if errors.name %}error{% endif %}" 
+                                placeholder="Enter category name..."
+                                required 
+                            />
+                            <div class="input-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                        </div>
+                        {% if errors.name %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            {{ errors.name }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>
+                            Description
+                            <span class="optional">(Optional)</span>
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea 
+                                name="description" 
+                                id="description" 
+                                class="form-textarea" 
+                                rows="4"
+                                placeholder="Enter category description..."
+                            ></textarea>
+                            <div class="textarea-icon">
+                                <i class="fas fa-align-left"></i>
+                            </div>
+                        </div>
+                        <div class="field-help">
+                            Provide a brief description of what this category contains
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-create">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Create Category
+                        </button>
+                        <a href="{% url 'category_list' %}" class="btn-cancel">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal">
+            <div class="modal-header logout-header">
+                <h5 class="modal-title" id="logoutModalLabel">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Confirm Logout
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-content">
+                    <div class="confirmation-icon logout-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="confirmation-text">
+                        <p>Are you sure you want to logout from the admin panel?</p>
+                        <div class="warning-text">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You will need to login again to access the admin features
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cancel
+                </button>
+                <a href="{% url 'admin_logout' %}" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    Yes, Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .add-category-container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Page Header - Compact and Dark */
+    .page-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        padding: 16px 25px;
+        margin: -30px -30px 20px -30px;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-title i {
+        font-size: 1.2rem;
+    }
+
+    .page-subtitle {
+        margin: 2px 0 0 0;
+        opacity: 0.8;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-back:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.2);
+        color: white;
+    }
+
+    .btn-back i {
+        font-size: 0.8rem;
+    }
+
+    /* Messages - Better Aligned and Smaller */
+    .messages-container {
+        margin-bottom: 18px;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        font-size: 0.9rem;
+    }
+
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .alert-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .alert-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .custom-close {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        opacity: 0.7;
+        padding: 4px;
+        margin-left: 10px;
+        flex-shrink: 0;
+    }
+
+    .custom-close:hover {
+        opacity: 1;
+    }
+
+    /* Alert Colors */
+    .alert-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .alert-danger, .alert-error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    /* Form Section */
+    .form-section {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 20px 25px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .form-title i {
+        font-size: 1rem;
+    }
+
+    .form-subtitle {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .form-body {
+        padding: 25px;
+    }
+
+    .category-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .form-label i {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .required {
+        color: #dc2626;
+        font-size: 0.8rem;
+    }
+
+    .optional {
+        color: #6b7280;
+        font-size: 0.8rem;
+        font-weight: 400;
+    }
+
+    /* Input Styling */
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #475569;
+        box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
+        background: white;
+    }
+
+    .form-input.error {
+        border-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    /* Textarea Styling */
+    .textarea-wrapper {
+        position: relative;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px 16px 12px 45px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #475569;
+        box-shadow: 0 0 0 0.1rem rgba(71, 85, 105, 0.15);
+        background: white;
+    }
+
+    .textarea-icon {
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .field-help {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    .error-message {
+        color: #dc2626;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .error-message i {
+        font-size: 0.75rem;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-create, .btn-cancel {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        justify-content: center;
+        min-width: 140px;
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    .btn-create i, .btn-cancel i {
+        font-size: 0.8rem;
+    }
+
+    /* Modal Styles */
+    .modern-modal {
+        border: none;
+        border-radius: 14px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-modal .modal-header {
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 20px 12px;
+    }
+
+    .logout-header {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border-bottom: none;
+    }
+
+    .modern-modal .modal-title {
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+    }
+
+    .logout-header .modal-title {
+        color: white;
+    }
+
+    .modern-modal .modal-title i {
+        font-size: 0.9rem;
+    }
+
+    .modern-modal .modal-body {
+        padding: 16px 20px;
+    }
+
+    .confirmation-content {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+    }
+
+    .confirmation-icon {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, #d97706, #b45309);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .logout-icon {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+
+    .confirmation-text {
+        flex: 1;
+    }
+
+    .confirmation-text p {
+        margin-bottom: 10px;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .warning-text {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+    }
+
+    .warning-text i {
+        font-size: 0.75rem;
+    }
+
+    .modern-modal .modal-footer {
+        border-top: 1px solid #e2e8f0;
+        padding: 12px 20px 16px;
+    }
+
+    .modern-modal .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.85rem;
+        text-decoration: none;
+    }
+
+    .modern-modal .btn i {
+        font-size: 0.75rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 12px 16px;
+            margin: -30px -30px 16px -30px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .page-title {
+            font-size: 1.2rem;
+            justify-content: center;
+        }
+
+        .form-card {
+            margin: 0 10px;
+        }
+
+        .form-header {
+            padding: 16px 20px;
+        }
+
+        .form-body {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-create, .btn-cancel {
+            min-width: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Auto dismiss alert messages after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll(".custom-alert");
+            alerts.forEach((alert) => {
+                alert.classList.remove("show");
+                alert.classList.add("fade");
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Form validation enhancement
+        const form = document.querySelector('.category-form');
+        const nameInput = document.getElementById('name');
+        
+        if (form && nameInput) {
+            form.addEventListener('submit', function(e) {
+                const createBtn = document.querySelector('.btn-create');
+                if (createBtn) {
+                    createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+                    createBtn.disabled = true;
+                }
+            });
+
+            // Real-time validation for name field
+            nameInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                if (value.length > 0) {
+                    this.classList.remove('error');
+                    // Remove any existing error message
+                    const errorMsg = this.parentNode.parentNode.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.remove();
+                    }
+                }
+            });
+        }
+
+        // Add smooth focus transitions
+        const inputs = document.querySelectorAll('.form-input, .form-textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentNode.style.transform = 'translateY(-1px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentNode.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

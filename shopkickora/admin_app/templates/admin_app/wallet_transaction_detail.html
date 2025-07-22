@@ -1,0 +1,481 @@
+{% extends "user_app/base_admin.html" %}
+{% load static %}
+{% block title %}Transaction Details | Admin{% endblock %}
+
+{% block content %}
+<div class="transaction-detail-container">
+  <!-- Page Header - Compact -->
+  <div class="page-header">
+      <div class="header-content">
+          <div class="header-title">
+              <h1 class="page-title">
+                  <i class="fas fa-info-circle me-2"></i>
+                  Transaction Details
+              </h1>
+              <p class="page-subtitle">Detailed view of wallet transaction {{ transaction.transaction_id }}</p>
+          </div>
+          <div class="header-actions">
+              <a href="{% url 'wallet_transaction_list' %}" class="btn-back-to-list">
+                  <i class="fas fa-arrow-left me-1"></i>
+                  Back to Transactions
+              </a>
+          </div>
+      </div>
+  </div>
+
+  <!-- Messages - Better Aligned -->
+  {% if messages %}
+  <div class="messages-container">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} custom-alert">
+          <div class="alert-content">
+              {% if message.tags == 'success' %}
+                  <i class="fas fa-check-circle alert-icon"></i>
+              {% elif message.tags == 'error' or message.tags == 'danger' %}
+                  <i class="fas fa-exclamation-circle alert-icon"></i>
+              {% elif message.tags == 'warning' %}
+                  <i class="fas fa-exclamation-triangle alert-icon"></i>
+              {% else %}
+                  <i class="fas fa-info-circle alert-icon"></i>
+              {% endif %}
+              <span class="alert-text">{{ message }}</span>
+          </div>
+          <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Transaction Details Section -->
+  <div class="detail-section">
+      <div class="detail-card">
+          <div class="detail-header">
+              <i class="fas fa-receipt me-2"></i>
+              <span>Transaction Information</span>
+          </div>
+          <div class="detail-body">
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-user me-2"></i>User:</label>
+                  <div class="detail-value">
+                      {% if transaction.wallet.user.is_superuser and transaction.order %}
+                          {{ transaction.order.user.get_full_name|default:transaction.order.user.email }}
+                      {% else %}
+                          {{ transaction.wallet.user.get_full_name|default:transaction.wallet.user.email }}
+                      {% endif %}
+                  </div>
+              </div>
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-hashtag me-2"></i>Transaction ID:</label>
+                  <div class="detail-value">{{ transaction.transaction_id }}</div>
+              </div>
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-calendar-alt me-2"></i>Date:</label>
+                  <div class="detail-value">{{ transaction.created_at|date:"M d, Y H:i:s" }}</div>
+              </div>
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-exchange-alt me-2"></i>Type:</label>
+                  <div class="detail-value">
+                      {% if transaction.transaction_type == 'CREDIT' %}
+                          <span class="status-badge status-active">
+                              <i class="fas fa-arrow-up me-1"></i>
+                              {{ transaction.transaction_type }}
+                          </span>
+                      {% else %}
+                          <span class="status-badge status-disabled">
+                              <i class="fas fa-arrow-down me-1"></i>
+                              {{ transaction.transaction_type }}
+                          </span>
+                      {% endif %}
+                  </div>
+              </div>
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-rupee-sign me-2"></i>Amount:</label>
+                  <div class="detail-value">
+                      <span class="discount-amount">₹{{ transaction.amount|floatformat:2 }}</span>
+                  </div>
+              </div>
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-align-left me-2"></i>Description:</label>
+                  <div class="detail-value">{{ transaction.description }}</div>
+              </div>
+              {% if transaction.order %}
+              <div class="detail-group">
+                  <label class="detail-label"><i class="fas fa-shopping-cart me-2"></i>Related Order:</label>
+                  <div class="detail-value">
+                      <a href="{% url 'admin_order_detail' transaction.order.id %}" class="action-btn btn-edit">
+                          <i class="fas fa-external-link-alt me-1"></i>
+                          View Order #{{ transaction.order.order_id }}
+                      </a>
+                  </div>
+              </div>
+              {% endif %}
+          </div>
+          <div class="detail-actions">
+              <a href="{% url 'wallet_transaction_list' %}" class="btn-cancel">
+                  <i class="fas fa-arrow-left me-1"></i>
+                  Back to Transactions
+              </a>
+          </div>
+      </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Base container for the entire page content */
+  .transaction-detail-container {
+      padding: 0;
+      max-width: 100%;
+  }
+
+  /* Page Header - Compact and Dark */
+  .page-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      padding: 16px 25px;
+      margin: -30px -30px 20px -30px;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+  }
+
+  .page-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+  }
+
+  .page-title i {
+      font-size: 1.2rem;
+  }
+
+  .page-subtitle {
+      margin: 2px 0 0 0;
+      opacity: 0.8;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+  }
+
+  .btn-back-to-list {
+      background: linear-gradient(135deg, #64748b, #475569);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-back-to-list:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(71, 85, 105, 0.2);
+      color: white;
+  }
+
+  .btn-back-to-list i {
+      font-size: 0.8rem;
+  }
+
+  /* Messages - Better Aligned and Smaller */
+  .messages-container {
+      margin-bottom: 18px;
+  }
+
+  .custom-alert {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      font-size: 0.9rem;
+  }
+
+  .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+  }
+
+  .alert-icon {
+      font-size: 0.9rem;
+      flex-shrink: 0;
+  }
+
+  .alert-text {
+      flex: 1;
+      line-height: 1.4;
+  }
+
+  .custom-close {
+      background: none;
+      border: none;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      padding: 4px;
+      margin-left: 10px;
+      flex-shrink: 0;
+  }
+
+  .custom-close:hover {
+      opacity: 1;
+  }
+
+  /* Alert Colors */
+  .alert-success {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+  }
+
+  .alert-danger,
+  .alert-error {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+  }
+
+  .alert-warning {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: white;
+  }
+
+  .alert-info {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+  }
+
+  /* Detail Section (reusing form-card styles) */
+  .detail-section {
+      margin-bottom: 20px;
+  }
+
+  .detail-card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+  }
+
+  .detail-header {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      padding: 14px 18px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+  }
+
+  .detail-header i {
+      font-size: 0.85rem;
+  }
+
+  .detail-body {
+      padding: 20px;
+  }
+
+  .detail-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .detail-group:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+  }
+
+  .detail-label {
+      font-weight: 600;
+      color: #334155;
+      font-size: 0.9rem;
+      min-width: 150px; /* Adjust as needed */
+      display: flex;
+      align-items: center;
+      margin-right: 15px;
+  }
+
+  .detail-label i {
+      font-size: 0.85rem;
+      margin-right: 8px;
+      color: #64748b;
+  }
+
+  .detail-value {
+      flex: 1;
+      color: #475569;
+      font-size: 0.9rem;
+      word-break: break-word; /* Ensure long values wrap */
+  }
+
+  /* Status Badges (reused from coupon/wallet list) */
+  .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.75rem;
+  }
+
+  .status-badge i {
+      font-size: 0.7rem;
+  }
+
+  .status-active { /* For CREDIT */
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+  }
+
+  .status-disabled { /* For DEBIT */
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+  }
+
+  /* Amount Styling (reused from wallet list) */
+  .discount-amount {
+      font-weight: 700;
+      color: #059669; /* Default for positive amounts */
+      font-size: 0.9rem;
+  }
+
+  /* Action Buttons (reused from coupon/wallet list) */
+  .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.8rem;
+      text-decoration: none;
+  }
+
+  .action-btn i {
+      font-size: 0.75rem;
+  }
+
+  .btn-edit { /* Reused for 'View Order' button */
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+  }
+
+  .btn-edit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+      color: white;
+  }
+
+  .detail-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 20px;
+      border-top: 1px solid #e2e8f0;
+  }
+
+  .btn-cancel { /* Reused for 'Back to Transactions' button */
+      background: #6b7280;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      cursor: pointer;
+  }
+
+  .btn-cancel:hover {
+      background: #4b5563;
+      transform: translateY(-1px);
+      color: white;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+      .page-header {
+          padding: 12px 16px;
+          margin: -30px -30px 16px -30px;
+      }
+
+      .header-content {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+          gap: 10px;
+      }
+
+      .page-title {
+          font-size: 1.2rem;
+          justify-content: center;
+      }
+
+      .detail-group {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
+      }
+
+      .detail-label {
+          min-width: auto;
+          margin-right: 0;
+          margin-bottom: 5px;
+      }
+
+      .detail-actions {
+          flex-direction: column;
+          align-items: stretch;
+      }
+
+      .btn-cancel {
+          justify-content: center;
+      }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      // Auto dismiss alert messages after 5 seconds
+      setTimeout(function() {
+          const alerts = document.querySelectorAll(".custom-alert");
+          alerts.forEach((alert) => {
+              alert.classList.remove("show"); // Ensure Bootstrap's fade out works
+              alert.classList.add("fade");
+              setTimeout(() => alert.remove(), 500);
+          });
+      }, 5000);
+  });
+</script>
+{% endblock %}

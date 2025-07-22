@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>404 | Page Not Found - ShopKickora</title>
+    <link rel="icon" href="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752845859/shopkickora-logo_ehlb6l.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .logo {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 72px;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .btn-home {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-home:hover {
+            background-color: #2563eb;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 48px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img src="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752845859/shopkickora-logo_ehlb6l.png" alt="ShopKickora Logo" class="logo">
+    <h1>404</h1>
+    <h2>Oops! Page not found.</h2>
+    <p>The requested URL <strong>{{ request_path }}</strong> was not found on this server.</p>
+    <a href="{% url 'user_home' %}" class="btn-home">Go to Homepage</a>
+</body>
+</html>

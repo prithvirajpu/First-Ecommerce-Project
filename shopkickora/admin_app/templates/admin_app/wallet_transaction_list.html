@@ -1,0 +1,676 @@
+{% extends "user_app/base_admin.html" %}
+{% load static %}
+{% block title %}Wallet Transactions | Admin{% endblock %}
+
+{% block content %}
+<div class="wallet-transactions-container">
+  <!-- Page Header - Compact -->
+  <div class="page-header">
+      <div class="header-content">
+          <div class="header-title">
+              <h1 class="page-title">
+                  <i class="fas fa-wallet me-2"></i>
+                  Wallet Transactions
+              </h1>
+              <p class="page-subtitle">View and manage all wallet activities</p>
+          </div>
+          <div class="header-actions">
+              <a href="{% url 'admin_dashboard' %}" class="btn-back-to-list">
+                  <i class="fas fa-arrow-left me-1"></i>
+                  Back to Dashboard
+              </a>
+          </div>
+      </div>
+  </div>
+
+  <!-- Messages - Better Aligned -->
+  {% if messages %}
+  <div class="messages-container">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} custom-alert">
+          <div class="alert-content">
+              {% if message.tags == 'success' %}
+                  <i class="fas fa-check-circle alert-icon"></i>
+              {% elif message.tags == 'error' or message.tags == 'danger' %}
+                  <i class="fas fa-exclamation-circle alert-icon"></i>
+              {% elif message.tags == 'warning' %}
+                  <i class="fas fa-exclamation-triangle alert-icon"></i>
+              {% else %}
+                  <i class="fas fa-info-circle alert-icon"></i>
+              {% endif %}
+              <span class="alert-text">{{ message }}</span>
+          </div>
+          <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Transactions Table -->
+  <div class="table-section">
+      <div class="table-card">
+          <div class="table-header">
+              <div class="table-title">
+                  <i class="fas fa-list me-2"></i>
+                  Transactions List
+              </div>
+              <div class="table-stats">
+                  <span class="stat-number">{{ transactions|length }}</span>
+                  <span class="stat-label">Total Transactions</span>
+              </div>
+          </div>
+          <div class="table-wrapper">
+              <table class="modern-table">
+                  <thead>
+                      <tr>
+                          <th class="th-number">#</th>
+                          <th>
+                              <i class="fas fa-hashtag me-1"></i>
+                              Txn ID
+                          </th>
+                          <th>
+                              <i class="fas fa-calendar-alt me-1"></i>
+                              Date
+                          </th>
+                          <th>
+                              <i class="fas fa-user me-1"></i>
+                              User
+                          </th>
+                          <th>
+                              <i class="fas fa-exchange-alt me-1"></i>
+                              Type
+                          </th>
+                          <th>
+                              <i class="fas fa-rupee-sign me-1"></i>
+                              Amount (₹)
+                          </th>
+                          <th>
+                              <i class="fas fa-eye me-1"></i>
+                              View
+                          </th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for txn in transactions %}
+                      <tr class="table-row">
+                          <td class="td-number">
+                              <div class="row-number">{{ forloop.counter }}</div>
+                          </td>
+                          <td>{{ txn.transaction_id }}</td>
+                          <td>{{ txn.created_at|date:"M d, Y H:i" }}</td>
+                          <td>
+                              {% if txn.wallet.user.is_superuser and txn.order %}
+                                  {{ txn.order.user.get_full_name|default:txn.order.user.email }}
+                              {% else %}
+                                  {{ txn.wallet.user.get_full_name|default:txn.wallet.user.email }}
+                              {% endif %}
+                          </td>
+                          <td>
+                              {% if txn.transaction_type == 'CREDIT' %}
+                                  <span class="status-badge status-active">
+                                      <i class="fas fa-arrow-up me-1"></i>
+                                      {{ txn.transaction_type }}
+                                  </span>
+                              {% else %}
+                                  <span class="status-badge status-disabled">
+                                      <i class="fas fa-arrow-down me-1"></i>
+                                      {{ txn.transaction_type }}
+                                  </span>
+                              {% endif %}
+                          </td>
+                          <td>
+                              <span class="discount-amount">₹{{ txn.amount|floatformat:2 }}</span>
+                          </td>
+                          <td class="td-actions">
+                              <div class="action-buttons">
+                                  <a href="{% url 'wallet_transaction_detail' txn.transaction_id %}" class="action-btn btn-edit" title="View Details">
+                                      <i class="fas fa-info-circle me-1"></i>
+                                      Details
+                                  </a>
+                              </div>
+                          </td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                          <td colspan="7" class="no-data">
+                              <div class="no-data-content">
+                                  <i class="fas fa-wallet"></i>
+                                  <h4>No Wallet Transactions Found</h4>
+                                  <p>There are no recorded transactions at the moment.</p>
+                              </div>
+                          </td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+
+  <!-- Pagination (Placeholder - add if needed) -->
+  
+  {% if transactions.has_other_pages %}
+  <div class="pagination-section">
+      <nav class="pagination-nav">
+          <ul class="modern-pagination">
+              {% if transactions.has_previous %}
+              <li class="page-item">
+                  <a
+                      class="page-link"
+                      href="?page={{ transactions.previous_page_number }}"
+                  >
+                      <i class="fas fa-chevron-left"></i>
+                      Previous
+                  </a>
+              </li>
+              {% else %}
+              <li class="page-item disabled">
+                  <span class="page-link">
+                      <i class="fas fa-chevron-left"></i>
+                      Previous
+                  </span>
+              </li>
+              {% endif %}
+              {% for num in transactions.paginator.page_range %}
+                  {% if transactions.number == num %}
+                  <li class="page-item active">
+                      <span class="page-link">{{ num }}</span>
+                  </li>
+                  {% else %}
+                  <li class="page-item">
+                      <a
+                          class="page-link"
+                          href="?page={{ num }}"
+                      >{{ num }}</a>
+                  </li>
+                  {% endif %}
+              {% endfor %}
+              {% if transactions.has_next %}
+              <li class="page-item">
+                  <a
+                      class="page-link"
+                      href="?page={{ transactions.next_page_number }}"
+                  >
+                      Next
+                      <i class="fas fa-chevron-right"></i>
+                  </a>
+              </li>
+              {% else %}
+              <li class="page-item disabled">
+                  <span class="page-link">
+                      Next
+                      <i class="fas fa-chevron-right"></i>
+                  </span>
+              </li>
+              {% endif %}
+          </ul>
+      </nav>
+  </div>
+  {% endif %}
+  
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Base container for the entire page content */
+  .wallet-transactions-container {
+      padding: 0;
+      max-width: 100%;
+  }
+
+  /* Page Header - Compact and Dark */
+  .page-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      padding: 16px 25px;
+      margin: -30px -30px 20px -30px;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+  }
+
+  .page-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+  }
+
+  .page-title i {
+      font-size: 1.2rem;
+  }
+
+  .page-subtitle {
+      margin: 2px 0 0 0;
+      opacity: 0.8;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+  }
+
+  .btn-back-to-list { /* Reusing btn-add-coupon style for back button */
+      background: linear-gradient(135deg, #64748b, #475569);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-back-to-list:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(71, 85, 105, 0.2);
+      color: white;
+  }
+
+  .btn-back-to-list i {
+      font-size: 0.8rem;
+  }
+
+  /* Messages - Better Aligned and Smaller */
+  .messages-container {
+      margin-bottom: 18px;
+  }
+
+  .custom-alert {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      font-size: 0.9rem;
+  }
+
+  .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+  }
+
+  .alert-icon {
+      font-size: 0.9rem;
+      flex-shrink: 0;
+  }
+
+  .alert-text {
+      flex: 1;
+      line-height: 1.4;
+  }
+
+  .custom-close {
+      background: none;
+      border: none;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      padding: 4px;
+      margin-left: 10px;
+      flex-shrink: 0;
+  }
+
+  .custom-close:hover {
+      opacity: 1;
+  }
+
+  /* Alert Colors */
+  .alert-success {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+  }
+
+  .alert-danger,
+  .alert-error {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+  }
+
+  .alert-warning {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: white;
+  }
+
+  .alert-info {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+  }
+
+  /* Table Section */
+  .table-section {
+      margin-bottom: 20px;
+  }
+
+  .table-card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+  }
+
+  .table-header {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      padding: 14px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  }
+
+  .table-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      align-items: center;
+  }
+
+  .table-title i {
+      font-size: 0.9rem;
+  }
+
+  .table-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(71, 85, 105, 0.1);
+      padding: 6px 12px;
+      border-radius: 8px;
+  }
+
+  .stat-number {
+      font-weight: 700;
+      color: #334155;
+      font-size: 0.9rem;
+  }
+
+  .stat-label {
+      font-size: 0.75rem;
+      color: #64748b;
+  }
+
+  .table-wrapper {
+      overflow-x: auto;
+  }
+
+  .modern-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+  }
+
+  .modern-table th {
+      background: #f8fafc;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #334155;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+      font-size: 0.85rem;
+  }
+
+  .modern-table th i {
+      font-size: 0.75rem;
+      color: #64748b;
+  }
+
+  .modern-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+  }
+
+  .table-row {
+      transition: all 0.3s ease;
+  }
+
+  .table-row:hover {
+      background: #f8fafc;
+  }
+
+  .row-number {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #475569, #334155);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+  }
+
+  /* Transaction Type Styling (reusing status-badge) */
+  .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.75rem;
+  }
+
+  .status-badge i {
+      font-size: 0.7rem;
+  }
+
+  .status-active { /* For CREDIT */
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+  }
+
+  .status-disabled { /* For DEBIT */
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+  }
+
+  /* Amount Styling (reusing discount-amount) */
+  .discount-amount {
+      font-weight: 700;
+      color: #059669; /* Default for positive amounts */
+      font-size: 0.9rem;
+  }
+  /* You might want to add a class for debit amounts if they should be red */
+  /* .debit-amount { color: #dc2626; } */
+
+
+  /* Action Buttons */
+  .action-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+  }
+
+  .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.8rem;
+      text-decoration: none;
+  }
+
+  .action-btn i {
+      font-size: 0.75rem;
+  }
+
+  .btn-edit { /* Reusing btn-edit for details */
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+  }
+
+  .btn-edit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+      color: white;
+  }
+
+  .no-data {
+      text-align: center;
+      padding: 40px 20px;
+  }
+
+  .no-data-content i {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+  }
+
+  .no-data-content h4 {
+      color: #64748b;
+      margin-bottom: 6px;
+      font-size: 1rem;
+  }
+
+  .no-data-content p {
+      color: #94a3b8;
+      margin: 0;
+      font-size: 0.85rem;
+  }
+
+  /* Pagination (if implemented) */
+  .pagination-section {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+  }
+
+  .modern-pagination {
+      display: flex;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      gap: 5px;
+  }
+
+  .modern-pagination .page-item {
+      display: flex;
+  }
+
+  .modern-pagination .page-link {
+      padding: 8px 12px;
+      border: 2px solid #e2e8f0;
+      background: white;
+      color: #64748b;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.85rem;
+  }
+
+  .modern-pagination .page-link i {
+      font-size: 0.75rem;
+  }
+
+  .modern-pagination .page-link:hover {
+      background: #475569;
+      border-color: #475569;
+      color: white;
+      transform: translateY(-1px);
+  }
+
+  .modern-pagination .page-item.active .page-link {
+      background: linear-gradient(135deg, #475569, #334155);
+      border-color: #475569;
+      color: white;
+  }
+
+  .modern-pagination .page-item.disabled .page-link {
+      background: #f8fafc;
+      color: #cbd5e1;
+      cursor: not-allowed;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+      .page-header {
+          padding: 12px 16px;
+          margin: -30px -30px 16px -30px;
+      }
+
+      .header-content {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+          gap: 10px;
+      }
+
+      .page-title {
+          font-size: 1.2rem;
+          justify-content: center;
+      }
+
+      .table-wrapper {
+          overflow-x: auto;
+      }
+
+      .modern-table {
+          min-width: 700px; /* Adjust min-width for better mobile table display */
+      }
+
+      .modern-pagination {
+          flex-wrap: wrap;
+          justify-content: center;
+      }
+
+      .table-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+      }
+
+      .table-stats {
+          justify-content: center;
+      }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      // Auto dismiss alert messages after 5 seconds
+      setTimeout(function() {
+          const alerts = document.querySelectorAll(".custom-alert");
+          alerts.forEach((alert) => {
+              alert.classList.remove("show"); // Ensure Bootstrap's fade out works
+              alert.classList.add("fade");
+              setTimeout(() => alert.remove(), 500);
+          });
+      }, 5000);
+
+      // Add smooth scrolling for pagination (if pagination is enabled)
+      document.querySelectorAll(".page-link").forEach(function(link) {
+          link.addEventListener("click", function() {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+      });
+  });
+</script>
+{% endblock %}

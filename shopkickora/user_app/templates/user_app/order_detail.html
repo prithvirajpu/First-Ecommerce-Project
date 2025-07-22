@@ -1,0 +1,179 @@
+{% extends "user_app/base_user.html" %}
+{% load cart_extras %}
+
+{% block title %}Order #{{ order.order_id }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800">Order Details</h2>
+
+  <!-- Top Section -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <p><strong>Order ID:</strong> {{ order.order_id }}</p>
+    <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+    <p><strong>Placed On:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
+    <p><strong>Subtotal:</strong> ₹{{ order.total_amount|add:order.coupon_discount|floatformat:2 }}</p>
+    {% if order.coupon_discount > 0 %}
+      <p><strong>Coupon Discount:</strong> -₹{{ order.coupon_discount }}</p>
+    {% endif %}
+    {% if order.shipping_charge > 0 %}
+      <p><strong>Shipping Charge:</strong> ₹{{ order.shipping_charge }}</p>
+    {% endif %}
+    <hr class="my-2 border-gray-200">
+    <p class="text-lg font-bold text-gray-800"><strong>Total:</strong> ₹{{ order.total_amount }}</p>
+
+    <!-- Actions -->
+    <div class="mt-4 flex flex-wrap gap-3">
+      {% if order.status != 'CANCELLED' and order.status != 'DELIVERED' %}
+        <form action="{% url 'cancel_order' order.id %}" method="get">
+          <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200">
+            Cancel Order
+          </button>
+        </form>
+      {% endif %}
+      {% if order.payment_status == 'paid' %}
+        <a href="{% url 'download_invoice' order.id %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+          Download Invoice
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Order Status Tracker -->
+  <div class="mt-6">
+    <h4 class="font-semibold mb-4 text-lg text-gray-800">Order Progress</h4>
+    <div class="relative flex items-center justify-between text-sm font-medium bg-white p-8 rounded-xl shadow-lg">
+      {% with steps="Placed,Shipped,Out for Delivery,Delivered,Cancelled"|split:"," status_map="PENDING,SHIPPED,OUT_FOR_DELIVERY,DELIVERED,CANCELLED"|split:"," icons="shopping-cart,truck,arrow-right-circle,check-circle,x-circle"|split:"," %}
+        {% for step in steps %}
+          {% with icon=icons|slice:forloop.counter0|first %}
+            <div class="flex-1 text-center relative z-10">
+              {% if forloop.counter0 < status_map|index_of:order.status %}
+                <div class="w-10 h-10 mx-auto rounded-full bg-green-500 flex items-center justify-center transform transition-transform duration-300 hover:scale-110">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    {% if icon == "shopping-cart" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    {% elif icon == "truck" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM3 5h18M3 5v7a2 2 0 002 2h13.5M3 5l1.5 7M21 5l-1.5 7"></path>
+                    {% elif icon == "arrow-right-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7m0-14h6m-6 14h6"></path>
+                    {% elif icon == "check-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    {% elif icon == "x-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    {% endif %}
+                  </svg>
+                </div>
+                <p class="text-green-700 mt-2 font-semibold">{{ step }}</p>
+              {% elif forloop.counter0 == status_map|index_of:order.status %}
+                <div class="w-10 h-10 mx-auto rounded-full bg-yellow-500 animate-pulse flex items-center justify-center transform transition-transform duration-300 hover:scale-110">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    {% if icon == "shopping-cart" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    {% elif icon == "truck" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM3 5h18M3 5v7a2 2 0 002 2h13.5M3 5l1.5 7M21 5l-1.5 7"></path>
+                    {% elif icon == "arrow-right-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7m0-14h6m-6 14h6"></path>
+                    {% elif icon == "check-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    {% elif icon == "x-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    {% endif %}
+                  </svg>
+                </div>
+                <p class="text-yellow-700 mt-2 font-semibold">{{ step }}</p>
+              {% else %}
+                <div class="w-10 h-10 mx-auto rounded-full bg-gray-300 flex items-center justify-center">
+                  <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    {% if icon == "shopping-cart" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    {% elif icon == "truck" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM3 5h18M3 5v7a2 2 0 002 2h13.5M3 5l1.5 7M21 5l-1.5 7"></path>
+                    {% elif icon == "arrow-right-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7m0-14h6m-6 14h6"></path>
+                    {% elif icon == "check-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    {% elif icon == "x-circle" %}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    {% endif %}
+                  </svg>
+                </div>
+                <p class="text-gray-500 mt-2">{{ step }}</p>
+              {% endif %}
+
+              {% if not forloop.last %}
+                <div class="absolute top-5 left-1/2 transform -translate-x-1/2 w-full h-1 bg-gray-200 z-0">
+                  {% if forloop.counter0 < status_map|index_of:order.status %}
+                    <div class="h-full bg-green-500 transition-all duration-500"></div>
+                  {% elif forloop.counter0 == status_map|index_of:order.status %}
+                    <div class="h-full bg-gradient-to-r from-green-500 to-gray-200 transition-all duration-500"></div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        {% endfor %}
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- Shipping Address -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <h4 class="text-lg font-semibold mb-2 text-gray-800">Shipping Address</h4>
+    <p class="font-semibold">{{ order.full_name }}</p>
+    <p>{{ order.street_address }}, {{ order.district }}, {{ order.state }} - {{ order.pincode }}</p>
+    <p>{{ order.country }}</p>
+    <p><strong>Phone:</strong> {{ order.mobile }}</p>
+  </div>
+
+  <!-- Order Items -->
+  <div class="bg-white rounded-xl shadow-lg p-6">
+    <h4 class="text-lg font-semibold mb-4 text-gray-800">Ordered Items</h4>
+    <table class="min-w-full text-left border mb-4">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 border">#</th>
+          <th class="p-2 border">Product</th>
+          <th class="p-2 border">Size</th>
+          <th class="p-2 border">Qty</th>
+          <th class="p-2 border">Price</th>
+          <th class="p-2 border">Total</th>
+          <th class="p-2 border">Return</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.order_items.all %}
+        <tr>
+          <td class="p-2 border">{{ forloop.counter }}</td>
+          <td class="p-2 border">{{ item.product.name }}</td>
+          <td class="p-2 border">{{ item.size }}</td>
+          <td class="p-2 border">{{ item.quantity }}</td>
+          <td class="p-2 border">₹{{ item.price }}</td>
+          <td class="p-2 border">₹{{ item.price|multiply:item.quantity }}</td>
+          <td class="p-2 border">
+            {% if order.status == 'DELIVERED' %}
+              {% if item.is_return_approved %}
+                <span class="text-green-600 text-xs font-semibold">Return Accepted</span>
+              {% elif item.is_return_rejected %}
+                <span class="text-red-600 text-xs font-semibold" title="{{ item.return_rejected_reason|default:'Rejected by admin' }}">
+                  Return Rejected
+                </span>
+              {% elif item.is_return_requested %}
+                <span class="text-yellow-600 text-xs font-semibold">Return Requested</span>
+              {% else %}
+                <form action="{% url 'request_return' item.id %}" method="get">
+                  <button class="bg-yellow-500 text-white text-xs px-3 py-1 rounded-lg hover:bg-yellow-600 transition-colors duration-200">
+                    Return
+                  </button>
+                </form>
+              {% endif %}
+            {% else %}
+              <span class="text-gray-500 text-xs">Not Available</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,283 @@
+{% extends 'user_app/base_user.html' %}
+{% load static %}
+
+{% block title %}Profile - shopKickora{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar-item {
+        transition: all 0.3s ease;
+    }
+    .sidebar-item:hover {
+        background-color: #99d0c9;
+        transform: translateX(4px);
+    }
+    .sidebar-item.active {
+        background-color: #e0f2fe;
+        border-right: 3px solid #509b8d;
+        color: #75ad9c;
+    }
+    .profile-card {
+        background: linear-gradient(135deg, #f0f9ff 0%, #66e6c8 100%);
+    }
+    .info-item {
+        transition: all 0.2s ease;
+    }
+    .info-item:hover {
+        background-color: #f8fafc;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-blue-50 py-3">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center space-x-2 text-sm">
+            <a href="{% url 'user_dashboard' %}" class="text-blue-600 hover:text-blue-800">Home</a>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-gray-600">Profile</span>
+        </nav>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar -->
+        <div class="lg:w-1/4">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <nav class="space-y-2">
+                    <a href="{% url 'user_profile' %}" class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <span class="font-medium">Profile</span>
+                    </a>
+                    <a href="{% url 'user_order_list' %}" class="sidebar-item  flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="font-medium">Orders</span>
+                    </a>
+                    <a href="{% url 'wallet_page' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                        <span class="font-medium">Wallet</span>
+                    </a>
+                    <a href="{% url 'address_view' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <span class="font-medium">Address</span>
+                    </a>
+                    <a href="{% url 'change_password' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <span class="font-medium">Password</span>
+                    </a>
+                    <a href="{% url 'referal' %}" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:text-blue-600">
+                        <i data-lucide="gift" class="w-5 h-5"></i>
+                        <span class="font-medium">Refer & Earn</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        
+
+        <!-- Main Content -->
+        <div class="lg:w-3/4">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+{% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+      <div class="fade-message p-3 rounded text-sm
+        {% if message.tags == 'error' %}
+          bg-red-100 text-red-800 border border-red-300
+        {% elif message.tags == 'success' %}
+          bg-green-100 text-green-800 border border-green-300
+        {% else %}
+          bg-blue-100 text-blue-800 border border-blue-300
+        {% endif %}
+      ">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+                <div class="profile-card p-8 text-center">
+                    
+                    <div class="relative inline-block">
+    {% if request.user.profile_image and request.user.profile_image.url %}
+        <img src="{{ request.user.profile_image.url }}"
+             alt="Profile Picture"
+             class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover relative">
+    {% else %}
+        <img src="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752843790/default.png_unu5k8.png"
+             alt="Default Profile"
+             class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover relative">
+    {% endif %}
+
+    {% if request.user.profile_image and request.user.profile_image.url and "default.png_unu5k8" not in request.user.profile_image.url %}
+        <button type="button"
+                class="absolute bottom-0 left-0 bg-red-600 text-white p-1.5 rounded-full shadow hover:bg-red-700 transition"
+                onclick="openDeleteModal()">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+    {% endif %}
+
+
+
+
+
+
+
+                            <form id="profileImageForm" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <label for="profileImageUpload" class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                                        <i data-lucide="camera" class="w-4 h-4"></i>
+                                    </label>
+                                    <input type="file" id="profileImageUpload" name="profile_image" accept="image/*" class="hidden" onchange="document.getElementById('profileImageForm').submit();">
+                                </form>
+
+                        </div>
+
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-4">{{ request.user.get_full_name|default:request.user.username }}</h1>
+                    <p class="text-gray-600 mt-2">Member since {{ request.user.date_joined|date:"F j, Y" }} </p>
+                </div>
+
+                <!-- Profile Information -->
+                <div class="p-8">
+                    <div class="space-y-6">
+                        <!-- Full Name -->
+                        <div class="info-item p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i data-lucide="user" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-sm text-gray-500 font-medium">Full Name</label>
+                                    <p class="text-lg font-semibold text-gray-800">
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="info-item p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <i data-lucide="mail" class="w-5 h-5 text-green-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-sm text-gray-500 font-medium">Email</label>
+                                    <p class="text-lg font-semibold text-gray-800">{{ request.user.email }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="info-item p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-purple-100 p-3 rounded-full">
+                                    <i data-lucide="phone" class="w-5 h-5 text-purple-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-sm text-gray-500 font-medium">Phone</label>
+                                    {% if address %}
+                                            <p class="text-lg font-semibold text-gray-800">{{ address.mobile }}</p>
+                                            {% else %}
+                                            <p class="text-lg font-semibold text-gray-800 text-gray-500 italic">
+                                                No phone number set.
+                                            </p>
+                                            {% endif %}
+
+                                </div>
+                            </div>
+                        </div>
+
+                       <!-- Address -->
+<div class="info-item p-4 rounded-lg border border-gray-200">
+    <div class="flex items-center space-x-4">
+        <div class="bg-orange-100 p-3 rounded-full">
+            <i data-lucide="map-pin" class="w-5 h-5 text-orange-600"></i>
+        </div>
+        <div class="flex-1">
+            <label class="text-sm text-gray-500 font-medium">Address</label>
+            
+            {% if address %}
+                <p class="text-lg font-semibold text-gray-800">
+                    {{ address.street_address }}, {{ address.district }}, {{ address.state }} - {{ address.pincode }}, {{ address.country }}
+                </p>
+            {% else %}
+                <p class="text-lg text-gray-500 italic">No default address set.</p>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+
+                    <!-- Edit Profile Button -->
+                    <div class="mt-8 flex justify-end">
+                        <a href="{% url 'edit_profile' %}"><button id="editProfileBtn" class="bg-gray-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition-colors flex items-center space-x-2 shadow-lg">
+                            <i data-lucide="edit" class="w-5 h-5"></i>
+                            <span>Edit Profile</span>
+                        </button></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Confirm Deletion</h2>
+        <p class="text-sm text-gray-600 mb-6">Are you sure you want to delete your profile picture?</p>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-800">Cancel</button>
+            <form method="POST" action="{% url 'remove_profile_image' %}">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+    // Sidebar active state management
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    sidebarItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            // Remove active class from all items
+            sidebarItems.forEach(i => i.classList.remove('active'));
+            // Add active class to clicked item
+            e.currentTarget.classList.add('active');
+        });
+    });
+
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Auto-fade flash messages after 5 seconds
+    setTimeout(() => {
+        const messages = document.querySelectorAll('.fade-message');
+        messages.forEach(msg => {
+            msg.style.transition = 'opacity 1s ease';
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 1000); // remove from DOM after fade
+        });
+    }, 3000); // 5 seconds
+</script>
+
+{% endblock %}

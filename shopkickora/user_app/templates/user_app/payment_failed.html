@@ -1,0 +1,38 @@
+{% extends "user_app/base_user.html" %}
+{% load static %}
+
+{% block title %}Payment Failed{% endblock %}
+
+{% block content %}
+<div class="bg-blue-50 py-3">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center space-x-2 text-sm">
+            <a href="{% url 'user_dashboard' %}" class="text-blue-600 hover:text-blue-800">Home</a>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-gray-600">Payment failed</span>
+        </nav>
+    </div>
+</div>
+<div class="max-w-3xl mx-auto px-4 py-12 text-center">
+  <div class="bg-white rounded-xl shadow p-8 border">
+    <div class="flex flex-col items-center space-y-4">
+      <img src="https://res.cloudinary.com/dlfyesjsd/image/upload/v1752846045/failure_dsiglo.jpg" alt="Failed" class="w-40 h-40">
+
+      <h2 class="text-2xl font-bold text-red-600">Payment Failed</h2>
+
+      <p class="text-gray-600 text-sm sm:text-base">
+        Oops! Your payment could not be completed. Please try again or choose a different method.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 pt-6">
+        <a href="{% url 'checkout' %}" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all text-sm font-semibold">
+          Retry Payment
+        </a>
+        <a href="{% url 'user_dashboard' %}" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-all text-sm font-semibold">
+          Go to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
