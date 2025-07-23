@@ -126,13 +126,17 @@
 
 
 
-                            <form id="profileImageForm" method="POST" enctype="multipart/form-data">
-                                    {% csrf_token %}
-                                    <label for="profileImageUpload" class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer">
-                                        <i data-lucide="camera" class="w-4 h-4"></i>
-                                    </label>
-                                    <input type="file" id="profileImageUpload" name="profile_image" accept="image/*" class="hidden" onchange="document.getElementById('profileImageForm').submit();">
-                                </form>
+                           <form id="profileImageForm" method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <!-- Custom label for file upload -->
+  <label for="profileImageUpload" class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors cursor-pointer">
+    <i data-lucide="camera" class="w-4 h-4"></i>
+  </label>
+
+  <input type="file" id="profileImageUpload" name="profile_image" accept="image/*" class="hidden" onchange="document.getElementById('profileImageForm').submit();">
+</form>
+
 
                         </div>
 
