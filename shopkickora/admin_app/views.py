@@ -795,20 +795,24 @@ def return_requests_dashboard(request):
     return render(request, 'admin_app/return_requests_dashboard.html', context)
 
 
+
 @never_cache
 @user_passes_test(lambda x: x.is_superuser, login_url='admin_login')
 def approve_return(request, order_item_id):
+    # Fetch the OrderItem object
     item = get_object_or_404(OrderItem, id=order_item_id)
 
+    # Check if return is valid
     if not item.is_return_requested or item.is_return_approved:
         messages.warning(request, "Invalid or already approved return request.")
         return redirect('admin_order_detail', order_id=item.order.id)
 
+    # Update order item return status
     item.is_return_approved = True
     item.status = 'RETURN_ACCEPTED'
     item.save()
 
-    
+    # Update product stock for the returned size
     try:
         stock_obj = ProductSizeStock.objects.get(product=item.product, size=item.size)
         stock_obj.quantity += item.quantity
@@ -816,16 +820,23 @@ def approve_return(request, order_item_id):
     except ProductSizeStock.DoesNotExist:
         messages.warning(request, f"Stock entry for size {item.size} not found. Please add it manually.")
 
-    
+    # Calculate refund
     item_total = item.price * item.quantity
+
     order_items = item.order.order_items.all()
     order_total_before_coupon = sum(i.price * i.quantity for i in order_items)
 
-    coupon_discount = item.order.coupon_discount or 0
-    proportional_discount = (item_total / order_total_before_coupon) * coupon_discount if order_total_before_coupon > 0 else 0
+    coupon_discount = Decimal(item.order.coupon_discount or 0)
+
+    # Calculate how much of the coupon discount applies to this item
+    proportional_discount = Decimal('0.00')
+    if order_total_before_coupon > 0:
+        proportional_discount = (item_total / order_total_before_coupon) * coupon_discount
 
     refund_amount = item_total - proportional_discount
+    refund_amount = round(refund_amount, 2)  # rounding to 2 decimal places
 
+    # Add refund to user's wallet
     user_wallet, _ = Wallet.objects.get_or_create(user=item.order.user)
     user_wallet.balance += refund_amount
     user_wallet.save()
@@ -838,7 +849,7 @@ def approve_return(request, order_item_id):
         order=item.order
     )
 
-    # DEBIT from admin's wallet
+    # Subtract refund from admin's wallet
     admin_user = CustomUser.objects.filter(is_superuser=True).first()
     if admin_user:
         admin_wallet, _ = Wallet.objects.get_or_create(user=admin_user)
@@ -853,9 +864,12 @@ def approve_return(request, order_item_id):
             order=item.order
         )
 
-    messages.success(request, f"Return approved and ₹{refund_amount:.2f} refunded to user's wallet (after applying coupon share).")
+    # Confirmation message
+    messages.success(
+        request,
+        f"Return approved and ₹{refund_amount:.2f} refunded to user's wallet (after applying coupon share)."
+    )
     return redirect('admin_order_detail', order_id=item.order.id)
-
 
 
 @user_passes_test(lambda x: x.is_superuser)

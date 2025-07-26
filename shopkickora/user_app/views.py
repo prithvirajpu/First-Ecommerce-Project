@@ -1147,10 +1147,8 @@ def apply_coupon(request):
             if cart_total < coupon.minimum_order_amount:
                 messages.error(request, f'Minimum order amount for this coupon is ₹{coupon.minimum_order_amount}.')
                 return redirect('checkout')
-            if cart_total>2000:
-                best_discount=coupon.discount_amount*2
-            else:
-                best_discount=0
+            
+            best_discount=coupon.discount_amount
             # best_discount = coupon.discount_amount 
             request.session['applied_coupon_code'] = coupon.code
             request.session['coupon_discount'] = str(best_discount)
@@ -1366,30 +1364,34 @@ def user_order_list(request):
 
         approved_items = items.filter(is_return_approved=True).count()
         rejected_items = items.filter(is_return_rejected=True).count()
-        requested_items = items.filter(is_return_requested=True).exists()
+        requested_items = items.filter(is_return_requested=True).count()
 
         order.status_display = order.get_status_display()
         order.status_class = "bg-yellow-100 text-yellow-700"
 
         if order.status == 'DELIVERED':
-            if total_items == approved_items:
+            if approved_items == total_items:
                 order.status_display = "Return Accepted"
                 order.status_class = "bg-green-100 text-green-700"
+            elif approved_items > 0:
+                order.status_display = "Partially Returned"
+                order.status_class = "bg-blue-100 text-blue-700"
+            elif requested_items > 0:
+                order.status_display = "Return Requested"
+                order.status_class = "bg-yellow-100 text-yellow-700"
             elif rejected_items > 0:
                 order.status_display = "Return Rejected"
                 order.status_class = "bg-red-100 text-red-700"
-            elif requested_items:
-                order.status_display = "Return Requested"
-                order.status_class = "bg-yellow-100 text-yellow-700"
             else:
-                order.status_display = order.get_status_display()
+                order.status_display = "Delivered"
                 order.status_class = "bg-green-100 text-green-700"
 
         elif order.status == 'CANCELLED':
-            order.status_display = order.get_status_display()
+            order.status_display = "Cancelled"
             order.status_class = "bg-red-100 text-red-700"
 
         enriched_orders.append(order)
+
 
     return render(request, 'user_app/order_list.html', {
         'orders': enriched_orders,
@@ -1487,6 +1489,7 @@ def wallet_page(request):
 
     if request.method == "POST":
         try:
+
             amount = Decimal(request.POST.get('amount'))
             if amount > 0:
                 wallet.balance += amount
