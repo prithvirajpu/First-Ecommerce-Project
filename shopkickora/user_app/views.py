@@ -1119,6 +1119,23 @@ def checkout(request):
 
 
 
+@csrf_exempt
+@login_required
+def save_address_to_session(request):
+    if request.method == "POST":
+        request.session['new_address_data'] = {
+            'full_name': request.POST.get('full_name'),
+            'mobile': request.POST.get('mobile'),
+            'street': request.POST.get('street'),
+            'district': request.POST.get('district'),
+            'state': request.POST.get('state'),
+            'pincode': request.POST.get('pincode'),
+            'country': request.POST.get('country'),
+        }
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'})
+
+
 @login_required
 def apply_coupon(request):
     if request.method == "POST":

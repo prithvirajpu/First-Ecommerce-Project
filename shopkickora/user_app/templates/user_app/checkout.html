@@ -101,31 +101,32 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                            <input type="text" name="full_name" class="form-input" />
+                            <input type="text" name="full_name" class="form-input"  value="{{ request.session.new_address_data.full_name|default_if_none:'' }}" />
                         </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
-                            <input type="text" name="mobile" class="form-input" />
+                            <input type="text"  name="mobile" class="form-input" value="{{ request.session.new_address_data.mobile|default_if_none:'' }}" />
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
-                            <input type="text" name="street" class="form-input" />
+                            <input type="text" name="street" class="form-input" value="{{ request.session.new_address_data.street|default_if_none:'' }}" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">District</label>
-                            <input type="text" name="district" class="form-input" />
+                            <input type="text" name="district" class="form-input" value="{{ request.session.new_address_data.district|default_if_none:'' }}" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
-                            <input type="text" name="state" class="form-input" />
+                            <input type="text" name="state" class="form-input" value="{{ request.session.new_address_data.state|default_if_none:'' }}" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
-                            <input type="text" name="pincode" class="form-input" />
+                            <input type="text" name="pincode" class="form-input" value="{{ request.session.new_address_data.pincode|default_if_none:'' }}" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                            <input type="text" name="country" value="India" class="form-input" />
+                            <input type="text" name="country" value="India" class="form-input" value="{{ request.session.new_address_data.country|default_if_none:'' }}" />
                         </div>
                     </div>
                 </div>
@@ -250,6 +251,32 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+function saveAddressToSession() {
+    const data = new FormData();
+    data.append('full_name', document.querySelector('input[name="full_name"]').value);
+    data.append('mobile', document.querySelector('input[name="mobile"]').value);
+    data.append('street', document.querySelector('input[name="street"]').value);
+    data.append('district', document.querySelector('input[name="district"]').value);
+    data.append('state', document.querySelector('input[name="state"]').value);
+    data.append('pincode', document.querySelector('input[name="pincode"]').value);
+    data.append('country', document.querySelector('input[name="country"]').value);
+
+    fetch("{% url 'save_address' %}", {
+        method: "POST",
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: data
+    });
+}
+
+// Save on every input change
+document.querySelectorAll("#newAddressForm input").forEach(input => {
+    input.addEventListener("change", saveAddressToSession);
+});
+</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const newAddressOption = document.getElementById('new_address_option');
