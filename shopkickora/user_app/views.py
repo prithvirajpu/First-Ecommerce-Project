@@ -1147,8 +1147,11 @@ def apply_coupon(request):
             if cart_total < coupon.minimum_order_amount:
                 messages.error(request, f'Minimum order amount for this coupon is ₹{coupon.minimum_order_amount}.')
                 return redirect('checkout')
-
-            best_discount = coupon.discount_amount
+            if cart_total>2000:
+                best_discount=coupon.discount_amount*2
+            else:
+                best_discount=0
+            # best_discount = coupon.discount_amount 
             request.session['applied_coupon_code'] = coupon.code
             request.session['coupon_discount'] = str(best_discount)
             return redirect('/checkout/?success=coupon_added')
