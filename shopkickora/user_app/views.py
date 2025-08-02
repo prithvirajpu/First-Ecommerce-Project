@@ -291,6 +291,7 @@ def user_dashboard(request):
     
     all_products = Product.objects.filter(
         is_deleted=False,
+        is_active=True,
         category__is_deleted=False,
         category__is_active=True,
         brand__is_active=True,
